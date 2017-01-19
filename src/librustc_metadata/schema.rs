@@ -254,7 +254,7 @@ pub struct ModData {
 
 #[derive(RustcEncodable, RustcDecodable)]
 pub struct MacroDef {
-    pub body: String,
+    pub body: hir::MacroDef,
 }
 
 #[derive(RustcEncodable, RustcDecodable)]

@@ -829,7 +829,7 @@ impl<'a, 'tcx> EncodeContext<'a, 'tcx> {
     fn encode_info_for_macro_def(&mut self, macro_def: &hir::MacroDef) -> Entry<'tcx> {
         Entry {
             kind: EntryKind::MacroDef(self.lazy(&MacroDef {
-                body: ::syntax::print::pprust::tts_to_string(&macro_def.body)
+                body: &macro_def.body
             })),
             visibility: self.lazy(&ty::Visibility::Public),
             span: self.lazy(&macro_def.span),
