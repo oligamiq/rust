@@ -10,7 +10,7 @@
 
 use self::Destination::*;
 
-use syntax_pos::{COMMAND_LINE_SP, DUMMY_SP, FileMap, Span, MultiSpan, CharPos};
+use syntax_pos::{COMMAND_LINE_SP, DUMMY_SP, EXT_MACRO_SP, FileMap, Span, MultiSpan, CharPos};
 
 use {Level, CodeSuggestion, DiagnosticBuilder, SubDiagnostic, CodeMapper};
 use RenderSpan::*;
@@ -628,6 +628,9 @@ impl EmitterWriter {
     // <*macros>. Since these locations are often difficult to read, we move these Spans from
     // <*macros> to their corresponding use site.
     fn fix_multispan_in_std_macros(&mut self, span: &mut MultiSpan) -> bool {
+        fn is_macro(sp: Span, cm: Rc<CodeMapper>) -> bool{
+            cm.span_to_filename(sp.clone()).contains("macros>") || *sp == EXT_MACRO_SP
+        }
         let mut spans_updated = false;
 
         if let Some(ref cm) = self.cm {
@@ -639,7 +642,7 @@ impl EmitterWriter {
                 if (*sp == COMMAND_LINE_SP) || (*sp == DUMMY_SP) {
                     continue;
                 }
-                if cm.span_to_filename(sp.clone()).contains("macros>") {
+                if is_macro(sp.clone(), cm.clone()) {
                     let v = cm.macro_backtrace(sp.clone());
                     if let Some(use_site) = v.last() {
                         before_after.push((sp.clone(), use_site.call_site.clone()));
@@ -653,7 +656,7 @@ impl EmitterWriter {
                             continue;
                         }
                         // Check to make sure we're not in any <*macros>
-                        if !cm.span_to_filename(def_site).contains("macros>") &&
+                        if !is_macro(def_site.clone(), cm.clone()) &&
                            !trace.macro_decl_name.starts_with("#[") {
                             new_labels.push((trace.call_site,
                                              "in this macro invocation".to_string()));
@@ -669,7 +672,7 @@ impl EmitterWriter {
                 if (sp_label.span == COMMAND_LINE_SP) || (sp_label.span == DUMMY_SP) {
                     continue;
                 }
-                if cm.span_to_filename(sp_label.span.clone()).contains("macros>") {
+                if is_macro(sp_label, cm.clone()) {
                     let v = cm.macro_backtrace(sp_label.span.clone());
                     if let Some(use_site) = v.last() {
                         before_after.push((sp_label.span.clone(), use_site.call_site.clone()));

@@ -41,7 +41,7 @@ x: 1 y: 1
 
 Note it is an error to have both a catch-all `_` and a catch-all binding in the same match block:
 
-```rust
+```rust,ignore
 let x = 1;
 
 match x {

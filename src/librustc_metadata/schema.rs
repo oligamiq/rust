@@ -254,7 +254,7 @@ pub struct ModData {
 
 #[derive(RustcEncodable, RustcDecodable)]
 pub struct MacroDef {
-    pub body: String,
+    pub body: Vec<::syntax::tokenstream::TokenTree>,
 }
 
 #[derive(RustcEncodable, RustcDecodable)]

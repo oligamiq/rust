@@ -32,7 +32,8 @@ use std::io::prelude::*;
 use std::io::Cursor;
 use std::rc::Rc;
 use std::u32;
-use syntax::ast::{self, CRATE_NODE_ID};
+use syntax::ast::{self, Mac_, CRATE_NODE_ID};
+use syntax::ext::base::ChangeSpan;
 use syntax::codemap::Spanned;
 use syntax::attr;
 use syntax::symbol::Symbol;
@@ -827,9 +828,21 @@ impl<'a, 'tcx> EncodeContext<'a, 'tcx> {
 
     /// Serialize the text of exported macros
     fn encode_info_for_macro_def(&mut self, macro_def: &hir::MacroDef) -> Entry<'tcx> {
+        use syntax::fold::Folder;
+        use syntax::ast::Path;
+
+        let body = macro_def.body.to_vec();
+        let mut mac_ = Spanned {
+            node: Mac_ { path: Path { span: syntax_pos::DUMMY_SP, segments: vec![] }, tts: body },
+            span: syntax_pos::DUMMY_SP
+        };
+
+        let mut change_span = ChangeSpan { span: syntax_pos::EXT_MACRO_SP };
+        mac_ = change_span.fold_mac(mac_);
+
         Entry {
             kind: EntryKind::MacroDef(self.lazy(&MacroDef {
-                body: ::syntax::print::pprust::tts_to_string(&macro_def.body)
+                body: mac_.node.tts
             })),
             visibility: self.lazy(&ty::Visibility::Public),
             span: self.lazy(&macro_def.span),
