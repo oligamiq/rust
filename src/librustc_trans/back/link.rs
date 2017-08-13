@@ -89,16 +89,8 @@ pub const RLIB_BYTECODE_OBJECT_V1_DATA_OFFSET: usize =
     RLIB_BYTECODE_OBJECT_V1_DATASIZE_OFFSET + 8;
 
 pub use self::rustc_trans_utils::link::{find_crate_name, filename_for_input,
-                                        default_output_for_target, invalid_output_for_target};
-
-pub fn build_link_meta(incremental_hashes_map: &IncrementalHashesMap) -> LinkMeta {
-    let krate_dep_node = &DepNode::new_no_params(DepKind::Krate);
-    let r = LinkMeta {
-        crate_hash: Svh::new(incremental_hashes_map[krate_dep_node].to_smaller_hash()),
-    };
-    info!("{:?}", r);
-    return r;
-}
+                                        default_output_for_target, invalid_output_for_target,
+                                        build_link_meta};
 
 // The third parameter is for env vars, used on windows to set up the
 // path for MSVC to find its DLLs, and gcc to find its bundled

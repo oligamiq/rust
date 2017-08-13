@@ -28,6 +28,8 @@
 #![feature(rustc_diagnostic_macros)]
 #![feature(set_stdio)]
 
+#[cfg(not(feature="llvm"))]
+extern crate ar;
 extern crate arena;
 extern crate getopts;
 extern crate graphviz;
@@ -159,7 +161,6 @@ pub use rustc_trans::LlvmMetadataLoader as MetadataLoader;
 
 #[cfg(not(feature="llvm"))]
 mod no_llvm_metadata_loader {
-    extern crate ar;
     extern crate owning_ref;
 
     use rustc::middle::cstore::MetadataLoader as MetadataLoaderTrait;
@@ -168,7 +169,7 @@ mod no_llvm_metadata_loader {
     use std::fs::File;
     use std::path::Path;
 
-    use self::ar::Archive;
+    use ar::Archive;
     use self::owning_ref::{OwningRef, ErasedBoxRef};
 
     pub struct NoLLvmMetadataLoader;

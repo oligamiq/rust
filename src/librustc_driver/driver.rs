@@ -74,6 +74,8 @@ pub fn compile_input(sess: &Session,
                      addl_plugins: Option<Vec<String>>,
                      control: &CompileController) -> CompileResult {
     use rustc_trans::back::write::OngoingCrateTranslation;
+    use rustc::session::config::CrateType;
+
     macro_rules! controller_entry_point {
         ($point: ident, $tsess: expr, $make_state: expr, $phase_result: expr) => {{
             let state = &mut $make_state;
@@ -91,7 +93,6 @@ pub fn compile_input(sess: &Session,
     }
 
     if cfg!(not(feature="llvm")) {
-        use rustc::session::config::CrateType;
         if !sess.opts.debugging_opts.no_trans && sess.opts.output_types.should_trans() {
             sess.err("LLVM is not supported by this rustc. Please use -Z no-trans to compile")
         }
@@ -232,6 +233,26 @@ pub fn compile_input(sess: &Session,
             if log_enabled!(::log::LogLevel::Info) {
                 println!("Pre-trans");
                 tcx.print_debug_stats();
+            }
+
+            #[cfg(not(feature="llvm"))]
+            {
+                use ar::{Builder, Header};
+                use std::fs::File;
+                use std::io::Cursor;
+                if sess.opts.crate_types == vec![CrateType::CrateTypeRlib] {
+                    let cstore = &tcx.sess.cstore;
+                    let link_meta =
+                        ::rustc_trans_utils::link::build_link_meta(&incremental_hashes_map);
+                    let exported_symbols =
+                        ::rustc_trans_utils::find_exported_symbols(tcx, &analysis.reachable);
+                    let (metadata, _hashes) =
+                        cstore.encode_metadata(tcx, &link_meta, &exported_symbols);
+                    let mut builder = Builder::new(File::create("abc.rlib").unwrap());
+                    builder
+                        .append(&Header::new("rust.metadata.bin".to_string(), metadata.raw_data.len() as u64), Cursor::new(metadata.raw_data))
+                        .unwrap();
+                }
             }
 
             let trans = phase_4_translate_to_llvm(tcx, analysis, incremental_hashes_map,
