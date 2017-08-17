@@ -38,40 +38,40 @@ use syntax_pos::Span;
 /// This trait defines the callbacks you can expect to receive when
 /// employing the ExprUseVisitor.
 pub trait Delegate<'tcx> {
-    // The value found at `cmt` is either copied or moved, depending
-    // on mode.
+    /// The value found at `cmt` is either copied or moved, depending
+    /// on mode.
     fn consume(&mut self,
                consume_id: ast::NodeId,
                consume_span: Span,
                cmt: mc::cmt<'tcx>,
                mode: ConsumeMode);
 
-    // The value found at `cmt` has been determined to match the
-    // pattern binding `matched_pat`, and its subparts are being
-    // copied or moved depending on `mode`.  Note that `matched_pat`
-    // is called on all variant/structs in the pattern (i.e., the
-    // interior nodes of the pattern's tree structure) while
-    // consume_pat is called on the binding identifiers in the pattern
-    // (which are leaves of the pattern's tree structure).
-    //
-    // Note that variants/structs and identifiers are disjoint; thus
-    // `matched_pat` and `consume_pat` are never both called on the
-    // same input pattern structure (though of `consume_pat` can be
-    // called on a subpart of an input passed to `matched_pat).
+    /// The value found at `cmt` has been determined to match the
+    /// pattern binding `matched_pat`, and its subparts are being
+    /// copied or moved depending on `mode`.  Note that `matched_pat`
+    /// is called on all variant/structs in the pattern (i.e., the
+    /// interior nodes of the pattern's tree structure) while
+    /// consume_pat is called on the binding identifiers in the pattern
+    /// (which are leaves of the pattern's tree structure).
+    ///
+    /// Note that variants/structs and identifiers are disjoint; thus
+    /// `matched_pat` and `consume_pat` are never both called on the
+    /// same input pattern structure (though of `consume_pat` can be
+    /// called on a subpart of an input passed to `matched_pat).
     fn matched_pat(&mut self,
                    matched_pat: &hir::Pat,
                    cmt: mc::cmt<'tcx>,
                    mode: MatchMode);
 
-    // The value found at `cmt` is either copied or moved via the
-    // pattern binding `consume_pat`, depending on mode.
+    /// The value found at `cmt` is either copied or moved via the
+    /// pattern binding `consume_pat`, depending on mode.
     fn consume_pat(&mut self,
                    consume_pat: &hir::Pat,
                    cmt: mc::cmt<'tcx>,
                    mode: ConsumeMode);
 
-    // The value found at `borrow` is being borrowed at the point
-    // `borrow_id` for the region `loan_region` with kind `bk`.
+    /// The value found at `borrow` is being borrowed at the point
+    /// `borrow_id` for the region `loan_region` with kind `bk`.
     fn borrow(&mut self,
               borrow_id: ast::NodeId,
               borrow_span: Span,
@@ -80,12 +80,12 @@ pub trait Delegate<'tcx> {
               bk: ty::BorrowKind,
               loan_cause: LoanCause);
 
-    // The local variable `id` is declared but not initialized.
+    /// The local variable `id` is declared but not initialized.
     fn decl_without_init(&mut self,
                          id: ast::NodeId,
                          span: Span);
 
-    // The path at `cmt` is being assigned to.
+    /// The path at `cmt` is being assigned to.
     fn mutate(&mut self,
               assignment_id: ast::NodeId,
               assignment_span: Span,
@@ -108,8 +108,10 @@ pub enum LoanCause {
 
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum ConsumeMode {
-    Copy,                // reference to x where x has a type that copies
-    Move(MoveReason),    // reference to x where x has a type that moves
+    /// reference to x where x has a type that copies
+    Copy,
+    /// reference to x where x has a type that moves
+    Move(MoveReason),
 }
 
 #[derive(Copy, Clone, PartialEq, Debug)]
@@ -135,35 +137,35 @@ enum TrackMatchMode {
 }
 
 impl TrackMatchMode {
-    // Builds up the whole match mode for a pattern from its constituent
-    // parts.  The lattice looks like this:
-    //
-    //          Conflicting
-    //            /     \
-    //           /       \
-    //      Borrowing   Moving
-    //           \       /
-    //            \     /
-    //            Copying
-    //               |
-    //          NonBinding
-    //               |
-    //            Unknown
-    //
-    // examples:
-    //
-    // * `(_, some_int)` pattern is Copying, since
-    //   NonBinding + Copying => Copying
-    //
-    // * `(some_int, some_box)` pattern is Moving, since
-    //   Copying + Moving => Moving
-    //
-    // * `(ref x, some_box)` pattern is Conflicting, since
-    //   Borrowing + Moving => Conflicting
-    //
-    // Note that the `Unknown` and `Conflicting` states are
-    // represented separately from the other more interesting
-    // `Definite` states, which simplifies logic here somewhat.
+    /// Builds up the whole match mode for a pattern from its constituent
+    /// parts.  The lattice looks like this:
+    ///
+    ///          Conflicting
+    ///            /     \
+    ///           /       \
+    ///      Borrowing   Moving
+    ///           \       /
+    ///            \     /
+    ///            Copying
+    ///               |
+    ///          NonBinding
+    ///               |
+    ///            Unknown
+    ///
+    /// examples:
+    ///
+    /// * `(_, some_int)` pattern is Copying, since
+    ///   NonBinding + Copying => Copying
+    ///
+    /// * `(some_int, some_box)` pattern is Moving, since
+    ///   Copying + Moving => Moving
+    ///
+    /// * `(ref x, some_box)` pattern is Conflicting, since
+    ///   Borrowing + Moving => Conflicting
+    ///
+    /// Note that the `Unknown` and `Conflicting` states are
+    /// represented separately from the other more interesting
+    /// `Definite` states, which simplifies logic here somewhat.
     fn lub(&mut self, mode: MatchMode) {
         *self = match (*self, mode) {
             // Note that clause order below is very significant.
@@ -197,8 +199,10 @@ impl TrackMatchMode {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum MutateMode {
     Init,
-    JustWrite,    // x = y
-    WriteAndRead, // x += y
+    /// x = y
+    JustWrite,
+    /// x += y
+    WriteAndRead,
 }
 
 #[derive(Copy, Clone)]
@@ -242,13 +246,13 @@ pub struct ExprUseVisitor<'a, 'gcx: 'a+'tcx, 'tcx: 'a> {
     param_env: ty::ParamEnv<'tcx>,
 }
 
-// If the MC results in an error, it's because the type check
-// failed (or will fail, when the error is uncovered and reported
-// during writeback). In this case, we just ignore this part of the
-// code.
-//
-// Note that this macro appears similar to try!(), but, unlike try!(),
-// it does not propagate the error.
+/// If the MC results in an error, it's because the type check
+/// failed (or will fail, when the error is uncovered and reported
+/// during writeback). In this case, we just ignore this part of the
+/// code.
+///
+/// Note that this macro appears similar to try!(), but, unlike try!(),
+/// it does not propagate the error.
 macro_rules! return_if_err {
     ($inp: expr) => (
         match $inp {
@@ -674,9 +678,9 @@ impl<'a, 'gcx, 'tcx> ExprUseVisitor<'a, 'gcx, 'tcx> {
         }
     }
 
-    // Invoke the appropriate delegate calls for anything that gets
-    // consumed or borrowed as part of the automatic adjustment
-    // process.
+    /// Invoke the appropriate delegate calls for anything that gets
+    /// consumed or borrowed as part of the automatic adjustment
+    /// process.
     fn walk_adjustment(&mut self, expr: &hir::Expr) {
         let adjustments = self.mc.tables.expr_adjustments(expr);
         let mut cmt = return_if_err!(self.mc.cat_expr_unadjusted(expr));

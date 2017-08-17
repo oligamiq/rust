@@ -712,9 +712,9 @@ impl EmitterWriter {
         max
     }
 
-    // This "fixes" MultiSpans that contain Spans that are pointing to locations inside of
-    // <*macros>. Since these locations are often difficult to read, we move these Spans from
-    // <*macros> to their corresponding use site.
+    /// This "fixes" MultiSpans that contain Spans that are pointing to locations inside of
+    /// <*macros>. Since these locations are often difficult to read, we move these Spans from
+    /// <*macros> to their corresponding use site.
     fn fix_multispan_in_std_macros(&mut self, span: &mut MultiSpan) -> bool {
         let mut spans_updated = false;
 
@@ -772,9 +772,9 @@ impl EmitterWriter {
         spans_updated
     }
 
-    // This does a small "fix" for multispans by looking to see if it can find any that
-    // point directly at <*macros>. Since these are often difficult to read, this
-    // will change the span to point at the use site.
+    /// This does a small "fix" for multispans by looking to see if it can find any that
+    /// point directly at <*macros>. Since these are often difficult to read, this
+    /// will change the span to point at the use site.
     fn fix_multispans_in_std_macros(&mut self,
                                     span: &mut MultiSpan,
                                     children: &mut Vec<SubDiagnostic>) {
@@ -1328,8 +1328,8 @@ pub struct BufferedWriter {
 }
 
 impl BufferedWriter {
-    // note: we use _new because the conditional compilation at its use site may make this
-    // this function unused on some platforms
+    /// note: we use _new because the conditional compilation at its use site may make this
+    /// this function unused on some platforms
     fn _new() -> BufferedWriter {
         BufferedWriter { buffer: vec![] }
     }

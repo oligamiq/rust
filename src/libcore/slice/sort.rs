@@ -238,7 +238,7 @@ fn partition_in_blocks<T, F>(v: &mut [T], pivot: &T, is_less: &mut F) -> usize
     // FIXME: When we get VLAs, try creating one array of length `min(v.len(), 2 * BLOCK)` rather
     // than two fixed-size arrays of length `BLOCK`. VLAs might be more cache-efficient.
 
-    // Returns the number of elements between pointers `l` (inclusive) and `r` (exclusive).
+    /// Returns the number of elements between pointers `l` (inclusive) and `r` (exclusive).
     fn width<T>(l: *mut T, r: *mut T) -> usize {
         assert!(mem::size_of::<T>() > 0);
         (r as usize - l as usize) / mem::size_of::<T>()

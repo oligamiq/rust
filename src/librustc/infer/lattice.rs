@@ -42,12 +42,12 @@ pub trait LatticeDir<'f, 'gcx: 'f+'tcx, 'tcx: 'f> : TypeRelation<'f, 'gcx, 'tcx>
 
     fn cause(&self) -> &ObligationCause<'tcx>;
 
-    // Relates the type `v` to `a` and `b` such that `v` represents
-    // the LUB/GLB of `a` and `b` as appropriate.
-    //
-    // Subtle hack: ordering *may* be significant here. This method
-    // relates `v` to `a` first, which may help us to avoid unnecessary
-    // type variable obligations. See caller for details.
+    /// Relates the type `v` to `a` and `b` such that `v` represents
+    /// the LUB/GLB of `a` and `b` as appropriate.
+    ///
+    /// Subtle hack: ordering *may* be significant here. This method
+    /// relates `v` to `a` first, which may help us to avoid unnecessary
+    /// type variable obligations. See caller for details.
     fn relate_bound(&mut self, v: Ty<'tcx>, a: Ty<'tcx>, b: Ty<'tcx>) -> RelateResult<'tcx, ()>;
 }
 

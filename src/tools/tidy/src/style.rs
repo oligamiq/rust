@@ -157,6 +157,9 @@ pub fn check(path: &Path, bad: &mut bool) {
         if !licenseck(file, &contents) {
             tidy_error!(bad, "{}: incorrect license", file.display());
         }
+        if !no_comment_before_item_when_no_doc(file, &contents) {
+            // Don't abort as this has a high false positive rate and there is much code which doesn't pass this lint.
+        }
     })
 }
 
@@ -197,4 +200,25 @@ fn licenseck(file: &Path, contents: &str) -> bool {
         })
     })
 
+}
+
+fn no_comment_before_item_when_no_doc(file: &Path, contents: &str) -> bool {
+    if let Some(true) = file.to_str().map(|f|f.contains("/test") || f.ends_with("diagnostics.rs") || f.ends_with("librustc/middle/cstore.rs") || f.contains("/librustc_llvm/")) {
+        return true;
+    }
+
+    let mut succeeded = true;
+
+    let mut lines = contents.lines().map(|l| l.trim()).enumerate().peekable();
+    while let Some((i, line)) = lines.next() {
+        if line.starts_with("//") && !line.starts_with("///") && !line.starts_with("//!") && !line.starts_with("// FIXME") {
+            if let Some(&(_, next)) = lines.peek(){
+                if next.starts_with("pub fn ") || next.starts_with("pub trait ") || next.starts_with("pub struct ") || next.starts_with("pub enum ") {
+                    println!("Regular comment before item, but no doc comment at {}:{}", file.display(), i+1);
+                    succeeded = false;
+                }
+            }
+        }
+    }
+    succeeded
 }

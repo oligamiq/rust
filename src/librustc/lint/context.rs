@@ -98,7 +98,8 @@ pub struct BufferedEarlyLint {
 /// guidelines.
 pub struct FutureIncompatibleInfo {
     pub id: LintId,
-    pub reference: &'static str // e.g., a URL for an issue/PR/RFC or error code
+    /// e.g., a URL for an issue/PR/RFC or error code
+    pub reference: &'static str
 }
 
 /// The targed of the `by_name` map, which accounts for renaming/deprecation.
@@ -166,7 +167,7 @@ impl LintStore {
         self.late_passes.as_mut().unwrap().push(pass);
     }
 
-    // Helper method for register_early/late_pass
+    /// Helper method for register_early/late_pass
     fn push_pass<P: LintPass + ?Sized + 'static>(&mut self,
                                         sess: Option<&Session>,
                                         from_plugin: bool,

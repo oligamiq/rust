@@ -313,7 +313,7 @@ fn pat_is_catchall(pat: &Pat) -> bool {
     }
 }
 
-// Check for unreachable patterns
+/// Check for unreachable patterns
 fn check_arms<'a, 'tcx>(cx: &mut MatchCheckCtxt<'a, 'tcx>,
                         arms: &[(Vec<(&'a Pattern<'tcx>, &hir::Pat)>, Option<&hir::Expr>)],
                         source: hir::MatchSource)
@@ -455,7 +455,7 @@ fn check_exhaustive<'a, 'tcx>(cx: &mut MatchCheckCtxt<'a, 'tcx>,
     }
 }
 
-// Legality of move bindings checking
+/// Legality of move bindings checking
 fn check_legality_of_move_bindings(cx: &MatchVisitor,
                                    has_guard: bool,
                                    pats: &[P<Pat>]) {

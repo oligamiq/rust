@@ -572,8 +572,8 @@ fn signal_shadowing_problem(sess: &Session, name: ast::Name, orig: Original, sha
     err.emit();
 }
 
-// Adds all labels in `b` to `ctxt.labels_in_fn`, signalling a warning
-// if one of the label shadows a lifetime or another label.
+/// Adds all labels in `b` to `ctxt.labels_in_fn`, signalling a warning
+/// if one of the label shadows a lifetime or another label.
 fn extract_labels(ctxt: &mut LifetimeContext, body: &hir::Body) {
     struct GatherLabels<'a, 'tcx: 'a> {
         sess: &'a Session,

@@ -326,26 +326,26 @@ pub trait DataflowResultsConsumer<'a, 'tcx: 'a> {
 
     fn mir(&self) -> &'a Mir<'tcx>;
 
-    // reset the state bitvector to represent the entry to block `bb`.
+    /// reset the state bitvector to represent the entry to block `bb`.
     fn reset_to_entry_of(&mut self,
                          bb: BasicBlock,
                          flow_state: &mut Self::FlowState);
 
-    // build gen + kill sets for statement at `loc`.
+    /// build gen + kill sets for statement at `loc`.
     fn reconstruct_statement_effect(&mut self,
                                     loc: Location,
                                     flow_state: &mut Self::FlowState);
 
-    // build gen + kill sets for terminator for `loc`.
+    /// build gen + kill sets for terminator for `loc`.
     fn reconstruct_terminator_effect(&mut self,
                                      loc: Location,
                                      flow_state: &mut Self::FlowState);
 
-    // apply current gen + kill sets to `flow_state`.
-    //
-    // (`bb` and `stmt_idx` parameters can be ignored if desired by
-    // client. For the terminator, the `stmt_idx` will be the number
-    // of statements in the block.)
+    /// apply current gen + kill sets to `flow_state`.
+    ///
+    /// (`bb` and `stmt_idx` parameters can be ignored if desired by
+    /// client. For the terminator, the `stmt_idx` will be the number
+    /// of statements in the block.)
     fn apply_local_effect(&mut self,
                           loc: Location,
                           flow_state: &mut Self::FlowState);

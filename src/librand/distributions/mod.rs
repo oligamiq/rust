@@ -295,7 +295,7 @@ mod tests {
         }
     }
 
-    // 0, 1, 2, 3, ...
+    /// 0, 1, 2, 3, ...
     struct CountingRng {
         i: u32,
     }

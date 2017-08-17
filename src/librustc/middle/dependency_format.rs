@@ -301,15 +301,15 @@ fn attempt_static<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>) -> Option<DependencyLis
     Some(ret)
 }
 
-// Given a list of how to link upstream dependencies so far, ensure that an
-// injected dependency is activated. This will not do anything if one was
-// transitively included already (e.g. via a dylib or explicitly so).
-//
-// If an injected dependency was not found then we're guaranteed the
-// metadata::creader module has injected that dependency (not listed as
-// a required dependency) in one of the session's field. If this field is not
-// set then this compilation doesn't actually need the dependency and we can
-// also skip this step entirely.
+/// Given a list of how to link upstream dependencies so far, ensure that an
+/// injected dependency is activated. This will not do anything if one was
+/// transitively included already (e.g. via a dylib or explicitly so).
+///
+/// If an injected dependency was not found then we're guaranteed the
+/// metadata::creader module has injected that dependency (not listed as
+/// a required dependency) in one of the session's field. If this field is not
+/// set then this compilation doesn't actually need the dependency and we can
+/// also skip this step entirely.
 fn activate_injected_dep(injected: Option<CrateNum>,
                          list: &mut DependencyList,
                          replaces_injected: &Fn(CrateNum) -> bool) {
@@ -341,8 +341,8 @@ fn activate_injected_allocator(sess: &session::Session,
     }
 }
 
-// After the linkage for a crate has been determined we need to verify that
-// there's only going to be one allocator in the output.
+/// After the linkage for a crate has been determined we need to verify that
+/// there's only going to be one allocator in the output.
 fn verify_ok<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>, list: &[Linkage]) {
     let sess = &tcx.sess;
     if list.len() == 0 {

@@ -330,9 +330,9 @@ impl<T> Packet<T> {
     // select implementation
     ////////////////////////////////////////////////////////////////////////////
 
-    // Tests to see whether this port can receive without blocking. If Ok is
-    // returned, then that's the answer. If Err is returned, then the returned
-    // port needs to be queried instead (an upgrade happened)
+    /// Tests to see whether this port can receive without blocking. If Ok is
+    /// returned, then that's the answer. If Err is returned, then the returned
+    /// port needs to be queried instead (an upgrade happened)
     pub fn can_recv(&self) -> Result<bool, Receiver<T>> {
         // We peek at the queue to see if there's anything on it, and we use
         // this return value to determine if we should pop from the queue and
@@ -351,7 +351,7 @@ impl<T> Packet<T> {
         }
     }
 
-    // increment the count on the channel (used for selection)
+    /// increment the count on the channel (used for selection)
     fn bump(&self, amt: isize) -> isize {
         match self.cnt.fetch_add(amt, Ordering::SeqCst) {
             DISCONNECTED => {
@@ -362,8 +362,8 @@ impl<T> Packet<T> {
         }
     }
 
-    // Attempts to start selecting on this port. Like a oneshot, this can fail
-    // immediately because of an upgrade.
+    /// Attempts to start selecting on this port. Like a oneshot, this can fail
+    /// immediately because of an upgrade.
     pub fn start_selection(&self, token: SignalToken) -> SelectionResult<T> {
         match self.decrement(token) {
             Ok(()) => SelSuccess,
@@ -387,7 +387,7 @@ impl<T> Packet<T> {
         }
     }
 
-    // Removes a previous thread from being blocked in this port
+    /// Removes a previous thread from being blocked in this port
     pub fn abort_selection(&self,
                            was_upgrade: bool) -> Result<bool, Receiver<T>> {
         // If we're aborting selection after upgrading from a oneshot, then

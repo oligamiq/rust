@@ -107,7 +107,7 @@ pub struct Index<'tcx> {
     used_features: FxHashMap<Symbol, attr::StabilityLevel>
 }
 
-// A private tree-walker for producing an Index.
+/// A private tree-walker for producing an Index.
 struct Annotator<'a, 'tcx: 'a> {
     tcx: TyCtxt<'a, 'tcx, 'tcx>,
     index: &'a mut Index<'tcx>,
@@ -117,8 +117,8 @@ struct Annotator<'a, 'tcx: 'a> {
 }
 
 impl<'a, 'tcx: 'a> Annotator<'a, 'tcx> {
-    // Determine the stability for a node based on its attributes and inherited
-    // stability. The stability is recorded in the index and used as the parent.
+    /// Determine the stability for a node based on its attributes and inherited
+    /// stability. The stability is recorded in the index and used as the parent.
     fn annotate<F>(&mut self, id: NodeId, attrs: &[Attribute],
                    item_sp: Span, kind: AnnotationKind, visit_children: F)
         where F: FnOnce(&mut Self)
@@ -445,7 +445,7 @@ struct Checker<'a, 'tcx: 'a> {
 }
 
 impl<'a, 'gcx, 'tcx> TyCtxt<'a, 'gcx, 'tcx> {
-    // (See issue #38412)
+    /// (See issue #38412)
     fn skip_stability_check_due_to_privacy(self, mut def_id: DefId) -> bool {
         // Check if `def_id` is a trait method.
         match self.describe_def(def_id) {

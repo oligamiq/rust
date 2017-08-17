@@ -131,7 +131,7 @@ fn relevant_lib(sess: &Session, lib: &NativeLibrary) -> bool {
     }
 }
 
-// Extra info about a crate loaded for plugins or exported macros.
+/// Extra info about a crate loaded for plugins or exported macros.
 struct ExtensionCrate {
     metadata: PMDSource,
     dylib: Option<PathBuf>,
@@ -503,7 +503,7 @@ impl<'a> CrateLoader<'a> {
         }
     }
 
-    // Go through the crate metadata and load any crates that it references
+    /// Go through the crate metadata and load any crates that it references
     fn resolve_crate_deps(&mut self,
                           root: &Option<CratePaths>,
                           crate_root: &CrateRoot,

@@ -330,7 +330,7 @@ impl<'a, 'tcx> BitDenotation for MaybeUninitializedLvals<'a, 'tcx> {
         self.move_data().move_paths.len()
     }
 
-    // sets on_entry bits for Arg lvalues
+    /// sets on_entry bits for Arg lvalues
     fn start_block_effect(&self, sets: &mut BlockSets<MovePathIndex>) {
         // set all bits to 1 (uninit) before gathering counterevidence
         for e in sets.on_entry.words_mut() { *e = !0; }
@@ -385,7 +385,7 @@ impl<'a, 'tcx> BitDenotation for DefinitelyInitializedLvals<'a, 'tcx> {
         self.move_data().move_paths.len()
     }
 
-    // sets on_entry bits for Arg lvalues
+    /// sets on_entry bits for Arg lvalues
     fn start_block_effect(&self, sets: &mut BlockSets<MovePathIndex>) {
         for e in sets.on_entry.words_mut() { *e = 0; }
 

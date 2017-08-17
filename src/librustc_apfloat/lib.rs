@@ -315,7 +315,7 @@ pub trait Float
     }
     fn div_r(self, rhs: Self, round: Round) -> StatusAnd<Self>;
     /// IEEE remainder.
-    // This is not currently correct in all cases.
+    /// This is not currently correct in all cases.
     fn ieee_rem(self, rhs: Self) -> StatusAnd<Self> {
         let mut v = self;
 

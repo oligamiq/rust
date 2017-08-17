@@ -92,7 +92,7 @@ pub struct SelectionContext<'cx, 'gcx: 'cx+'tcx, 'tcx: 'cx> {
     inferred_obligations: SnapshotVec<InferredObligationsSnapshotVecDelegate<'tcx>>,
 }
 
-// A stack that walks back up the stack frame.
+/// A stack that walks back up the stack frame.
 struct TraitObligationStack<'prev, 'tcx: 'prev> {
     obligation: &'prev TraitObligation<'tcx>,
 
@@ -977,7 +977,7 @@ impl<'cx, 'gcx, 'tcx> SelectionContext<'cx, 'gcx, 'tcx> {
         (result, dep_node)
     }
 
-    // Treat negative impls as unimplemented
+    /// Treat negative impls as unimplemented
     fn filter_negative_impls(&self, candidate: SelectionCandidate<'tcx>)
                              -> SelectionResult<'tcx, SelectionCandidate<'tcx>> {
         if let ImplCandidate(def_id) = candidate {
@@ -1889,8 +1889,8 @@ impl<'cx, 'gcx, 'tcx> SelectionContext<'cx, 'gcx, 'tcx> {
     // those will hopefully change to library-defined traits in the
     // future.
 
-    // HACK: if this returns an error, selection exits without considering
-    // other impls.
+    /// HACK: if this returns an error, selection exits without considering
+    /// other impls.
     fn assemble_builtin_bound_candidates<'o>(&mut self,
                                              conditions: BuiltinImplConditions<'tcx>,
                                              candidates: &mut SelectionCandidateSet<'tcx>)

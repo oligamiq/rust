@@ -988,10 +988,10 @@ pub fn print_after_hir_lowering<'tcx, 'a: 'tcx>(sess: &'a Session,
     write_output(out, ofile);
 }
 
-// In an ideal world, this would be a public function called by the driver after
-// analsysis is performed. However, we want to call `phase_3_run_analysis_passes`
-// with a different callback than the standard driver, so that isn't easy.
-// Instead, we call that function ourselves.
+/// In an ideal world, this would be a public function called by the driver after
+/// analsysis is performed. However, we want to call `phase_3_run_analysis_passes`
+/// with a different callback than the standard driver, so that isn't easy.
+/// Instead, we call that function ourselves.
 fn print_with_analysis<'tcx, 'a: 'tcx>(sess: &'a Session,
                                        hir_map: &hir_map::Map<'tcx>,
                                        analysis: &ty::CrateAnalysis,

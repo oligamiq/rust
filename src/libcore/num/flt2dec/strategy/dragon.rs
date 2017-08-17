@@ -62,7 +62,7 @@ fn div_2pow10(x: &mut Big, mut n: usize) -> &mut Big {
     x
 }
 
-// only usable when `x < 16 * scale`; `scaleN` should be `scale.mul_small(N)`
+/// only usable when `x < 16 * scale`; `scaleN` should be `scale.mul_small(N)`
 fn div_rem_upto_16<'a>(x: &'a mut Big, scale: &Big,
                        scale2: &Big, scale4: &Big, scale8: &Big) -> (u8, &'a mut Big) {
     let mut d = 0;

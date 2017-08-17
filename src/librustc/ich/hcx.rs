@@ -232,15 +232,15 @@ impl<'a, 'gcx, 'tcx> HashStable<StableHashingContext<'a, 'gcx, 'tcx>> for ast::N
 
 impl<'a, 'gcx, 'tcx> HashStable<StableHashingContext<'a, 'gcx, 'tcx>> for Span {
 
-    // Hash a span in a stable way. We can't directly hash the span's BytePos
-    // fields (that would be similar to hashing pointers, since those are just
-    // offsets into the CodeMap). Instead, we hash the (file name, line, column)
-    // triple, which stays the same even if the containing FileMap has moved
-    // within the CodeMap.
-    // Also note that we are hashing byte offsets for the column, not unicode
-    // codepoint offsets. For the purpose of the hash that's sufficient.
-    // Also, hashing filenames is expensive so we avoid doing it twice when the
-    // span starts and ends in the same file, which is almost always the case.
+    /// Hash a span in a stable way. We can't directly hash the span's BytePos
+    /// fields (that would be similar to hashing pointers, since those are just
+    /// offsets into the CodeMap). Instead, we hash the (file name, line, column)
+    /// triple, which stays the same even if the containing FileMap has moved
+    /// within the CodeMap.
+    /// Also note that we are hashing byte offsets for the column, not unicode
+    /// codepoint offsets. For the purpose of the hash that's sufficient.
+    /// Also, hashing filenames is expensive so we avoid doing it twice when the
+    /// span starts and ends in the same file, which is almost always the case.
     fn hash_stable<W: StableHasherResult>(&self,
                                           hcx: &mut StableHashingContext<'a, 'gcx, 'tcx>,
                                           hasher: &mut StableHasher<W>) {

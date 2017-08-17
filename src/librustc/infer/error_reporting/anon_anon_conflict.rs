@@ -20,17 +20,17 @@ use middle::resolve_lifetime as rl;
 use hir::intravisit::{self, Visitor, NestedVisitorMap};
 
 impl<'a, 'gcx, 'tcx> InferCtxt<'a, 'gcx, 'tcx> {
-    // This method prints the error message for lifetime errors when both the concerned regions
-    // are anonymous.
-    // Consider a case where we have
-    // fn foo(x: &mut Vec<&u8>, y: &u8)
-    //    { x.push(y); }.
-    // The example gives
-    // fn foo(x: &mut Vec<&u8>, y: &u8) {
-    //                    ---      --- these references must have the same lifetime
-    //            x.push(y);
-    //            ^ data from `y` flows into `x` here
-    // It will later be extended to trait objects and structs.
+    /// This method prints the error message for lifetime errors when both the concerned regions
+    /// are anonymous.
+    /// Consider a case where we have
+    /// fn foo(x: &mut Vec<&u8>, y: &u8)
+    ///    { x.push(y); }.
+    /// The example gives
+    /// fn foo(x: &mut Vec<&u8>, y: &u8) {
+    ///                    ---      --- these references must have the same lifetime
+    ///            x.push(y);
+    ///            ^ data from `y` flows into `x` here
+    /// It will later be extended to trait objects and structs.
     pub fn try_report_anon_anon_conflict(&self, error: &RegionResolutionError<'tcx>) -> bool {
 
         let (span, sub, sup) = match *error {
@@ -140,13 +140,13 @@ impl<'a, 'gcx, 'tcx> InferCtxt<'a, 'gcx, 'tcx> {
     }
 }
 
-// The FindNestedTypeVisitor captures the corresponding `hir::Ty` of the
-// anonymous region. The example above would lead to a conflict between
-// the two anonymous lifetimes for &u8 in x and y respectively. This visitor
-// would be invoked twice, once for each lifetime, and would
-// walk the types like &mut Vec<&u8> and &u8 looking for the HIR
-// where that lifetime appears. This allows us to highlight the
-// specific part of the type in the error message.
+/// The FindNestedTypeVisitor captures the corresponding `hir::Ty` of the
+/// anonymous region. The example above would lead to a conflict between
+/// the two anonymous lifetimes for &u8 in x and y respectively. This visitor
+/// would be invoked twice, once for each lifetime, and would
+/// walk the types like &mut Vec<&u8> and &u8 looking for the HIR
+/// where that lifetime appears. This allows us to highlight the
+/// specific part of the type in the error message.
 struct FindNestedTypeVisitor<'a, 'gcx: 'a + 'tcx, 'tcx: 'a> {
     infcx: &'a InferCtxt<'a, 'gcx, 'tcx>,
     hir_map: &'a hir::map::Map<'gcx>,

@@ -34,15 +34,15 @@ use hir::intravisit::{Visitor, NestedVisitorMap};
 use hir::itemlikevisit::ItemLikeVisitor;
 use hir::intravisit;
 
-// Returns true if the given set of generics implies that the item it's
-// associated with must be inlined.
+/// Returns true if the given set of generics implies that the item it's
+/// associated with must be inlined.
 fn generics_require_inlining(generics: &hir::Generics) -> bool {
     !generics.ty_params.is_empty()
 }
 
-// Returns true if the given item must be inlined because it may be
-// monomorphized or it was marked with `#[inline]`. This will only return
-// true for functions.
+/// Returns true if the given item must be inlined because it may be
+/// monomorphized or it was marked with `#[inline]`. This will only return
+/// true for functions.
 fn item_might_be_inlined(item: &hir::Item) -> bool {
     if attr::requests_inline(&item.attrs) {
         return true
@@ -77,17 +77,17 @@ fn method_might_be_inlined<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>,
     }
 }
 
-// Information needed while computing reachability.
+/// Information needed while computing reachability.
 struct ReachableContext<'a, 'tcx: 'a> {
-    // The type context.
+    /// The type context.
     tcx: TyCtxt<'a, 'tcx, 'tcx>,
     tables: &'a ty::TypeckTables<'tcx>,
-    // The set of items which must be exported in the linkage sense.
+    /// The set of items which must be exported in the linkage sense.
     reachable_symbols: NodeSet,
-    // A worklist of item IDs. Each item ID in this worklist will be inlined
-    // and will be scanned for further references.
+    /// A worklist of item IDs. Each item ID in this worklist will be inlined
+    /// and will be scanned for further references.
     worklist: Vec<ast::NodeId>,
-    // Whether any output of this compilation is a library
+    /// Whether any output of this compilation is a library
     any_library: bool,
 }
 
@@ -313,14 +313,14 @@ impl<'a, 'tcx> ReachableContext<'a, 'tcx> {
     }
 }
 
-// Some methods from non-exported (completely private) trait impls still have to be
-// reachable if they are called from inlinable code. Generally, it's not known until
-// monomorphization if a specific trait impl item can be reachable or not. So, we
-// conservatively mark all of them as reachable.
-// FIXME: One possible strategy for pruning the reachable set is to avoid marking impl
-// items of non-exported traits (or maybe all local traits?) unless their respective
-// trait items are used from inlinable code through method call syntax or UFCS, or their
-// trait is a lang item.
+/// Some methods from non-exported (completely private) trait impls still have to be
+/// reachable if they are called from inlinable code. Generally, it's not known until
+/// monomorphization if a specific trait impl item can be reachable or not. So, we
+/// conservatively mark all of them as reachable.
+/// FIXME: One possible strategy for pruning the reachable set is to avoid marking impl
+/// items of non-exported traits (or maybe all local traits?) unless their respective
+/// trait items are used from inlinable code through method call syntax or UFCS, or their
+/// trait is a lang item.
 struct CollectPrivateImplItemsVisitor<'a, 'tcx: 'a> {
     tcx: TyCtxt<'a, 'tcx, 'tcx>,
     access_levels: &'a privacy::AccessLevels,

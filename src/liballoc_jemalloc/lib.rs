@@ -86,7 +86,7 @@ mod contents {
                   target_arch = "sparc64")))]
     const MIN_ALIGN: usize = 16;
 
-    // MALLOCX_ALIGN(a) macro
+    /// MALLOCX_ALIGN(a) macro
     fn mallocx_align(a: usize) -> c_int {
         a.trailing_zeros() as c_int
     }

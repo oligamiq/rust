@@ -736,9 +736,9 @@ impl<'a, 'tcx> Liveness<'a, 'tcx> {
         }
     }
 
-    // Indicates that a local variable was *defined*; we know that no
-    // uses of the variable can precede the definition (resolve checks
-    // this) so we just clear out all the data.
+    /// Indicates that a local variable was *defined*; we know that no
+    /// uses of the variable can precede the definition (resolve checks
+    /// this) so we just clear out all the data.
     fn define(&mut self, writer: LiveNode, var: Variable) {
         let idx = self.idx(writer, var);
         self.users[idx].reader = invalid_node();
@@ -748,7 +748,7 @@ impl<'a, 'tcx> Liveness<'a, 'tcx> {
                idx, self.ln_str(writer));
     }
 
-    // Either read, write, or both depending on the acc bitset
+    /// Either read, write, or both depending on the acc bitset
     fn acc(&mut self, ln: LiveNode, var: Variable, acc: u32) {
         debug!("{:?} accesses[{:x}] {:?}: {}",
                ln, acc, var, self.ln_str(ln));

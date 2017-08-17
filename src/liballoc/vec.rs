@@ -1317,7 +1317,7 @@ impl<T: Default> Vec<T> {
     }
 }
 
-// This code generalises `extend_with_{element,default}`.
+/// This code generalises `extend_with_{element,default}`.
 trait ExtendWith<T> {
     fn next(&self) -> T;
     fn last(self) -> T;
@@ -1365,11 +1365,11 @@ impl<T> Vec<T> {
     }
 }
 
-// Set the length of the vec when the `SetLenOnDrop` value goes out of scope.
-//
-// The idea is: The length field in SetLenOnDrop is a local variable
-// that the optimizer will see does not alias with any stores through the Vec's data
-// pointer. This is a workaround for alias analysis issue #32155
+/// Set the length of the vec when the `SetLenOnDrop` value goes out of scope.
+///
+/// The idea is: The length field in SetLenOnDrop is a local variable
+/// that the optimizer will see does not alias with any stores through the Vec's data
+/// pointer. This is a workaround for alias analysis issue #32155
 struct SetLenOnDrop<'a> {
     len: &'a mut usize,
     local_len: usize,
@@ -1446,7 +1446,7 @@ pub fn from_elem<T: Clone>(elem: T, n: usize) -> Vec<T> {
     <T as SpecFromElem>::from_elem(elem, n)
 }
 
-// Specialization trait used for Vec::from_elem
+/// Specialization trait used for Vec::from_elem
 trait SpecFromElem: Sized {
     fn from_elem(elem: Self, n: usize) -> Vec<Self>;
 }
@@ -1764,7 +1764,7 @@ impl<T> Extend<T> for Vec<T> {
     }
 }
 
-// Specialization trait used for Vec::from_iter and Vec::extend
+/// Specialization trait used for Vec::from_iter and Vec::extend
 trait SpecExtend<T, I> {
     fn from_iter(iter: I) -> Self;
     fn spec_extend(&mut self, iter: I);

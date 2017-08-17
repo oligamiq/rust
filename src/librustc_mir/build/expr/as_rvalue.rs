@@ -349,7 +349,7 @@ impl<'a, 'gcx, 'tcx> Builder<'a, 'gcx, 'tcx> {
         }
     }
 
-    // Helper to get a `-1` value of the appropriate type
+    /// Helper to get a `-1` value of the appropriate type
     fn neg_1_literal(&mut self, span: Span, ty: ty::Ty<'tcx>) -> Operand<'tcx> {
         let literal = match ty.sty {
             ty::TyInt(ity) => {
@@ -376,7 +376,7 @@ impl<'a, 'gcx, 'tcx> Builder<'a, 'gcx, 'tcx> {
         self.literal_operand(span, ty, literal)
     }
 
-    // Helper to get the minimum value of the appropriate type
+    /// Helper to get the minimum value of the appropriate type
     fn minval_literal(&mut self, span: Span, ty: ty::Ty<'tcx>) -> Operand<'tcx> {
         let literal = match ty.sty {
             ty::TyInt(ity) => {

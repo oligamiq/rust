@@ -839,7 +839,7 @@ impl<'a, 'tcx> ty::TyS<'tcx> {
                             sp: Span)
                             -> Representability {
 
-        // Iterate until something non-representable is found
+        /// Iterate until something non-representable is found
         fn fold_repr<It: Iterator<Item=Representability>>(iter: It) -> Representability {
             iter.fold(Representability::Representable, |r1, r2| {
                 match (r1, r2) {
@@ -917,8 +917,8 @@ impl<'a, 'tcx> ty::TyS<'tcx> {
             }
         }
 
-        // Does the type `ty` directly (without indirection through a pointer)
-        // contain any types on stack `seen`?
+        /// Does the type `ty` directly (without indirection through a pointer)
+        /// contain any types on stack `seen`?
         fn is_type_structurally_recursive<'a, 'tcx>(
             tcx: TyCtxt<'a, 'tcx, 'tcx>,
             sp: Span,

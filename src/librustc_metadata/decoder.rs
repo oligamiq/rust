@@ -920,8 +920,8 @@ impl<'a, 'tcx> CrateMetadata {
             .collect()
     }
 
-    // Translate a DefId from the current compilation environment to a DefId
-    // for an external crate.
+    /// Translate a DefId from the current compilation environment to a DefId
+    /// for an external crate.
     fn reverse_translate_def_id(&self, did: DefId) -> Option<DefId> {
         for (local, &global) in self.cnum_map.borrow().iter_enumerated() {
             if global == did.krate {

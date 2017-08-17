@@ -28,10 +28,10 @@ use syntax::{ast, codemap};
 use syntax::attr;
 use syntax_pos;
 
-// Any local node that may call something in its body block should be
-// explored. For example, if it's a live NodeItem that is a
-// function, then we should explore its block to check for codes that
-// may need to be marked as live.
+/// Any local node that may call something in its body block should be
+/// explored. For example, if it's a live NodeItem that is a
+/// function, then we should explore its block to check for codes that
+/// may need to be marked as live.
 fn should_explore<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>,
                             node_id: ast::NodeId) -> bool {
     match tcx.hir.find(node_id) {
@@ -320,19 +320,19 @@ fn has_allow_dead_code_or_lang_attr(tcx: TyCtxt,
     tcx.lint_level_at_node(lint::builtin::DEAD_CODE, id).0 == lint::Allow
 }
 
-// This visitor seeds items that
-//   1) We want to explicitly consider as live:
-//     * Item annotated with #[allow(dead_code)]
-//         - This is done so that if we want to suppress warnings for a
-//           group of dead functions, we only have to annotate the "root".
-//           For example, if both `f` and `g` are dead and `f` calls `g`,
-//           then annotating `f` with `#[allow(dead_code)]` will suppress
-//           warning for both `f` and `g`.
-//     * Item annotated with #[lang=".."]
-//         - This is because lang items are always callable from elsewhere.
-//   or
-//   2) We are not sure to be live or not
-//     * Implementation of a trait method
+/// This visitor seeds items that
+///   1) We want to explicitly consider as live:
+///     * Item annotated with #[allow(dead_code)]
+///         - This is done so that if we want to suppress warnings for a
+///           group of dead functions, we only have to annotate the "root".
+///           For example, if both `f` and `g` are dead and `f` calls `g`,
+///           then annotating `f` with `#[allow(dead_code)]` will suppress
+///           warning for both `f` and `g`.
+///     * Item annotated with #[lang=".."]
+///         - This is because lang items are always callable from elsewhere.
+///   or
+///   2) We are not sure to be live or not
+///     * Implementation of a trait method
 struct LifeSeeder<'k, 'tcx: 'k> {
     worklist: Vec<ast::NodeId>,
     krate: &'k hir::Crate,
@@ -490,15 +490,15 @@ impl<'a, 'tcx> DeadVisitor<'a, 'tcx> {
             && !has_allow_dead_code_or_lang_attr(self.tcx, fi.id, &fi.attrs)
     }
 
-    // id := node id of an item's definition.
-    // ctor_id := `Some` if the item is a struct_ctor (tuple struct),
-    //            `None` otherwise.
-    // If the item is a struct_ctor, then either its `id` or
-    // `ctor_id` (unwrapped) is in the live_symbols set. More specifically,
-    // DefMap maps the ExprPath of a struct_ctor to the node referred by
-    // `ctor_id`. On the other hand, in a statement like
-    // `type <ident> <generics> = <ty>;` where <ty> refers to a struct_ctor,
-    // DefMap maps <ty> to `id` instead.
+    /// id := node id of an item's definition.
+    /// ctor_id := `Some` if the item is a struct_ctor (tuple struct),
+    ///            `None` otherwise.
+    /// If the item is a struct_ctor, then either its `id` or
+    /// `ctor_id` (unwrapped) is in the live_symbols set. More specifically,
+    /// DefMap maps the ExprPath of a struct_ctor to the node referred by
+    /// `ctor_id`. On the other hand, in a statement like
+    /// `type <ident> <generics> = <ty>;` where <ty> refers to a struct_ctor,
+    /// DefMap maps <ty> to `id` instead.
     fn symbol_is_live(&mut self,
                       id: ast::NodeId,
                       ctor_id: Option<ast::NodeId>)
@@ -611,7 +611,7 @@ impl<'a, 'tcx> Visitor<'tcx> for DeadVisitor<'a, 'tcx> {
         }
     }
 
-    // Overwrite so that we don't warn the trait item itself.
+    /// Overwrite so that we don't warn the trait item itself.
     fn visit_trait_item(&mut self, trait_item: &'tcx hir::TraitItem) {
         match trait_item.node {
             hir::TraitItemKind::Const(_, Some(body_id)) |

@@ -46,7 +46,7 @@ fn float_to_decimal_common_shortest<T>(fmt: &mut Formatter,
     }
 }
 
-// Common code of floating point Debug and Display.
+/// Common code of floating point Debug and Display.
 fn float_to_decimal_common<T>(fmt: &mut Formatter, num: &T, negative_zero: bool) -> Result
     where T: flt2dec::DecodableFloat
 {
@@ -102,7 +102,7 @@ fn float_to_exponential_common_shortest<T>(fmt: &mut Formatter,
     }
 }
 
-// Common code of floating point LowerExp and UpperExp.
+/// Common code of floating point LowerExp and UpperExp.
 fn float_to_exponential_common<T>(fmt: &mut Formatter, num: &T, upper: bool) -> Result
     where T: flt2dec::DecodableFloat
 {

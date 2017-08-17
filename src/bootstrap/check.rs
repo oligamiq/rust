@@ -46,7 +46,7 @@ pub enum TestKind {
 }
 
 impl TestKind {
-    // Return the cargo subcommand for this test kind
+    /// Return the cargo subcommand for this test kind
     fn subcommand(self) -> &'static str {
         match self {
             TestKind::Test => "test",

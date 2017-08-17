@@ -98,8 +98,8 @@ pub fn fully_resolve<'a, 'gcx, 'tcx, T>(infcx: &InferCtxt<'a, 'gcx, 'tcx>,
     }
 }
 
-// N.B. This type is not public because the protocol around checking the
-// `err` field is not enforcable otherwise.
+/// N.B. This type is not public because the protocol around checking the
+/// `err` field is not enforcable otherwise.
 struct FullTypeResolver<'a, 'gcx: 'a+'tcx, 'tcx: 'a> {
     infcx: &'a InferCtxt<'a, 'gcx, 'tcx>,
     err: Option<FixupError>,

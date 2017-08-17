@@ -358,25 +358,25 @@ fn check_matcher(sess: &ParseSess,
     err == sess.span_diagnostic.err_count()
 }
 
-// The FirstSets for a matcher is a mapping from subsequences in the
-// matcher to the FIRST set for that subsequence.
-//
-// This mapping is partially precomputed via a backwards scan over the
-// token trees of the matcher, which provides a mapping from each
-// repetition sequence to its FIRST set.
-//
-// (Hypothetically sequences should be uniquely identifiable via their
-// spans, though perhaps that is false e.g. for macro-generated macros
-// that do not try to inject artificial span information. My plan is
-// to try to catch such cases ahead of time and not include them in
-// the precomputed mapping.)
+/// The FirstSets for a matcher is a mapping from subsequences in the
+/// matcher to the FIRST set for that subsequence.
+///
+/// This mapping is partially precomputed via a backwards scan over the
+/// token trees of the matcher, which provides a mapping from each
+/// repetition sequence to its FIRST set.
+///
+/// (Hypothetically sequences should be uniquely identifiable via their
+/// spans, though perhaps that is false e.g. for macro-generated macros
+/// that do not try to inject artificial span information. My plan is
+/// to try to catch such cases ahead of time and not include them in
+/// the precomputed mapping.)
 struct FirstSets {
-    // this maps each TokenTree::Sequence `$(tt ...) SEP OP` that is uniquely identified by its
-    // span in the original matcher to the First set for the inner sequence `tt ...`.
-    //
-    // If two sequences have the same span in a matcher, then map that
-    // span to None (invalidating the mapping here and forcing the code to
-    // use a slow path).
+    /// this maps each TokenTree::Sequence `$(tt ...) SEP OP` that is uniquely identified by its
+    /// span in the original matcher to the First set for the inner sequence `tt ...`.
+    ///
+    /// If two sequences have the same span in a matcher, then map that
+    /// span to None (invalidating the mapping here and forcing the code to
+    /// use a slow path).
     first: HashMap<Span, Option<TokenSet>>,
 }
 
@@ -388,9 +388,9 @@ impl FirstSets {
         build_recur(&mut sets, tts);
         return sets;
 
-        // walks backward over `tts`, returning the FIRST for `tts`
-        // and updating `sets` at the same time for all sequence
-        // substructure we find within `tts`.
+        /// walks backward over `tts`, returning the FIRST for `tts`
+        /// and updating `sets` at the same time for all sequence
+        /// substructure we find within `tts`.
         fn build_recur(sets: &mut FirstSets, tts: &[TokenTree]) -> TokenSet {
             let mut first = TokenSet::empty();
             for tt in tts.iter().rev() {
@@ -446,8 +446,8 @@ impl FirstSets {
         }
     }
 
-    // walks forward over `tts` until all potential FIRST tokens are
-    // identified.
+    /// walks forward over `tts` until all potential FIRST tokens are
+    /// identified.
     fn first(&self, tts: &[quoted::TokenTree]) -> TokenSet {
         use self::quoted::TokenTree;
 
@@ -508,16 +508,16 @@ impl FirstSets {
     }
 }
 
-// A set of `quoted::TokenTree`s, which may include `TokenTree::Match`s
-// (for macro-by-example syntactic variables). It also carries the
-// `maybe_empty` flag; that is true if and only if the matcher can
-// match an empty token sequence.
-//
-// The First set is computed on submatchers like `$($a:expr b),* $(c)* d`,
-// which has corresponding FIRST = {$a:expr, c, d}.
-// Likewise, `$($a:expr b),* $(c)+ d` has FIRST = {$a:expr, c}.
-//
-// (Notably, we must allow for *-op to occur zero times.)
+/// A set of `quoted::TokenTree`s, which may include `TokenTree::Match`s
+/// (for macro-by-example syntactic variables). It also carries the
+/// `maybe_empty` flag; that is true if and only if the matcher can
+/// match an empty token sequence.
+///
+/// The First set is computed on submatchers like `$($a:expr b),* $(c)* d`,
+/// which has corresponding FIRST = {$a:expr, c, d}.
+/// Likewise, `$($a:expr b),* $(c)+ d` has FIRST = {$a:expr, c}.
+///
+/// (Notably, we must allow for *-op to occur zero times.)
 #[derive(Clone, Debug)]
 struct TokenSet {
     tokens: Vec<quoted::TokenTree>,
@@ -525,32 +525,32 @@ struct TokenSet {
 }
 
 impl TokenSet {
-    // Returns a set for the empty sequence.
+    /// Returns a set for the empty sequence.
     fn empty() -> Self { TokenSet { tokens: Vec::new(), maybe_empty: true } }
 
-    // Returns the set `{ tok }` for the single-token (and thus
-    // non-empty) sequence [tok].
+    /// Returns the set `{ tok }` for the single-token (and thus
+    /// non-empty) sequence [tok].
     fn singleton(tok: quoted::TokenTree) -> Self {
         TokenSet { tokens: vec![tok], maybe_empty: false }
     }
 
-    // Changes self to be the set `{ tok }`.
-    // Since `tok` is always present, marks self as non-empty.
+    /// Changes self to be the set `{ tok }`.
+    /// Since `tok` is always present, marks self as non-empty.
     fn replace_with(&mut self, tok: quoted::TokenTree) {
         self.tokens.clear();
         self.tokens.push(tok);
         self.maybe_empty = false;
     }
 
-    // Changes self to be the empty set `{}`; meant for use when
-    // the particular token does not matter, but we want to
-    // record that it occurs.
+    /// Changes self to be the empty set `{}`; meant for use when
+    /// the particular token does not matter, but we want to
+    /// record that it occurs.
     fn replace_with_irrelevant(&mut self) {
         self.tokens.clear();
         self.maybe_empty = false;
     }
 
-    // Adds `tok` to the set for `self`, marking sequence as non-empy.
+    /// Adds `tok` to the set for `self`, marking sequence as non-empy.
     fn add_one(&mut self, tok: quoted::TokenTree) {
         if !self.tokens.contains(&tok) {
             self.tokens.push(tok);
@@ -558,20 +558,20 @@ impl TokenSet {
         self.maybe_empty = false;
     }
 
-    // Adds `tok` to the set for `self`. (Leaves `maybe_empty` flag alone.)
+    /// Adds `tok` to the set for `self`. (Leaves `maybe_empty` flag alone.)
     fn add_one_maybe(&mut self, tok: quoted::TokenTree) {
         if !self.tokens.contains(&tok) {
             self.tokens.push(tok);
         }
     }
 
-    // Adds all elements of `other` to this.
-    //
-    // (Since this is a set, we filter out duplicates.)
-    //
-    // If `other` is potentially empty, then preserves the previous
-    // setting of the empty flag of `self`. If `other` is guaranteed
-    // non-empty, then `self` is marked non-empty.
+    /// Adds all elements of `other` to this.
+    ///
+    /// (Since this is a set, we filter out duplicates.)
+    ///
+    /// If `other` is potentially empty, then preserves the previous
+    /// setting of the empty flag of `self`. If `other` is guaranteed
+    /// non-empty, then `self` is marked non-empty.
     fn add_all(&mut self, other: &Self) {
         for tok in &other.tokens {
             if !self.tokens.contains(tok) {
@@ -584,17 +584,17 @@ impl TokenSet {
     }
 }
 
-// Checks that `matcher` is internally consistent and that it
-// can legally by followed by a token N, for all N in `follow`.
-// (If `follow` is empty, then it imposes no constraint on
-// the `matcher`.)
-//
-// Returns the set of NT tokens that could possibly come last in
-// `matcher`. (If `matcher` matches the empty sequence, then
-// `maybe_empty` will be set to true.)
-//
-// Requires that `first_sets` is pre-computed for `matcher`;
-// see `FirstSets::new`.
+/// Checks that `matcher` is internally consistent and that it
+/// can legally by followed by a token N, for all N in `follow`.
+/// (If `follow` is empty, then it imposes no constraint on
+/// the `matcher`.)
+///
+/// Returns the set of NT tokens that could possibly come last in
+/// `matcher`. (If `matcher` matches the empty sequence, then
+/// `maybe_empty` will be set to true.)
+///
+/// Requires that `first_sets` is pre-computed for `matcher`;
+/// see `FirstSets::new`.
 fn check_matcher_core(sess: &ParseSess,
                       features: &RefCell<Features>,
                       attrs: &[ast::Attribute],
@@ -785,7 +785,7 @@ fn frag_can_be_followed_by_any(frag: &str) -> bool {
 /// we expanded `expr` to include a new binary operator, we might
 /// break macros that were relying on that binary operator as a
 /// separator.
-// when changing this do not forget to update doc/book/macros.md!
+/// when changing this do not forget to update doc/book/macros.md!
 fn is_in_follow(tok: &quoted::TokenTree, frag: &str) -> Result<bool, (String, &'static str)> {
     use self::quoted::TokenTree;
 

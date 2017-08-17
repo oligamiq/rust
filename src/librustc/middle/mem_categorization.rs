@@ -511,8 +511,8 @@ impl<'a, 'gcx, 'tcx> MemCategorizationContext<'a, 'gcx, 'tcx> {
     }
 
     pub fn cat_expr(&self, expr: &hir::Expr) -> McResult<cmt<'tcx>> {
-        // This recursion helper avoids going through *too many*
-        // adjustments, since *only* non-overloaded deref recurses.
+        /// This recursion helper avoids going through *too many*
+        /// adjustments, since *only* non-overloaded deref recurses.
         fn helper<'a, 'gcx, 'tcx>(mc: &MemCategorizationContext<'a, 'gcx, 'tcx>,
                                   expr: &hir::Expr,
                                   adjustments: &[adjustment::Adjustment<'tcx>])
@@ -691,8 +691,8 @@ impl<'a, 'gcx, 'tcx> MemCategorizationContext<'a, 'gcx, 'tcx> {
         }
     }
 
-    // Categorize an upvar, complete with invisible derefs of closure
-    // environment and upvar reference as appropriate.
+    /// Categorize an upvar, complete with invisible derefs of closure
+    /// environment and upvar reference as appropriate.
     fn cat_upvar(&self,
                  id: ast::NodeId,
                  span: Span,

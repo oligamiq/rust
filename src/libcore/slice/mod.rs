@@ -1248,8 +1248,8 @@ macro_rules! iterator {
 
         // search_while is a generalization of the internal iteration methods.
         impl<'a, T> $name<'a, T> {
-            // search through the iterator's element using the closure `g`.
-            // if no element was found, return `default`.
+            /// search through the iterator's element using the closure `g`.
+            /// if no element was found, return `default`.
             fn search_while<Acc, G>(&mut self, default: Acc, mut g: G) -> Acc
                 where Self: Sized,
                       G: FnMut($elem) -> SearchWhile<Acc>
@@ -1318,11 +1318,11 @@ macro_rules! make_mut_slice {
     }}
 }
 
-// An enum used for controlling the execution of `.search_while()`.
+/// An enum used for controlling the execution of `.search_while()`.
 enum SearchWhile<T> {
-    // Continue searching
+    /// Continue searching
     Continue,
-    // Fold is complete and will return this value
+    /// Fold is complete and will return this value
     Done(T),
 }
 
@@ -1407,7 +1407,7 @@ impl<'a, T> Iter<'a, T> {
         make_slice!(self.ptr, self.end)
     }
 
-    // Helper function for Iter::nth
+    /// Helper function for Iter::nth
     fn iter_nth(&mut self, n: usize) -> Option<&'a T> {
         match self.as_slice().get(n) {
             Some(elem_ref) => unsafe {
@@ -1535,7 +1535,7 @@ impl<'a, T> IterMut<'a, T> {
         make_mut_slice!(self.ptr, self.end)
     }
 
-    // Helper function for IterMut::nth
+    /// Helper function for IterMut::nth
     fn iter_nth(&mut self, n: usize) -> Option<&'a mut T> {
         match make_mut_slice!(self.ptr, self.end).get_mut(n) {
             Some(elem_ref) => unsafe {
@@ -1576,7 +1576,7 @@ fn ptrdistance<T>(start: *const T, end: *const T) -> usize {
     }
 }
 
-// Extension methods for raw pointers, used by the iterators
+/// Extension methods for raw pointers, used by the iterators
 trait PointerExt : Copy {
     unsafe fn slice_offset(self, i: isize) -> Self;
 
@@ -2494,7 +2494,7 @@ impl<T: PartialOrd> PartialOrd for [T] {
 }
 
 #[doc(hidden)]
-// intermediate trait for specialization of slice's PartialEq
+/// intermediate trait for specialization of slice's PartialEq
 trait SlicePartialEq<B> {
     fn equal(&self, other: &[B]) -> bool;
 
@@ -2540,7 +2540,7 @@ impl<A> SlicePartialEq<A> for [A]
 }
 
 #[doc(hidden)]
-// intermediate trait for specialization of slice's PartialOrd
+/// intermediate trait for specialization of slice's PartialOrd
 trait SlicePartialOrd<B> {
     fn partial_compare(&self, other: &[B]) -> Option<Ordering>;
 }
@@ -2576,7 +2576,7 @@ impl<A> SlicePartialOrd<A> for [A]
 }
 
 #[doc(hidden)]
-// intermediate trait for specialization of slice's Ord
+/// intermediate trait for specialization of slice's Ord
 trait SliceOrd<B> {
     fn compare(&self, other: &[B]) -> Ordering;
 }

@@ -1480,8 +1480,8 @@ impl<S: Semantics, T: Semantics> FloatConvert<IeeeFloat<T>> for IeeeFloat<S> {
             marker: PhantomData,
         };
 
-        // x86 has some unusual NaNs which cannot be represented in any other
-        // format; note them here.
+        /// x86 has some unusual NaNs which cannot be represented in any other
+        /// format; note them here.
         fn is_x87_double_extended<S: Semantics>() -> bool {
             S::QNAN_SIGNIFICAND == X87DoubleExtendedS::QNAN_SIGNIFICAND
         }

@@ -915,7 +915,7 @@ impl<'a, 'tcx> LateLintPass<'a, 'tcx> for UnconditionalRecursion {
             }
         }
 
-        // Check if the expression `id` performs a call to `method`.
+        /// Check if the expression `id` performs a call to `method`.
         fn expr_refers_to_this_method(cx: &LateContext,
                                       method: &ty::AssociatedItem,
                                       id: ast::NodeId)
@@ -971,8 +971,8 @@ impl<'a, 'tcx> LateLintPass<'a, 'tcx> for UnconditionalRecursion {
             }
         }
 
-        // Check if the method call to the method with the ID `callee_id`
-        // and instantiated with `callee_substs` refers to method `method`.
+        /// Check if the method call to the method with the ID `callee_id`
+        /// and instantiated with `callee_substs` refers to method `method`.
         fn method_call_refers_to_method<'a, 'tcx>(cx: &LateContext<'a, 'tcx>,
                                                   method: &ty::AssociatedItem,
                                                   callee_id: DefId,

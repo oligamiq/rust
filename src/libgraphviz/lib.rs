@@ -808,8 +808,8 @@ mod tests {
         edges: Vec<Edge>,
     }
 
-    // A simple wrapper around LabelledGraph that forces the labels to
-    // be emitted as EscStr.
+    /// A simple wrapper around LabelledGraph that forces the labels to
+    /// be emitted as EscStr.
     struct LabelledGraphWithEscStrs {
         graph: LabelledGraph,
     }

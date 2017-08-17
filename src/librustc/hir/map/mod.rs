@@ -976,12 +976,12 @@ impl<'a, 'hir> NodesMatchingSuffix<'a, 'hir> {
         }
         return true;
 
-        // Finds the first mod in parent chain for `id`, along with
-        // that mod's name.
-        //
-        // If `id` itself is a mod named `m` with parent `p`, then
-        // returns `Some(id, m, p)`.  If `id` has no mod in its parent
-        // chain, then returns `None`.
+        /// Finds the first mod in parent chain for `id`, along with
+        /// that mod's name.
+        ///
+        /// If `id` itself is a mod named `m` with parent `p`, then
+        /// returns `Some(id, m, p)`.  If `id` has no mod in its parent
+        /// chain, then returns `None`.
         fn find_first_mod_parent<'a>(map: &'a Map, mut id: NodeId) -> Option<(NodeId, Name)> {
             loop {
                 match map.find(id) {
@@ -1004,8 +1004,8 @@ impl<'a, 'hir> NodesMatchingSuffix<'a, 'hir> {
         }
     }
 
-    // We are looking at some node `n` with a given name and parent
-    // id; do their names match what I am seeking?
+    /// We are looking at some node `n` with a given name and parent
+    /// id; do their names match what I am seeking?
     fn matches_names(&self, parent_of_n: NodeId, name: Name) -> bool {
         name == &**self.item_name && self.suffix_matches(parent_of_n)
     }

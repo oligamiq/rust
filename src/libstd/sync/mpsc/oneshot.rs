@@ -55,12 +55,12 @@ const DISCONNECTED: usize = 2;   // channel is disconnected OR upgraded
 // whoever changed the state.
 
 pub struct Packet<T> {
-    // Internal state of the chan/port pair (stores the blocked thread as well)
+    /// Internal state of the chan/port pair (stores the blocked thread as well)
     state: AtomicUsize,
-    // One-shot data slot location
+    /// One-shot data slot location
     data: UnsafeCell<Option<T>>,
-    // when used for the second time, a oneshot channel must be upgraded, and
-    // this contains the slot for the upgrade
+    /// when used for the second time, a oneshot channel must be upgraded, and
+    /// this contains the slot for the upgrade
     upgrade: UnsafeCell<MyUpgrade<T>>,
 }
 
@@ -133,8 +133,8 @@ impl<T> Packet<T> {
         }
     }
 
-    // Just tests whether this channel has been sent on or not, this is only
-    // safe to use from the sender.
+    /// Just tests whether this channel has been sent on or not, this is only
+    /// safe to use from the sender.
     pub fn sent(&self) -> bool {
         unsafe {
             match *self.upgrade.get() {
@@ -214,9 +214,9 @@ impl<T> Packet<T> {
         }
     }
 
-    // Returns whether the upgrade was completed. If the upgrade wasn't
-    // completed, then the port couldn't get sent to the other half (it will
-    // never receive it).
+    /// Returns whether the upgrade was completed. If the upgrade wasn't
+    /// completed, then the port couldn't get sent to the other half (it will
+    /// never receive it).
     pub fn upgrade(&self, up: Receiver<T>) -> UpgradeResult {
         unsafe {
             let prev = match *self.upgrade.get() {
@@ -274,8 +274,8 @@ impl<T> Packet<T> {
     // select implementation
     ////////////////////////////////////////////////////////////////////////////
 
-    // If Ok, the value is whether this port has data, if Err, then the upgraded
-    // port needs to be checked instead of this one.
+    /// If Ok, the value is whether this port has data, if Err, then the upgraded
+    /// port needs to be checked instead of this one.
     pub fn can_recv(&self) -> Result<bool, Receiver<T>> {
         unsafe {
             match self.state.load(Ordering::SeqCst) {
@@ -300,8 +300,8 @@ impl<T> Packet<T> {
         }
     }
 
-    // Attempts to start selection on this port. This can either succeed, fail
-    // because there is data, or fail because there is an upgrade pending.
+    /// Attempts to start selection on this port. This can either succeed, fail
+    /// because there is data, or fail because there is an upgrade pending.
     pub fn start_selection(&self, token: SignalToken) -> SelectionResult<T> {
         unsafe {
             let ptr = token.cast_to_usize();
@@ -339,10 +339,10 @@ impl<T> Packet<T> {
         }
     }
 
-    // Remove a previous selecting thread from this port. This ensures that the
-    // blocked thread will no longer be visible to any other threads.
-    //
-    // The return value indicates whether there's data on this port.
+    /// Remove a previous selecting thread from this port. This ensures that the
+    /// blocked thread will no longer be visible to any other threads.
+    ///
+    /// The return value indicates whether there's data on this port.
     pub fn abort_selection(&self) -> Result<bool, Receiver<T>> {
         let state = match self.state.load(Ordering::SeqCst) {
             // Each of these states means that no further activity will happen

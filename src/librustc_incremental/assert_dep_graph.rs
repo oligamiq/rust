@@ -304,9 +304,9 @@ impl<'a, 'tcx, 'q> dot::Labeller<'a> for GraphvizDepGraph<'q> {
     }
 }
 
-// Given an optional filter like `"x,y,z"`, returns either `None` (no
-// filter) or the set of nodes whose labels contain all of those
-// substrings.
+/// Given an optional filter like `"x,y,z"`, returns either `None` (no
+/// filter) or the set of nodes whose labels contain all of those
+/// substrings.
 fn node_set<'q>(query: &'q DepGraphQuery, filter: &DepNodeFilter)
                 -> Option<FxHashSet<&'q DepNode>>
 {

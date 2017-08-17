@@ -554,14 +554,14 @@ impl<'a> Context<'a> {
         }
     }
 
-    // Attempts to extract *one* library from the set `m`. If the set has no
-    // elements, `None` is returned. If the set has more than one element, then
-    // the errors and notes are emitted about the set of libraries.
-    //
-    // With only one library in the set, this function will extract it, and then
-    // read the metadata from it if `*slot` is `None`. If the metadata couldn't
-    // be read, it is assumed that the file isn't a valid rust library (no
-    // errors are emitted).
+    /// Attempts to extract *one* library from the set `m`. If the set has no
+    /// elements, `None` is returned. If the set has more than one element, then
+    /// the errors and notes are emitted about the set of libraries.
+    ///
+    /// With only one library in the set, this function will extract it, and then
+    /// read the metadata from it if `*slot` is `None`. If the metadata couldn't
+    /// be read, it is assumed that the file isn't a valid rust library (no
+    /// errors are emitted).
     fn extract_one(&mut self,
                    m: FxHashMap<PathBuf, PathKind>,
                    flavor: CrateFlavor,
@@ -723,15 +723,15 @@ impl<'a> Context<'a> {
     }
 
 
-    // Returns the corresponding (prefix, suffix) that files need to have for
-    // dynamic libraries
+    /// Returns the corresponding (prefix, suffix) that files need to have for
+    /// dynamic libraries
     fn dylibname(&self) -> (String, String) {
         let t = &self.target;
         (t.options.dll_prefix.clone(), t.options.dll_suffix.clone())
     }
 
-    // Returns the corresponding (prefix, suffix) that files need to have for
-    // static libraries
+    /// Returns the corresponding (prefix, suffix) that files need to have for
+    /// static libraries
     fn staticlibname(&self) -> (String, String) {
         let t = &self.target;
         (t.options.staticlib_prefix.clone(), t.options.staticlib_suffix.clone())
@@ -823,7 +823,7 @@ pub fn note_crate_name(err: &mut DiagnosticBuilder, name: &str) {
     err.note(&format!("crate name: {}", name));
 }
 
-// Just a small wrapper to time how long reading metadata takes.
+/// Just a small wrapper to time how long reading metadata takes.
 fn get_metadata_section(target: &Target,
                         flavor: CrateFlavor,
                         filename: &Path,

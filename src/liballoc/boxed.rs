@@ -727,7 +727,7 @@ impl<T: Clone> Clone for Box<[T]> {
 
         return unsafe { new.into_box() };
 
-        // Helper type for responding to panics correctly.
+        /// Helper type for responding to panics correctly.
         struct BoxBuilder<T> {
             data: RawVec<T>,
             len: usize,

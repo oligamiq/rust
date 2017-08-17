@@ -101,8 +101,8 @@ pub unsafe fn cleanup(ptr: *mut u8) -> Box<Any + Send> {
     cause.unwrap()
 }
 
-// Rust's exception class identifier.  This is used by personality routines to
-// determine whether the exception was thrown by their own runtime.
+/// Rust's exception class identifier.  This is used by personality routines to
+/// determine whether the exception was thrown by their own runtime.
 fn rust_exception_class() -> uw::_Unwind_Exception_Class {
     // M O Z \0  R U S T -- vendor, language
     0x4d4f5a_00_52555354

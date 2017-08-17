@@ -1148,18 +1148,18 @@ impl TwoWaySearcher {
         (left, period)
     }
 
-    // Compute the maximal suffix of the reverse of `arr`.
-    //
-    // The maximal suffix is a possible critical factorization (u', v') of `arr`.
-    //
-    // Returns `i` where `i` is the starting index of v', from the back;
-    // returns immediately when a period of `known_period` is reached.
-    //
-    // `order_greater` determines if lexical order is `<` or `>`. Both
-    // orders must be computed -- the ordering with the largest `i` gives
-    // a critical factorization.
-    //
-    // For long period cases, the resulting period is not exact (it is too short).
+    /// Compute the maximal suffix of the reverse of `arr`.
+    ///
+    /// The maximal suffix is a possible critical factorization (u', v') of `arr`.
+    ///
+    /// Returns `i` where `i` is the starting index of v', from the back;
+    /// returns immediately when a period of `known_period` is reached.
+    ///
+    /// `order_greater` determines if lexical order is `<` or `>`. Both
+    /// orders must be computed -- the ordering with the largest `i` gives
+    /// a critical factorization.
+    ///
+    /// For long period cases, the resulting period is not exact (it is too short).
     fn reverse_maximal_suffix(arr: &[u8], known_period: usize,
                               order_greater: bool) -> usize
     {
@@ -1202,8 +1202,8 @@ impl TwoWaySearcher {
     }
 }
 
-// TwoWayStrategy allows the algorithm to either skip non-matches as quickly
-// as possible, or to work in a mode where it emits Rejects relatively quickly.
+/// TwoWayStrategy allows the algorithm to either skip non-matches as quickly
+/// as possible, or to work in a mode where it emits Rejects relatively quickly.
 trait TwoWayStrategy {
     type Output;
     fn use_early_reject() -> bool;

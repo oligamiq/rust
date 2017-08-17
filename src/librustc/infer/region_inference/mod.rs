@@ -1349,9 +1349,9 @@ impl<'a, 'gcx, 'tcx> RegionVarBindings<'a, 'gcx, 'tcx> {
             return;
         }
 
-        // We place free regions first because we are special casing
-        // SubSupConflict(ReFree, ReFree) when reporting error, and so
-        // the user will more likely get a specific suggestion.
+        /// We place free regions first because we are special casing
+        /// SubSupConflict(ReFree, ReFree) when reporting error, and so
+        /// the user will more likely get a specific suggestion.
         fn region_order_key(x: &RegionAndOrigin) -> u8 {
             match *x.region {
                 ReEarlyBound(_) => 0,

@@ -221,7 +221,7 @@ impl<O: ForestObligation> ObligationForest<O> {
         let _ = self.register_obligation_at(obligation, None);
     }
 
-    // returns Err(()) if we already know this obligation failed.
+    /// returns Err(()) if we already know this obligation failed.
     fn register_obligation_at(&mut self, obligation: O, parent: Option<NodeIndex>)
                               -> Result<(), ()>
     {

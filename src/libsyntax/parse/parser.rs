@@ -983,7 +983,7 @@ impl<'a> Parser<'a> {
         self.parse_seq_to_before_tokens(&[ket], sep, f, |mut e| e.emit())
     }
 
-    // `fe` is an error handler.
+    /// `fe` is an error handler.
     fn parse_seq_to_before_tokens<T, F, Fe>(&mut self,
                                             kets: &[&token::Token],
                                             sep: SeqSep,
@@ -1045,8 +1045,8 @@ impl<'a> Parser<'a> {
         Ok(result)
     }
 
-    // NB: Do not use this function unless you actually plan to place the
-    // spanned list in the AST.
+    /// NB: Do not use this function unless you actually plan to place the
+    /// spanned list in the AST.
     pub fn parse_seq<T, F>(&mut self,
                            bra: &token::Token,
                            ket: &token::Token,
@@ -2380,7 +2380,7 @@ impl<'a> Parser<'a> {
         )
     }
 
-    // Assuming we have just parsed `.`, continue parsing into an expression.
+    /// Assuming we have just parsed `.`, continue parsing into an expression.
     fn parse_dot_suffix(&mut self, self_arg: P<Expr>, lo: Span) -> PResult<'a, P<Expr>> {
         let segment = self.parse_path_segment(PathStyle::Expr)?;
         Ok(match self.token {
@@ -3095,7 +3095,7 @@ impl<'a> Parser<'a> {
         Ok(self.mk_expr(span_lo.to(body.span), ExprKind::Catch(body), attrs))
     }
 
-    // `match` token already eaten
+    /// `match` token already eaten
     fn parse_match_expr(&mut self, mut attrs: ThinVec<Attribute>) -> PResult<'a, P<Expr>> {
         let match_span = self.prev_span;
         let lo = self.prev_span;
@@ -3387,8 +3387,8 @@ impl<'a> Parser<'a> {
         }
     }
 
-    // helper function to decide whether to parse as ident binding or to try to do
-    // something more complex like range patterns
+    /// helper function to decide whether to parse as ident binding or to try to do
+    /// something more complex like range patterns
     fn parse_as_ident(&mut self) -> bool {
         self.look_ahead(1, |t| match *t {
             token::OpenDelim(token::Paren) | token::OpenDelim(token::Brace) |
@@ -3641,21 +3641,21 @@ impl<'a> Parser<'a> {
         Ok(self.parse_stmt_(true))
     }
 
-    // Eat tokens until we can be relatively sure we reached the end of the
-    // statement. This is something of a best-effort heuristic.
-    //
-    // We terminate when we find an unmatched `}` (without consuming it).
+    /// Eat tokens until we can be relatively sure we reached the end of the
+    /// statement. This is something of a best-effort heuristic.
+    ///
+    /// We terminate when we find an unmatched `}` (without consuming it).
     fn recover_stmt(&mut self) {
         self.recover_stmt_(SemiColonMode::Ignore, BlockMode::Ignore)
     }
 
-    // If `break_on_semi` is `Break`, then we will stop consuming tokens after
-    // finding (and consuming) a `;` outside of `{}` or `[]` (note that this is
-    // approximate - it can mean we break too early due to macros, but that
-    // shoud only lead to sub-optimal recovery, not inaccurate parsing).
-    //
-    // If `break_on_block` is `Break`, then we will stop consuming tokens
-    // after finding (and consuming) a brace-delimited block.
+    /// If `break_on_semi` is `Break`, then we will stop consuming tokens after
+    /// finding (and consuming) a `;` outside of `{}` or `[]` (note that this is
+    /// approximate - it can mean we break too early due to macros, but that
+    /// shoud only lead to sub-optimal recovery, not inaccurate parsing).
+    ///
+    /// If `break_on_block` is `Break`, then we will stop consuming tokens
+    /// after finding (and consuming) a brace-delimited block.
     fn recover_stmt_(&mut self, break_on_semi: SemiColonMode, break_on_block: BlockMode) {
         let mut brace_depth = 0;
         let mut bracket_depth = 0;
@@ -4137,11 +4137,11 @@ impl<'a> Parser<'a> {
         }).emit();
     }
 
-    // Parse bounds of a type parameter `BOUND + BOUND + BOUND`, possibly with trailing `+`.
-    // BOUND = TY_BOUND | LT_BOUND
-    // LT_BOUND = LIFETIME (e.g. `'a`)
-    // TY_BOUND = TY_BOUND_NOPAREN | (TY_BOUND_NOPAREN)
-    // TY_BOUND_NOPAREN = [?] [for<LT_PARAM_DEFS>] SIMPLE_PATH (e.g. `?for<'a: 'b> m::Trait<'a>`)
+    /// Parse bounds of a type parameter `BOUND + BOUND + BOUND`, possibly with trailing `+`.
+    /// BOUND = TY_BOUND | LT_BOUND
+    /// LT_BOUND = LIFETIME (e.g. `'a`)
+    /// TY_BOUND = TY_BOUND_NOPAREN | (TY_BOUND_NOPAREN)
+    /// TY_BOUND_NOPAREN = [?] [for<LT_PARAM_DEFS>] SIMPLE_PATH (e.g. `?for<'a: 'b> m::Trait<'a>`)
     fn parse_ty_param_bounds_common(&mut self, allow_plus: bool) -> PResult<'a, TyParamBounds> {
         let mut bounds = Vec::new();
         loop {
@@ -4193,8 +4193,8 @@ impl<'a> Parser<'a> {
         self.parse_ty_param_bounds_common(true)
     }
 
-    // Parse bounds of a lifetime parameter `BOUND + BOUND + BOUND`, possibly with trailing `+`.
-    // BOUND = LT_BOUND (e.g. `'a`)
+    /// Parse bounds of a lifetime parameter `BOUND + BOUND + BOUND`, possibly with trailing `+`.
+    /// BOUND = LT_BOUND (e.g. `'a`)
     fn parse_lt_param_bounds(&mut self) -> Vec<Lifetime> {
         let mut lifetimes = Vec::new();
         while self.check_lifetime() {
@@ -4659,7 +4659,7 @@ impl<'a> Parser<'a> {
         }))
     }
 
-    // parse the |arg, arg| header on a lambda
+    /// parse the |arg, arg| header on a lambda
     fn parse_fn_block_decl(&mut self) -> PResult<'a, P<FnDecl>> {
         let inputs_captures = {
             if self.eat(&token::OrOr) {

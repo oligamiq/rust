@@ -45,11 +45,14 @@ const MAX_STEALS: isize = 1 << 20;
 
 pub struct Packet<T> {
     queue: mpsc::Queue<T>,
-    cnt: AtomicIsize, // How many items are on this channel
-    steals: UnsafeCell<isize>, // How many times has a port received without blocking?
-    to_wake: AtomicUsize, // SignalToken for wake up
+    /// How many items are on this channel
+    cnt: AtomicIsize,
+    /// How many times has a port received without blocking?
+    steals: UnsafeCell<isize>,
+    /// SignalToken for wake up
+    to_wake: AtomicUsize,
 
-    // The number of channels which are currently using this packet.
+    /// The number of channels which are currently using this packet.
     channels: AtomicUsize,
 
     // See the discussion in Port::drop and the channel send methods for what
@@ -57,8 +60,8 @@ pub struct Packet<T> {
     port_dropped: AtomicBool,
     sender_drain: AtomicIsize,
 
-    // this lock protects various portions of this implementation during
-    // select()
+    /// this lock protects various portions of this implementation during
+    /// select()
     select_lock: Mutex<()>,
 }
 
@@ -68,8 +71,8 @@ pub enum Failure {
 }
 
 impl<T> Packet<T> {
-    // Creation of a packet *must* be followed by a call to postinit_lock
-    // and later by inherit_blocker
+    /// Creation of a packet *must* be followed by a call to postinit_lock
+    /// and later by inherit_blocker
     pub fn new() -> Packet<T> {
         Packet {
             queue: mpsc::Queue::new(),
@@ -83,20 +86,20 @@ impl<T> Packet<T> {
         }
     }
 
-    // This function should be used after newly created Packet
-    // was wrapped with an Arc
-    // In other case mutex data will be duplicated while cloning
-    // and that could cause problems on platforms where it is
-    // represented by opaque data structure
+    /// This function should be used after newly created Packet
+    /// was wrapped with an Arc
+    /// In other case mutex data will be duplicated while cloning
+    /// and that could cause problems on platforms where it is
+    /// represented by opaque data structure
     pub fn postinit_lock(&self) -> MutexGuard<()> {
         self.select_lock.lock().unwrap()
     }
 
-    // This function is used at the creation of a shared packet to inherit a
-    // previously blocked thread. This is done to prevent spurious wakeups of
-    // threads in select().
-    //
-    // This can only be called at channel-creation time
+    /// This function is used at the creation of a shared packet to inherit a
+    /// previously blocked thread. This is done to prevent spurious wakeups of
+    /// threads in select().
+    ///
+    /// This can only be called at channel-creation time
     pub fn inherit_blocker(&self,
                            token: Option<SignalToken>,
                            guard: MutexGuard<()>) {

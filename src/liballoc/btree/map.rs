@@ -499,7 +499,7 @@ impl<'a, K: 'a + Debug + Ord, V: 'a + Debug> Debug for OccupiedEntry<'a, K, V> {
     }
 }
 
-// An iterator for merging two sorted sequences into one
+/// An iterator for merging two sorted sequences into one
 struct MergeIter<K, V, I: Iterator<Item = (K, V)>> {
     left: Peekable<I>,
     right: Peekable<I>,

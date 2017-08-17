@@ -2145,8 +2145,8 @@ pub trait StrExt {
     fn parse<'a, T: TryFrom<&'a str>>(&'a self) -> Result<T, T::Error>;
 }
 
-// truncate `&str` to length at most equal to `max`
-// return `true` if it were truncated, and the new str.
+/// truncate `&str` to length at most equal to `max`
+/// return `true` if it were truncated, and the new str.
 fn truncate_to_char_boundary(s: &str, mut max: usize) -> (bool, &str) {
     if max >= s.len() {
         (false, s)

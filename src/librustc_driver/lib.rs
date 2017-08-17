@@ -317,14 +317,14 @@ pub fn run_compiler<'a>(args: &[String],
      Some(sess))
 }
 
-// Extract output directory and file from matches.
+/// Extract output directory and file from matches.
 fn make_output(matches: &getopts::Matches) -> (Option<PathBuf>, Option<PathBuf>) {
     let odir = matches.opt_str("out-dir").map(|o| PathBuf::from(&o));
     let ofile = matches.opt_str("o").map(|o| PathBuf::from(&o));
     (odir, ofile)
 }
 
-// Extract input (string or file and optional path) from matches.
+/// Extract input (string or file and optional path) from matches.
 fn make_input(free_matches: &[String]) -> Option<(Input, Option<PathBuf>)> {
     if free_matches.len() == 1 {
         let ifile = &free_matches[0];
@@ -363,7 +363,7 @@ fn parse_pretty(sess: &Session,
     }
 }
 
-// Whether to stop or continue compilation.
+/// Whether to stop or continue compilation.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Compilation {
     Stop,
@@ -379,12 +379,12 @@ impl Compilation {
     }
 }
 
-// A trait for customising the compilation process. Offers a number of hooks for
-// executing custom code or customising input.
+/// A trait for customising the compilation process. Offers a number of hooks for
+/// executing custom code or customising input.
 pub trait CompilerCalls<'a> {
-    // Hook for a callback early in the process of handling arguments. This will
-    // be called straight after options have been parsed but before anything
-    // else (e.g., selecting input and output).
+    /// Hook for a callback early in the process of handling arguments. This will
+    /// be called straight after options have been parsed but before anything
+    /// else (e.g., selecting input and output).
     fn early_callback(&mut self,
                       _: &getopts::Matches,
                       _: &config::Options,
@@ -395,9 +395,9 @@ pub trait CompilerCalls<'a> {
         Compilation::Continue
     }
 
-    // Hook for a callback late in the process of handling arguments. This will
-    // be called just before actual compilation starts (and before build_controller
-    // is called), after all arguments etc. have been completely handled.
+    /// Hook for a callback late in the process of handling arguments. This will
+    /// be called just before actual compilation starts (and before build_controller
+    /// is called), after all arguments etc. have been completely handled.
     fn late_callback(&mut self,
                      _: &getopts::Matches,
                      _: &Session,
@@ -408,9 +408,9 @@ pub trait CompilerCalls<'a> {
         Compilation::Continue
     }
 
-    // Called after we extract the input from the arguments. Gives the implementer
-    // an opportunity to change the inputs or to add some custom input handling.
-    // The default behaviour is to simply pass through the inputs.
+    /// Called after we extract the input from the arguments. Gives the implementer
+    /// an opportunity to change the inputs or to add some custom input handling.
+    /// The default behaviour is to simply pass through the inputs.
     fn some_input(&mut self,
                   input: Input,
                   input_path: Option<PathBuf>)
@@ -418,11 +418,11 @@ pub trait CompilerCalls<'a> {
         (input, input_path)
     }
 
-    // Called after we extract the input from the arguments if there is no valid
-    // input. Gives the implementer an opportunity to supply alternate input (by
-    // returning a Some value) or to add custom behaviour for this error such as
-    // emitting error messages. Returning None will cause compilation to stop
-    // at this point.
+    /// Called after we extract the input from the arguments if there is no valid
+    /// input. Gives the implementer an opportunity to supply alternate input (by
+    /// returning a Some value) or to add custom behaviour for this error such as
+    /// emitting error messages. Returning None will cause compilation to stop
+    /// at this point.
     fn no_input(&mut self,
                 _: &getopts::Matches,
                 _: &config::Options,
@@ -434,12 +434,12 @@ pub trait CompilerCalls<'a> {
         None
     }
 
-    // Create a CompilController struct for controlling the behaviour of
-    // compilation.
+    /// Create a CompilController struct for controlling the behaviour of
+    /// compilation.
     fn build_controller(&mut self, _: &Session, _: &getopts::Matches) -> CompileController<'a>;
 }
 
-// CompilerCalls instance for a regular rustc build.
+/// CompilerCalls instance for a regular rustc build.
 #[derive(Copy, Clone)]
 pub struct RustcDefaultCalls;
 

@@ -229,8 +229,8 @@ impl<T> TypedArena<T> {
         }
     }
 
-    // Drops the contents of the last chunk. The last chunk is partially empty, unlike all other
-    // chunks.
+    /// Drops the contents of the last chunk. The last chunk is partially empty, unlike all other
+    /// chunks.
     fn clear_last_chunk(&self, last_chunk: &mut TypedArenaChunk<T>) {
         // Determine how much was filled.
         let start = last_chunk.start() as usize;

@@ -155,7 +155,7 @@ fn fn_contains_unsafe<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>, src: MirSource) -> 
         }
     }
 
-    // Visit the entire body of the function and check for unsafe blocks in there
+    /// Visit the entire body of the function and check for unsafe blocks in there
     struct FindUnsafe {
         found_unsafe: bool,
     }

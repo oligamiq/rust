@@ -173,7 +173,7 @@ impl<'a, 'tcx> MatchCheckCtxt<'a, 'tcx> {
         })
     }
 
-    // convert a byte-string pattern to a list of u8 patterns.
+    /// convert a byte-string pattern to a list of u8 patterns.
     fn lower_byte_str_pattern<'p>(&mut self, pat: &'p Pattern<'tcx>) -> Vec<&'p Pattern<'tcx>>
             where 'a: 'p
     {

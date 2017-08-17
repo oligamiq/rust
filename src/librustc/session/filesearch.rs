@@ -146,7 +146,7 @@ fn make_target_lib_path(sysroot: &Path,
 }
 
 pub fn get_or_default_sysroot() -> PathBuf {
-    // Follow symlinks.  If the resolved path is relative, make it absolute.
+    /// Follow symlinks.  If the resolved path is relative, make it absolute.
     fn canonicalize(path: Option<PathBuf>) -> Option<PathBuf> {
         path.and_then(|path| {
             match fs::canonicalize(&path) {
@@ -170,7 +170,7 @@ pub fn get_or_default_sysroot() -> PathBuf {
     }
 }
 
-// The name of the directory rustc expects libraries to be located.
+/// The name of the directory rustc expects libraries to be located.
 fn find_libdir(sysroot: &Path) -> Cow<'static, str> {
     // FIXME: This is a quick hack to make the rustc binary able to locate
     // Rust libraries in Linux environments where libraries might be installed

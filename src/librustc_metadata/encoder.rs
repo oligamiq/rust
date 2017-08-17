@@ -878,7 +878,7 @@ impl<'a, 'b: 'a, 'tcx: 'b> IsolatedEncoder<'a, 'b, 'tcx> {
         }
     }
 
-    // Encodes the inherent implementations of a structure, enumeration, or trait.
+    /// Encodes the inherent implementations of a structure, enumeration, or trait.
     fn encode_inherent_implementations(&mut self, def_id: DefId) -> LazySeq<DefIndex> {
         debug!("IsolatedEncoder::encode_inherent_implementations({:?})", def_id);
         let implementations = self.tcx.inherent_impls(def_id);
@@ -1363,12 +1363,12 @@ impl<'a, 'b: 'a, 'tcx: 'b> IsolatedEncoder<'a, 'b, 'tcx> {
         self.lazy_seq_from_slice(&all_impls[..])
     }
 
-    // Encodes all symbols exported from this crate into the metadata.
-    //
-    // This pass is seeded off the reachability list calculated in the
-    // middle::reachable module but filters out items that either don't have a
-    // symbol associated with them (they weren't translated) or if they're an FFI
-    // definition (as that's not defined in this crate).
+    /// Encodes all symbols exported from this crate into the metadata.
+    ///
+    /// This pass is seeded off the reachability list calculated in the
+    /// middle::reachable module but filters out items that either don't have a
+    /// symbol associated with them (they weren't translated) or if they're an FFI
+    /// definition (as that's not defined in this crate).
     fn encode_exported_symbols(&mut self, exported_symbols: &NodeSet) -> LazySeq<DefIndex> {
         let tcx = self.tcx;
         self.lazy_seq(exported_symbols.iter().map(|&id| tcx.hir.local_def_id(id).index))

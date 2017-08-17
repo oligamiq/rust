@@ -72,12 +72,12 @@ pub fn walk_shallow<'tcx>(ty: Ty<'tcx>) -> AccIntoIter<TypeWalkerArray<'tcx>> {
     stack.into_iter()
 }
 
-// We push types on the stack in reverse order so as to
-// maintain a pre-order traversal. As of the time of this
-// writing, the fact that the traversal is pre-order is not
-// known to be significant to any code, but it seems like the
-// natural order one would expect (basically, the order of the
-// types as they are written).
+/// We push types on the stack in reverse order so as to
+/// maintain a pre-order traversal. As of the time of this
+/// writing, the fact that the traversal is pre-order is not
+/// known to be significant to any code, but it seems like the
+/// natural order one would expect (basically, the order of the
+/// types as they are written).
 fn push_subtypes<'tcx>(stack: &mut TypeWalkerStack<'tcx>, parent_ty: Ty<'tcx>) {
     match parent_ty.sty {
         ty::TyBool | ty::TyChar | ty::TyInt(_) | ty::TyUint(_) | ty::TyFloat(_) |
