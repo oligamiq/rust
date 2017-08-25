@@ -883,6 +883,8 @@ pub fn trans_crate<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>,
                              incremental_hashes_map: IncrementalHashesMap,
                              output_filenames: &OutputFilenames)
                              -> OngoingCrateTranslation {
+    use back::link::rustc_trans_utils::find_exported_symbols;
+
     check_for_rustc_errors_attr(tcx);
 
     // Be careful with this krate: obviously it gives access to the
