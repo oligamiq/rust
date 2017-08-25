@@ -249,8 +249,12 @@ pub fn compile_input(sess: &Session,
                     let (metadata, _hashes) =
                         cstore.encode_metadata(tcx, &link_meta, &exported_symbols);
                     let mut builder = Builder::new(File::create("abc.rlib").unwrap());
+                    let header = Header::new(
+                        "rust.metadata.bin".to_string(),
+                        metadata.raw_data.len() as u64
+                    );
                     builder
-                        .append(&Header::new("rust.metadata.bin".to_string(), metadata.raw_data.len() as u64), Cursor::new(metadata.raw_data))
+                        .append(&header, Cursor::new(metadata.raw_data))
                         .unwrap();
                 }
             }
