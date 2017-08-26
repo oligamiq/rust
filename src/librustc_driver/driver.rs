@@ -66,7 +66,7 @@ use derive_registrar;
 
 use profile;
 
-pub fn compile_input(sess: &Session,
+pub fn compile_input(sess: &mut Session,
                      cstore: &CStore,
                      input: &Input,
                      outdir: &Option<PathBuf>,
@@ -97,16 +97,23 @@ pub fn compile_input(sess: &Session,
             sess.err("LLVM is not supported by this rustc. Please use -Z no-trans to compile")
         }
 
-        if sess.opts.crate_types.iter().all(|&t|{
-            t != CrateType::CrateTypeRlib && t != CrateType::CrateTypeExecutable
-        }) && !sess.opts.crate_types.is_empty() {
-            sess.err(
-                "LLVM is not supported by this rustc, so non rlib libraries are not supported"
-            );
+        for cty in sess.opts.crate_types.iter_mut() {
+            match *cty {
+                CrateType::CrateTypeRlib | CrateType::CrateTypeExecutable => {},
+                CrateType::CrateTypeDylib | CrateType::CrateTypeCdylib | CrateType::CrateTypeStaticlib => {
+                    sess.parse_sess.span_diagnostic.warn(&format!("LLVM not supported, so non rlib output type {} will be treated like rlib libraries", cty));
+                    *cty = CrateType::CrateTypeRlib;
+                },
+                CrateType::CrateTypeProcMacro => sess.parse_sess.span_diagnostic.err("No LLVM support, so cant compile proc macros")
+            }
         }
 
         sess.abort_if_errors();
     }
+
+    // Make sure nobody changes sess after crate types
+    // have optionally been adjusted for no llvm builds
+    let sess = &*sess;
 
     if sess.profile_queries() {
         profile::begin();
@@ -240,7 +247,9 @@ pub fn compile_input(sess: &Session,
                 use ar::{Builder, Header};
                 use std::fs::File;
                 use std::io::Cursor;
-                if sess.opts.crate_types == vec![CrateType::CrateTypeRlib] {
+                use rustc_trans_utils::link::out_filename;
+
+                if sess.opts.crate_types.contains(&CrateType::CrateTypeRlib) {
                     let cstore = &tcx.sess.cstore;
                     let link_meta =
                         ::rustc_trans_utils::link::build_link_meta(&incremental_hashes_map);
@@ -248,7 +257,9 @@ pub fn compile_input(sess: &Session,
                         ::rustc_trans_utils::find_exported_symbols(tcx, &analysis.reachable);
                     let (metadata, _hashes) =
                         cstore.encode_metadata(tcx, &link_meta, &exported_symbols);
-                    let mut builder = Builder::new(File::create("abc.rlib").unwrap());
+                    let output_name =
+                        out_filename(sess, CrateType::CrateTypeRlib, &outputs, &crate_name);
+                    let mut builder = Builder::new(File::create(&output_name).unwrap());
                     let header = Header::new(
                         "rust.metadata.bin".to_string(),
                         metadata.raw_data.len() as u64
@@ -280,6 +291,10 @@ pub fn compile_input(sess: &Session,
 
     if cfg!(not(feature="llvm")) {
         let (_, _) = (outputs, trans);
+
+        if sess.opts.crate_types.contains(&CrateType::CrateTypeRlib) {
+            return Ok(())
+        }
         sess.fatal("LLVM is not supported by this rustc");
     }
 
@@ -313,9 +328,9 @@ pub fn compile_input(sess: &Session,
             CompileState::state_when_compilation_done(input, sess, outdir, output),
             Ok(())
         );
-
-        Ok(())
     }
+
+    Ok(())
 }
 
 fn keep_hygiene_data(sess: &Session) -> bool {
