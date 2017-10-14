@@ -356,6 +356,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "cretonne"
+version = "0.0.0"
+source = "git+https://github.com/stoklund/cretonne#4130d67f341739039f7203e1e4b9260d47e91a06"
+
+[[package]]
+name = "cretonne-frontend"
+version = "0.0.0"
+source = "git+https://github.com/stoklund/cretonne#4130d67f341739039f7203e1e4b9260d47e91a06"
+dependencies = [
+ "cretonne 0.0.0 (git+https://github.com/stoklund/cretonne)",
+]
+
+[[package]]
 name = "crossbeam"
 version = "0.2.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1576,6 +1589,7 @@ dependencies = [
  "rustc_resolve 0.0.0",
  "rustc_save_analysis 0.0.0",
  "rustc_trans 0.0.0",
+ "rustc_trans_cretonne 0.0.0",
  "rustc_trans_utils 0.0.0",
  "rustc_typeck 0.0.0",
  "serialize 0.0.0",
@@ -1771,6 +1785,33 @@ dependencies = [
  "rustc_incremental 0.0.0",
  "rustc_llvm 0.0.0",
  "rustc_platform_intrinsics 0.0.0",
+ "rustc_trans_utils 0.0.0",
+ "serialize 0.0.0",
+ "syntax 0.0.0",
+ "syntax_pos 0.0.0",
+]
+
+[[package]]
+name = "rustc_trans_cretonne"
+version = "0.0.0"
+dependencies = [
+ "bitflags 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cretonne 0.0.0 (git+https://github.com/stoklund/cretonne)",
+ "cretonne-frontend 0.0.0 (git+https://github.com/stoklund/cretonne)",
+ "flate2 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jobserver 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num_cpus 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc 0.0.0",
+ "rustc-demangle 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rustc_allocator 0.0.0",
+ "rustc_back 0.0.0",
+ "rustc_const_math 0.0.0",
+ "rustc_data_structures 0.0.0",
+ "rustc_errors 0.0.0",
+ "rustc_incremental 0.0.0",
  "rustc_trans_utils 0.0.0",
  "serialize 0.0.0",
  "syntax 0.0.0",
@@ -2492,6 +2533,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum conv 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "78ff10625fd0ac447827aa30ea8b861fead473bb60aeb73af6c1c58caf0d1299"
 "checksum core-foundation 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "5909502e547762013619f4c4e01cc7393c20fe2d52d7fa471c1210adb2320dc7"
 "checksum core-foundation-sys 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "bc9fb3d6cb663e6fd7cf1c63f9b144ee2b1e4a78595a0451dd34bff85b9a3387"
+"checksum cretonne 0.0.0 (git+https://github.com/stoklund/cretonne)" = "<none>"
+"checksum cretonne-frontend 0.0.0 (git+https://github.com/stoklund/cretonne)" = "<none>"
 "checksum crossbeam 0.2.10 (registry+https://github.com/rust-lang/crates.io-index)" = "0c5ea215664ca264da8a9d9c3be80d2eaf30923c259d03e870388eb927508f97"
 "checksum crossbeam 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8837ab96533202c5b610ed44bc7f4183e7957c1c8f56e8cc78bb098593c8ba0a"
 "checksum cssparser 0.13.7 (registry+https://github.com/rust-lang/crates.io-index)" = "ef6124306e5ebc5ab11891d063aeafdd0cdc308079b708c8b566125f3680292b"
