@@ -49,6 +49,8 @@ extern crate rustc_resolve;
 extern crate rustc_save_analysis;
 #[cfg(feature="llvm")]
 extern crate rustc_trans;
+#[cfg(not(feature="llvm"))]
+extern crate rustc_trans_cretonne;
 extern crate rustc_trans_utils;
 extern crate rustc_typeck;
 extern crate serialize;
@@ -152,7 +154,7 @@ pub fn run<F>(run_compiler: F) -> isize
 }
 
 #[cfg(not(feature="llvm"))]
-pub use rustc_trans_utils::trans_crate::MetadataOnlyTransCrate as DefaultTransCrate;
+pub use rustc_trans_cretonne::CretonneTransCrate as DefaultTransCrate;
 #[cfg(feature="llvm")]
 pub use rustc_trans::LlvmTransCrate as DefaultTransCrate;
 

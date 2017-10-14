@@ -270,6 +270,7 @@ pub fn compile_input(sess: &Session,
     let (phase5_result, trans) =
         phase_5_run_llvm_passes::<DefaultTransCrate>(sess, &dep_graph, trans);
 
+    #[cfg(feature="llvm")]
     controller_entry_point!(after_llvm,
                             sess,
                             CompileState::state_after_llvm(input, sess, outdir, output, &trans),
@@ -522,6 +523,7 @@ impl<'a, 'tcx> CompileState<'a, 'tcx> {
         }
     }
 
+    #[cfg_attr(not(feature="llvm"), allow(dead_code))]
     fn state_after_llvm(input: &'a Input,
                         session: &'tcx Session,
                         out_dir: &'a Option<PathBuf>,
