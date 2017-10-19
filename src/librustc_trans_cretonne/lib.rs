@@ -64,11 +64,11 @@ extern crate serialize;
 #[cfg(windows)]
 extern crate cc; // Used to locate MSVC
 
-mod collector;
+//mod collector;
 mod context;
-mod common;
-mod trans_item;
-mod monomorphize;
+//mod common;
+//mod trans_item;
+//mod monomorphize;
 mod trans_crate;
 
 use std::any::Any;

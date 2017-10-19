@@ -1796,11 +1796,11 @@ name = "rustc_trans_cretonne"
 version = "0.0.0"
 dependencies = [
  "bitflags 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "cc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cc 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "cretonne 0.0.0 (git+https://github.com/stoklund/cretonne)",
  "cretonne-frontend 0.0.0 (git+https://github.com/stoklund/cretonne)",
  "flate2 0.2.20 (registry+https://github.com/rust-lang/crates.io-index)",
- "jobserver 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "jobserver 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "num_cpus 1.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "owning_ref 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)",
