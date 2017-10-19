@@ -102,16 +102,23 @@ fn rust_ty_to_cretonne_ty(ty: Ty) -> Result<Type, ()> {
         TyVar::TyInt(IntTy::I16) => I16,
         TyVar::TyInt(IntTy::I32) => I32,
         TyVar::TyInt(IntTy::I64) => I64,
-        TyVar::TyInt(IntTy::I128) => Err(())?,
+        TyVar::TyInt(IntTy::I128) => {
+            tcx.sess.span_err(mir.span, "Unsupported type i128");
+            Err(())?
+        }
         TyVar::TyInt(IntTy::Is) => Isize,
         TyVar::TyUint(UintTy::U8) => I8,
         TyVar::TyUint(UintTy::U16) => I16,
         TyVar::TyUint(UintTy::U32) => I32,
         TyVar::TyUint(UintTy::U64) => I64,
-        TyVar::TyUint(UintTy::U128) => Err(())?,
+        TyVar::TyUint(UintTy::U128) => {
+            tcx.sess.span_err(mir.span, "Unsupported type u128");
+            Err(())?
+        }
         TyVar::TyUint(UintTy::Us) => Isize,
         TyVar::TyFloat(FloatTy::F32) => F32,
         TyVar::TyFloat(FloatTy::F64) => F64,
+        TyAdt(adt_def, _) => Isize,
         TyVar::TyRef(_, _) => Isize,
         TyVar::TyNever => VOID,
         TyVar::TyTuple(slice, _) => if slice.is_empty() {
