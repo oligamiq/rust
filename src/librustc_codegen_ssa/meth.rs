@@ -12,8 +12,7 @@ use rustc_target::abi::call::FnType;
 
 use traits::*;
 
-use rustc::ty::{self, Ty};
-use rustc_mir::interpret::{VtableComponent, get_vtable_components};
+use rustc::ty::Ty;
 
 #[derive(Copy, Clone, Debug)]
 pub struct VirtualIndex(u64);
@@ -65,48 +64,4 @@ impl<'a, 'tcx: 'a> VirtualIndex {
         bx.set_invariant_load(ptr);
         ptr
     }
-}
-
-/// Creates a dynamic vtable for the given type and vtable origin.
-/// This is used only for objects.
-///
-/// The vtables are cached instead of created on every call.
-///
-/// The `trait_ref` encodes the erased self type. Hence if we are
-/// making an object `Foo<Trait>` from a value of type `Foo<T>`, then
-/// `trait_ref` would map `T:Trait`.
-pub fn get_vtable<'tcx, Cx: CodegenMethods<'tcx>>(
-    cx: &Cx,
-    ty: Ty<'tcx>,
-    trait_ref: ty::PolyExistentialTraitRef<'tcx>,
-) -> Cx::Value {
-    debug!("get_vtable(ty={:?}, trait_ref={:?})", ty, trait_ref);
-
-    let (ty, trait_ref) = cx.tcx().erase_regions(&(ty, trait_ref));
-
-    // Check the cache.
-    if let Some(&val) = cx.vtables().borrow().get(&(ty, trait_ref)) {
-        return val;
-    }
-
-    // Not in the cache. Build it.
-    let components = get_vtable_components(cx.tcx(), cx.layout_of(ty), trait_ref);
-
-    let nullptr = cx.const_null(cx.type_i8p());
-    let components = components.into_iter().map(|component| {
-        match component {
-            VtableComponent::Usize(num) => cx.const_usize(num),
-            VtableComponent::Nullptr => nullptr,
-            VtableComponent::FnPtr(inst) => cx.get_fn(inst),
-        }
-    }).collect::<Vec<_>>();
-
-    let vtable_const = cx.const_struct(&components, false);
-    let align = cx.data_layout().pointer_align.abi;
-    let vtable = cx.static_addr_of(vtable_const, align, Some("vtable"));
-
-    cx.create_vtable_metadata(ty, vtable);
-
-    cx.vtables().borrow_mut().insert((ty, trait_ref), vtable);
-    vtable
 }

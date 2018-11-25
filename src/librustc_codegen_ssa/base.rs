@@ -45,7 +45,6 @@ use {MemFlags, CrateInfo};
 use callee;
 use rustc_mir::monomorphize::item::DefPathBasedNames;
 use common::{RealPredicate, TypeKind, IntPredicate};
-use meth;
 use mir;
 use rustc::util::time_graph;
 use rustc_mir::monomorphize::Instance;
@@ -192,7 +191,7 @@ pub fn unsized_info<'tcx, Cx: CodegenMethods<'tcx>>(
         (_, &ty::Dynamic(ref data, ..)) => {
             let vtable_ptr = cx.layout_of(cx.tcx().mk_mut_ptr(target))
                 .field(cx, FAT_PTR_EXTRA);
-            cx.const_ptrcast(meth::get_vtable(cx, source, data.principal()),
+            cx.const_ptrcast(cx.get_vtable(source, data.principal()),
                             cx.backend_type(vtable_ptr))
         }
         _ => bug!("unsized_info: invalid unsizing {:?} -> {:?}",

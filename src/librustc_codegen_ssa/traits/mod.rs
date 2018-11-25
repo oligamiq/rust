@@ -62,7 +62,7 @@ pub trait CodegenMethods<'tcx>:
     + TypeMethods<'tcx>
     + MiscMethods<'tcx>
     + ConstMethods<'tcx>
-    + StaticMethods
+    + StaticMethods<'tcx>
     + DebugInfoMethods<'tcx>
     + AbiMethods<'tcx>
     + DeclareMethods<'tcx>
@@ -76,7 +76,7 @@ impl<'tcx, T> CodegenMethods<'tcx> for T where
         + TypeMethods<'tcx>
         + MiscMethods<'tcx>
         + ConstMethods<'tcx>
-        + StaticMethods
+        + StaticMethods<'tcx>
         + DebugInfoMethods<'tcx>
         + AbiMethods<'tcx>
         + DeclareMethods<'tcx>

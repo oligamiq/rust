@@ -31,6 +31,7 @@ use rustc_codegen_ssa::traits::*;
 use rustc::ty::layout::{self, Size, Align, LayoutOf};
 
 use rustc::hir::{self, CodegenFnAttrs, CodegenFnAttrFlags};
+use rustc_mir::interpret::{VtableComponent, get_vtable_components};
 
 use std::ffi::{CStr, CString};
 
@@ -205,7 +206,7 @@ impl CodegenCx<'ll, 'tcx> {
     }
 }
 
-impl StaticMethods for CodegenCx<'ll, 'tcx> {
+impl StaticMethods<'tcx> for CodegenCx<'ll, 'tcx> {
     fn static_addr_of(
         &self,
         cv: &'ll Value,
@@ -494,5 +495,41 @@ impl StaticMethods for CodegenCx<'ll, 'tcx> {
                 self.used_statics.borrow_mut().push(cast);
             }
         }
+    }
+
+    fn get_vtable(
+        &self,
+        ty: Ty<'tcx>,
+        trait_ref: ty::PolyExistentialTraitRef<'tcx>,
+    ) -> Self::Value {
+        debug!("get_vtable(ty={:?}, trait_ref={:?})", ty, trait_ref);
+
+        let (ty, trait_ref) = self.tcx.erase_regions(&(ty, trait_ref));
+
+        // Check the cache.
+        if let Some(&val) = self.vtables().borrow().get(&(ty, trait_ref)) {
+            return val;
+        }
+
+        // Not in the cache. Build it.
+        let components = get_vtable_components(self.tcx, self.layout_of(ty), trait_ref);
+
+        let nullptr = self.const_null(self.type_i8p());
+        let components = components.into_iter().map(|component| {
+            match component {
+                VtableComponent::Usize(num) => self.const_usize(num),
+                VtableComponent::Nullptr => nullptr,
+                VtableComponent::FnPtr(inst) => self.get_fn(inst),
+            }
+        }).collect::<Vec<_>>();
+
+        let vtable_const = self.const_struct(&components, false);
+        let align = self.data_layout().pointer_align.abi;
+        let vtable = self.static_addr_of(vtable_const, align, Some("vtable"));
+
+        self.create_vtable_metadata(ty, vtable);
+
+        self.vtables().borrow_mut().insert((ty, trait_ref), vtable);
+        vtable
     }
 }
