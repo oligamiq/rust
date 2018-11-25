@@ -8,8 +8,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-use rustc::ty::{self, Ty};
-use rustc::ty::layout::{Size, Align, LayoutOf};
+use rustc::ty::{self, Ty, TyCtxt, Instance};
+use rustc::ty::layout::{Size, Align, LayoutOf, TyLayout};
 use rustc::mir::interpret::{Scalar, Pointer, EvalResult, PointerArithmetic};
 
 use super::{EvalContext, Machine, MemoryKind};
@@ -34,44 +34,31 @@ impl<'a, 'mir, 'tcx, M: Machine<'a, 'mir, 'tcx>> EvalContext<'a, 'mir, 'tcx, M> 
             return Ok(Pointer::from(vtable).with_default_tag());
         }
 
-        let trait_ref = poly_trait_ref.with_self_ty(*self.tcx, ty);
-        let trait_ref = self.tcx.erase_regions(&trait_ref);
-
-        let methods = self.tcx.vtable_methods(trait_ref);
-
         let layout = self.layout_of(ty)?;
         assert!(!layout.is_unsized(), "can't create a vtable for an unsized type");
-        let size = layout.size.bytes();
-        let align = layout.align.abi.bytes();
+        let components = get_vtable_components(self.tcx.tcx, layout, poly_trait_ref);
 
         let ptr_size = self.pointer_size();
         let ptr_align = self.tcx.data_layout.pointer_align.abi;
-        // /////////////////////////////////////////////////////////////////////////////////////////
-        // If you touch this code, be sure to also make the corresponding changes to
-        // `get_vtable` in rust_codegen_llvm/meth.rs
-        // /////////////////////////////////////////////////////////////////////////////////////////
+
         let vtable = self.memory.allocate(
-            ptr_size * (3 + methods.len() as u64),
+            ptr_size * (components.len() as u64),
             ptr_align,
             MemoryKind::Vtable,
         )?.with_default_tag();
 
-        let drop = ::monomorphize::resolve_drop_in_place(*self.tcx, ty);
-        let drop = self.memory.create_fn_alloc(drop).with_default_tag();
-        self.memory.write_ptr_sized(vtable, ptr_align, Scalar::Ptr(drop).into())?;
-
-        let size_ptr = vtable.offset(ptr_size, self)?;
-        self.memory.write_ptr_sized(size_ptr, ptr_align, Scalar::from_uint(size, ptr_size).into())?;
-        let align_ptr = vtable.offset(ptr_size * 2, self)?;
-        self.memory.write_ptr_sized(align_ptr, ptr_align,
-            Scalar::from_uint(align, ptr_size).into())?;
-
-        for (i, method) in methods.iter().enumerate() {
-            if let Some((def_id, substs)) = *method {
-                let instance = self.resolve(def_id, substs)?;
-                let fn_ptr = self.memory.create_fn_alloc(instance).with_default_tag();
-                let method_ptr = vtable.offset(ptr_size * (3 + i as u64), self)?;
-                self.memory.write_ptr_sized(method_ptr, ptr_align, Scalar::Ptr(fn_ptr).into())?;
+        for (i, component) in components.into_iter().enumerate() {
+            match component {
+                VtableComponent::Usize(num) => {
+                    let ptr = vtable.offset(ptr_size * (i as u64), self)?;
+                    self.memory.write_ptr_sized(ptr, ptr_align, Scalar::from_uint(num, ptr_size).into())?;
+                }
+                VtableComponent::Nullptr => {}
+                VtableComponent::FnPtr(inst) => {
+                    let fn_alloc = self.memory.create_fn_alloc(inst).with_default_tag();
+                    let ptr = vtable.offset(ptr_size * (i as u64), self)?;
+                    self.memory.write_ptr_sized(ptr, ptr_align, Scalar::Ptr(fn_alloc).into())?;
+                }
             }
         }
 
@@ -112,4 +99,42 @@ impl<'a, 'mir, 'tcx, M: Machine<'a, 'mir, 'tcx>> EvalContext<'a, 'mir, 'tcx, M> 
         )?.to_bits(pointer_size)? as u64;
         Ok((Size::from_bytes(size), Align::from_bytes(align).unwrap()))
     }
+}
+
+
+#[derive(Clone)]
+pub enum VtableComponent<'tcx> {
+    Usize(u64),
+    Nullptr,
+    FnPtr(Instance<'tcx>),
+}
+
+pub fn get_vtable_components<'a, 'tcx: 'a>(
+    tcx: TyCtxt<'a, 'tcx, 'tcx>,
+    layout: TyLayout<'tcx>,
+    trait_ref: ty::PolyExistentialTraitRef<'tcx>,
+) -> Vec<VtableComponent<'tcx>> {
+    let methods = tcx.vtable_methods(trait_ref.with_self_ty(tcx, layout.ty));
+    let methods = methods.iter().cloned().map(|opt_mth| {
+        opt_mth.map_or(VtableComponent::Nullptr, |(def_id, substs)| {
+            VtableComponent::FnPtr(
+                ty::Instance::resolve_for_vtable(
+                    tcx,
+                    ty::ParamEnv::reveal_all(),
+                    def_id,
+                    substs
+                ).unwrap()
+            )
+        })
+    });
+
+    // /////////////////////////////////////////////////////////////////////////////////////////////
+    // If you touch this code, be sure to also make the corresponding changes to
+    // `get_vtable` in rust_mir/interpret/traits.rs
+    // /////////////////////////////////////////////////////////////////////////////////////////////
+    [
+        VtableComponent::FnPtr(::monomorphize::resolve_drop_in_place(tcx, layout.ty)),
+        VtableComponent::Usize(layout.size.bytes()),
+        VtableComponent::Usize(layout.align.abi.bytes())
+    ].iter().cloned().chain(methods).collect()
 }
