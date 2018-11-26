@@ -173,66 +173,7 @@ pub fn ptrcast(val: &'ll Value, ty: &'ll Type) -> &'ll Value {
 }
 
 impl CodegenCx<'ll, 'tcx> {
-    crate fn const_bitcast(&self, val: &'ll Value, ty: &'ll Type) -> &'ll Value {
-        unsafe {
-            llvm::LLVMConstBitCast(val, ty)
-        }
-    }
-
-    crate fn static_addr_of_mut(
-        &self,
-        cv: &'ll Value,
-        align: Align,
-        kind: Option<&str>,
-    ) -> &'ll Value {
-        unsafe {
-            let gv = match kind {
-                Some(kind) if !self.tcx.sess.fewer_names() => {
-                    let name = self.generate_local_symbol_name(kind);
-                    let gv = self.define_global(&name[..],
-                        self.val_ty(cv)).unwrap_or_else(||{
-                            bug!("symbol `{}` is already defined", name);
-                    });
-                    llvm::LLVMRustSetLinkage(gv, llvm::Linkage::PrivateLinkage);
-                    gv
-                },
-                _ => self.define_private_global(self.val_ty(cv)),
-            };
-            llvm::LLVMSetInitializer(gv, cv);
-            set_global_alignment(&self, gv, align);
-            SetUnnamedAddr(gv, true);
-            gv
-        }
-    }
-}
-
-impl StaticMethods<'tcx> for CodegenCx<'ll, 'tcx> {
-    fn static_addr_of(
-        &self,
-        cv: &'ll Value,
-        align: Align,
-        kind: Option<&str>,
-    ) -> &'ll Value {
-        if let Some(&gv) = self.const_globals.borrow().get(&cv) {
-            unsafe {
-                // Upgrade the alignment in cases where the same constant is used with different
-                // alignment requirements
-                let llalign = align.bytes() as u32;
-                if llalign > llvm::LLVMGetAlignment(gv) {
-                    llvm::LLVMSetAlignment(gv, llalign);
-                }
-            }
-            return gv;
-        }
-        let gv = self.static_addr_of_mut(cv, align, kind);
-        unsafe {
-            llvm::LLVMSetGlobalConstant(gv, True);
-        }
-        self.const_globals.borrow_mut().insert(cv, gv);
-        gv
-    }
-
-    fn get_static(&self, def_id: DefId) -> &'ll Value {
+    crate fn get_static(&self, def_id: DefId) -> &'ll Value {
         let instance = Instance::mono(self.tcx, def_id);
         if let Some(&g) = self.instances.borrow().get(&instance) {
             return g;
@@ -351,6 +292,67 @@ impl StaticMethods<'tcx> for CodegenCx<'ll, 'tcx> {
 
         self.instances.borrow_mut().insert(instance, g);
         g
+    }
+}
+
+impl CodegenCx<'ll, 'tcx> {
+    crate fn const_bitcast(&self, val: &'ll Value, ty: &'ll Type) -> &'ll Value {
+        unsafe {
+            llvm::LLVMConstBitCast(val, ty)
+        }
+    }
+
+    crate fn static_addr_of_mut(
+        &self,
+        cv: &'ll Value,
+        align: Align,
+        kind: Option<&str>,
+    ) -> &'ll Value {
+        unsafe {
+            let gv = match kind {
+                Some(kind) if !self.tcx.sess.fewer_names() => {
+                    let name = self.generate_local_symbol_name(kind);
+                    let gv = self.define_global(&name[..],
+                        self.val_ty(cv)).unwrap_or_else(||{
+                            bug!("symbol `{}` is already defined", name);
+                    });
+                    llvm::LLVMRustSetLinkage(gv, llvm::Linkage::PrivateLinkage);
+                    gv
+                },
+                _ => self.define_private_global(self.val_ty(cv)),
+            };
+            llvm::LLVMSetInitializer(gv, cv);
+            set_global_alignment(&self, gv, align);
+            SetUnnamedAddr(gv, true);
+            gv
+        }
+    }
+}
+
+impl StaticMethods<'tcx> for CodegenCx<'ll, 'tcx> {
+    fn static_addr_of(
+        &self,
+        cv: &'ll Value,
+        align: Align,
+        kind: Option<&str>,
+    ) -> &'ll Value {
+        if let Some(&gv) = self.const_globals.borrow().get(&cv) {
+            unsafe {
+                // Upgrade the alignment in cases where the same constant is used with different
+                // alignment requirements
+                let llalign = align.bytes() as u32;
+                if llalign > llvm::LLVMGetAlignment(gv) {
+                    llvm::LLVMSetAlignment(gv, llalign);
+                }
+            }
+            return gv;
+        }
+        let gv = self.static_addr_of_mut(cv, align, kind);
+        unsafe {
+            llvm::LLVMSetGlobalConstant(gv, True);
+        }
+        self.const_globals.borrow_mut().insert(cv, gv);
+        gv
     }
 
     fn codegen_static(
