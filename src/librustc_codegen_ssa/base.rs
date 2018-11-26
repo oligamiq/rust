@@ -171,16 +171,16 @@ pub fn compare_simd_types<'a, 'tcx: 'a, Bx: BuilderMethods<'a, 'tcx>>(
 /// The `old_info` argument is a bit funny. It is intended for use
 /// in an upcast, where the new vtable for an object will be derived
 /// from the old one.
-pub fn unsized_info<'tcx, Cx: CodegenMethods<'tcx>>(
-    cx: &Cx,
+pub fn unsized_info<'a, 'tcx: 'a, Bx: BuilderMethods<'a, 'tcx>>(
+    bx: &Bx,
     source: Ty<'tcx>,
     target: Ty<'tcx>,
-    old_info: Option<Cx::Value>,
-) -> Cx::Value {
-    let (source, target) = cx.tcx().struct_lockstep_tails(source, target);
+    old_info: Option<Bx::Value>,
+) -> Bx::Value {
+    let (source, target) = bx.tcx().struct_lockstep_tails(source, target);
     match (&source.sty, &target.sty) {
         (&ty::Array(_, len), &ty::Slice(_)) => {
-            cx.const_usize(len.unwrap_usize(cx.tcx()))
+            bx.cx().const_usize(len.unwrap_usize(bx.tcx()))
         }
         (&ty::Dynamic(..), &ty::Dynamic(..)) => {
             // For now, upcasts are limited to changes in marker
@@ -189,10 +189,10 @@ pub fn unsized_info<'tcx, Cx: CodegenMethods<'tcx>>(
             old_info.expect("unsized_info: missing old info for trait upcast")
         }
         (_, &ty::Dynamic(ref data, ..)) => {
-            let vtable_ptr = cx.layout_of(cx.tcx().mk_mut_ptr(target))
-                .field(cx, FAT_PTR_EXTRA);
-            cx.const_ptrcast(cx.get_vtable(source, data.principal()),
-                            cx.backend_type(vtable_ptr))
+            let vtable_ptr = bx.layout_of(bx.tcx().mk_mut_ptr(target))
+                .field(bx, FAT_PTR_EXTRA);
+            bx.cx().const_ptrcast(bx.get_vtable(source, data.principal()),
+                            bx.cx().backend_type(vtable_ptr))
         }
         _ => bug!("unsized_info: invalid unsizing {:?} -> {:?}",
                   source,
@@ -217,13 +217,13 @@ pub fn unsize_thin_ptr<'a, 'tcx: 'a, Bx: BuilderMethods<'a, 'tcx>>(
          &ty::RawPtr(ty::TypeAndMut { ty: b, .. })) => {
             assert!(bx.cx().type_is_sized(a));
             let ptr_ty = bx.cx().type_ptr_to(bx.cx().backend_type(bx.cx().layout_of(b)));
-            (bx.pointercast(src, ptr_ty), unsized_info(bx.cx(), a, b, None))
+            (bx.pointercast(src, ptr_ty), unsized_info(bx, a, b, None))
         }
         (&ty::Adt(def_a, _), &ty::Adt(def_b, _)) if def_a.is_box() && def_b.is_box() => {
             let (a, b) = (src_ty.boxed_ty(), dst_ty.boxed_ty());
             assert!(bx.cx().type_is_sized(a));
             let ptr_ty = bx.cx().type_ptr_to(bx.cx().backend_type(bx.cx().layout_of(b)));
-            (bx.pointercast(src, ptr_ty), unsized_info(bx.cx(), a, b, None))
+            (bx.pointercast(src, ptr_ty), unsized_info(bx, a, b, None))
         }
         (&ty::Adt(def_a, _), &ty::Adt(def_b, _)) => {
             assert_eq!(def_a, def_b);
