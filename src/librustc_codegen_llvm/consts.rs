@@ -329,6 +329,7 @@ impl CodegenCx<'ll, 'tcx> {
 
 impl StaticBuilderMethods<'tcx> for ::builder::Builder<'a, 'll, 'tcx> {
     fn get_static(&self, def_id: DefId) -> &'ll Value {
+        // Delegate to CodegenCx's get_static
         self.cx().get_static(def_id)
     }
 
@@ -340,33 +341,33 @@ impl StaticBuilderMethods<'tcx> for ::builder::Builder<'a, 'll, 'tcx> {
     ) -> Self::Value {
         debug!("get_vtable(ty={:?}, trait_ref={:?})", ty, trait_ref);
 
-        let (ty, trait_ref) = self.cx().tcx.erase_regions(&(ty, trait_ref));
+        let (ty, trait_ref) = self.tcx.erase_regions(&(ty, trait_ref));
 
         // Check the cache.
-        if let Some(&val) = self.cx().vtables().borrow().get(&(ty, trait_ref)) {
+        if let Some(&val) = self.vtables().borrow().get(&(ty, trait_ref)) {
             return val;
         }
 
         // Not in the cache. Build it.
-        let components = get_vtable_components(self.cx().tcx, self.layout_of(ty), trait_ref);
+        let components = get_vtable_components(self.tcx, self.layout_of(ty), trait_ref);
 
-        let nullptr = self.cx().const_null(self.cx().type_i8p());
+        let nullptr = self.const_null(self.type_i8p());
         let components = components.into_iter().map(|component| {
             match component {
-                VtableComponent::Usize(num) => self.cx().const_usize(num),
+                VtableComponent::Usize(num) => self.const_usize(num),
                 VtableComponent::Nullptr => nullptr,
-                VtableComponent::FnPtr(inst) => self.cx().get_fn(inst),
+                VtableComponent::FnPtr(inst) => self.get_fn(inst),
             }
         }).collect::<Vec<_>>();
 
-        let vtable_const = self.cx().const_struct(&components, false);
-        let align = self.cx().data_layout().pointer_align.abi;
-        let vtable = self.cx().static_addr_of(vtable_const, align, Some("vtable"));
+        let vtable_const = self.const_struct(&components, false);
+        let align = self.data_layout().pointer_align.abi;
+        let vtable = self.static_addr_of(vtable_const, align, Some("vtable"));
 
-        self.cx().create_vtable_metadata(ty, vtable);
+        self.create_vtable_metadata(ty, vtable);
 
-        self.cx().vtables().borrow_mut().insert((ty, trait_ref), vtable);
-        ptrcast(vtable, self.cx().backend_type(vtable_layout))
+        self.vtables().borrow_mut().insert((ty, trait_ref), vtable);
+        ptrcast(vtable, self.backend_type(vtable_layout))
     }
 }
 
