@@ -25,7 +25,7 @@ use base;
 use type_::Type;
 use type_of::LayoutLlvmExt;
 use value::Value;
-use rustc::ty::{self, Ty};
+use rustc::ty::{self, Ty, layout::TyLayout};
 use rustc_codegen_ssa::traits::*;
 
 use rustc::ty::layout::{self, Size, Align, LayoutOf};
@@ -336,6 +336,7 @@ impl StaticBuilderMethods<'tcx> for ::builder::Builder<'a, 'll, 'tcx> {
         &self,
         ty: Ty<'tcx>,
         trait_ref: ty::PolyExistentialTraitRef<'tcx>,
+        vtable_layout: TyLayout<'tcx>,
     ) -> Self::Value {
         debug!("get_vtable(ty={:?}, trait_ref={:?})", ty, trait_ref);
 
@@ -365,7 +366,7 @@ impl StaticBuilderMethods<'tcx> for ::builder::Builder<'a, 'll, 'tcx> {
         self.cx().create_vtable_metadata(ty, vtable);
 
         self.cx().vtables().borrow_mut().insert((ty, trait_ref), vtable);
-        vtable
+        ptrcast(vtable, self.cx().backend_type(vtable_layout))
     }
 }
 

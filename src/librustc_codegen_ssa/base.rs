@@ -189,10 +189,9 @@ pub fn unsized_info<'a, 'tcx: 'a, Bx: BuilderMethods<'a, 'tcx>>(
             old_info.expect("unsized_info: missing old info for trait upcast")
         }
         (_, &ty::Dynamic(ref data, ..)) => {
-            let vtable_ptr = bx.layout_of(bx.tcx().mk_mut_ptr(target))
+            let vtable_layout = bx.layout_of(bx.tcx().mk_mut_ptr(target))
                 .field(bx, FAT_PTR_EXTRA);
-            bx.cx().const_ptrcast(bx.get_vtable(source, data.principal()),
-                            bx.cx().backend_type(vtable_ptr))
+            bx.get_vtable(source, data.principal(), vtable_layout)
         }
         _ => bug!("unsized_info: invalid unsizing {:?} -> {:?}",
                   source,

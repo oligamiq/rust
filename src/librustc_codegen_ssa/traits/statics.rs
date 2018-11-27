@@ -10,7 +10,7 @@
 
 use super::BackendTypes;
 use rustc::hir::def_id::DefId;
-use rustc::ty::{self, Ty, layout::Align};
+use rustc::ty::{self, Ty, layout::{Align, TyLayout}};
 
 pub trait StaticMethods<'tcx>: BackendTypes {
     fn static_addr_of(&self, cv: Self::Value, align: Align, kind: Option<&str>) -> Self::Value;
@@ -19,5 +19,10 @@ pub trait StaticMethods<'tcx>: BackendTypes {
 
 pub trait StaticBuilderMethods<'tcx>: BackendTypes {
     fn get_static(&self, def_id: DefId) -> Self::Value;
-    fn get_vtable(&self, ty: Ty<'tcx>, trait_ref: ty::PolyExistentialTraitRef<'tcx>) -> Self::Value;
+    fn get_vtable(
+        &self,
+        ty: Ty<'tcx>,
+        trait_ref: ty::PolyExistentialTraitRef<'tcx>,
+        vtable_layout: TyLayout<'tcx>,
+    ) -> Self::Value;
 }

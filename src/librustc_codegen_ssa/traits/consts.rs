@@ -60,6 +60,4 @@ pub trait ConstMethods<'tcx>: BackendTypes {
         alloc: &Allocation,
         offset: layout::Size,
     ) -> PlaceRef<'tcx, Self::Value>;
-
-    fn const_ptrcast(&self, val: Self::Value, ty: Self::Type) -> Self::Value;
 }
