@@ -10,7 +10,11 @@
 
 use super::BackendTypes;
 use rustc::hir::def_id::DefId;
-use rustc::ty::{self, Ty, layout::{Align, TyLayout}};
+use rustc::ty::{
+    self,
+    layout::{Align, TyLayout},
+    Ty,
+};
 
 pub trait StaticMethods<'tcx>: BackendTypes {
     fn static_addr_of(&self, cv: Self::Value, align: Align, kind: Option<&str>) -> Self::Value;

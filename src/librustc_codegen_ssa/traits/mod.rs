@@ -46,7 +46,7 @@ pub use self::debuginfo::{DebugInfoBuilderMethods, DebugInfoMethods};
 pub use self::declare::{DeclareMethods, PreDefineMethods};
 pub use self::intrinsic::IntrinsicCallMethods;
 pub use self::misc::MiscMethods;
-pub use self::statics::{StaticMethods, StaticBuilderMethods};
+pub use self::statics::{StaticBuilderMethods, StaticMethods};
 pub use self::type_::{
     ArgTypeMethods, BaseTypeMethods, DerivedTypeMethods, LayoutTypeMethods, TypeMethods,
 };
@@ -85,7 +85,9 @@ impl<'tcx, T> CodegenMethods<'tcx> for T where
 {
 }
 
-pub trait HasCodegen<'tcx>: Backend<'tcx> {
+pub trait HasCodegen<'tcx>:
+    Backend<'tcx> + ::std::ops::Deref<Target = <Self as HasCodegen<'tcx>>::CodegenCx>
+{
     type CodegenCx: CodegenMethods<'tcx>
         + BackendTypes<
             Value = Self::Value,
