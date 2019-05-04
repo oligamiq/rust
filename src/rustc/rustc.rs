@@ -31,6 +31,5 @@ fn main() {
             jemalloc_sys::free;
     }
 
-    rustc_driver::set_sigpipe_handler();
     rustc_driver::main()
 }
