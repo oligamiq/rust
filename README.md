@@ -1,3 +1,14 @@
+Attempt to build rustc for wasm.
+
+```bash
+$ rustup override set nightly
+$ rustup toolchain add wasm32-unknown-wasi
+$ cd src/rustc
+$ CFG_COMPILER_HOST_TRIPLE="wasm32-unknown-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-unknown-wasi
+$ wasmtime ../../target/wasm32-unknown-wasi/debug/rustc_binary.wasm
+```
+
+
 # The Rust Programming Language
 
 This is the main source code repository for [Rust]. It contains the compiler,
