@@ -238,8 +238,6 @@ use std::ops::Deref;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use flate2::read::DeflateDecoder;
-
 use rustc_data_structures::owning_ref::OwningRef;
 
 use log::{debug, info, warn};
@@ -861,19 +859,6 @@ fn get_metadata_section(target: &Target,
     return ret;
 }
 
-/// A trivial wrapper for `Mmap` that implements `StableDeref`.
-struct StableDerefMmap(memmap::Mmap);
-
-impl Deref for StableDerefMmap {
-    type Target = [u8];
-
-    fn deref(&self) -> &[u8] {
-        self.0.deref()
-    }
-}
-
-unsafe impl stable_deref_trait::StableDeref for StableDerefMmap {}
-
 fn get_metadata_section_imp(target: &Target,
                             flavor: CrateFlavor,
                             filename: &Path,
@@ -885,39 +870,13 @@ fn get_metadata_section_imp(target: &Target,
     let raw_bytes: MetadataRef = match flavor {
         CrateFlavor::Rlib => loader.get_rlib_metadata(target, filename)?,
         CrateFlavor::Dylib => {
-            let buf = loader.get_dylib_metadata(target, filename)?;
-            // The header is uncompressed
-            let header_len = METADATA_HEADER.len();
-            debug!("checking {} bytes of metadata-version stamp", header_len);
-            let header = &buf[..cmp::min(header_len, buf.len())];
-            if header != METADATA_HEADER {
-                return Err(format!("incompatible metadata version found: '{}'",
-                                   filename.display()));
-            }
-
-            // Header is okay -> inflate the actual metadata
-            let compressed_bytes = &buf[header_len..];
-            debug!("inflating {} bytes of compressed metadata", compressed_bytes.len());
-            let mut inflated = Vec::new();
-            match DeflateDecoder::new(compressed_bytes).read_to_end(&mut inflated) {
-                Ok(_) => {
-                    let buf = unsafe { OwningRef::new_assert_stable_address(inflated) };
-                    rustc_erase_owner!(buf.map_owner_box())
-                }
-                Err(_) => {
-                    return Err(format!("failed to decompress metadata: {}", filename.display()));
-                }
-            }
+            panic!()
         }
         CrateFlavor::Rmeta => {
-            // mmap the file, because only a small fraction of it is read.
-            let file = std::fs::File::open(filename).map_err(|_|
+            let data = std::fs::read(filename).map_err(|_|
                 format!("failed to open rmeta metadata: '{}'", filename.display()))?;
-            let mmap = unsafe { memmap::Mmap::map(&file) };
-            let mmap = mmap.map_err(|_|
-                format!("failed to mmap rmeta metadata: '{}'", filename.display()))?;
 
-            rustc_erase_owner!(OwningRef::new(StableDerefMmap(mmap)).map_owner_box())
+            rustc_erase_owner!(OwningRef::new(data).map_owner_box())
         }
     };
     let blob = MetadataBlob(raw_bytes);

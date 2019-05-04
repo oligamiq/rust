@@ -10,8 +10,6 @@ use rustc_macros::HashStable;
 
 use super::{RawConst, Pointer, InboundsCheck, ScalarMaybeUndef};
 
-use backtrace::Backtrace;
-
 use crate::ty::query::TyCtxtAt;
 use errors::DiagnosticBuilder;
 
@@ -181,7 +179,7 @@ pub fn struct_error<'a, 'gcx, 'tcx>(
 #[derive(Debug, Clone)]
 pub struct EvalError<'tcx> {
     pub kind: InterpError<'tcx, u64>,
-    pub backtrace: Option<Box<Backtrace>>,
+    pub backtrace: Option<Box<()>>,
 }
 
 impl<'tcx> EvalError<'tcx> {
@@ -192,8 +190,7 @@ impl<'tcx> EvalError<'tcx> {
     }
 }
 
-fn print_backtrace(backtrace: &mut Backtrace) {
-    backtrace.resolve();
+fn print_backtrace(backtrace: &mut ()) {
     eprintln!("\n\nAn error occurred in miri:\n{:?}", backtrace);
 }
 
@@ -202,7 +199,7 @@ impl<'tcx> From<InterpError<'tcx, u64>> for EvalError<'tcx> {
         let backtrace = match env::var("RUST_CTFE_BACKTRACE") {
             // matching RUST_BACKTRACE, we treat "0" the same as "not present".
             Ok(ref val) if val != "0" => {
-                let mut backtrace = Backtrace::new_unresolved();
+                let mut backtrace = ();
 
                 if val == "immediate" {
                     // Print it now

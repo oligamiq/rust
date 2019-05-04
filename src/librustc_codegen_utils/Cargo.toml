@@ -7,11 +7,10 @@ edition = "2018"
 [lib]
 name = "rustc_codegen_utils"
 path = "lib.rs"
-crate-type = ["dylib"]
+
 test = false
 
 [dependencies]
-flate2 = "1.0"
 log = "0.4"
 
 syntax = { path = "../libsyntax" }
