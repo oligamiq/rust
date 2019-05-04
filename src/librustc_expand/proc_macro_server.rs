@@ -274,7 +274,7 @@ impl ToInternal<rustc_errors::Level> for Level {
     }
 }
 
-pub struct FreeFunctions;
+//pub struct FreeFunctions;
 
 #[derive(Clone)]
 pub struct TokenStreamIter {
@@ -381,7 +381,7 @@ impl<'a> Rustc<'a> {
 }
 
 impl server::Types for Rustc<'_> {
-    type FreeFunctions = FreeFunctions;
+    //type FreeFunctions = FreeFunctions;
     type TokenStream = TokenStream;
     type TokenStreamBuilder = tokenstream::TokenStreamBuilder;
     type TokenStreamIter = TokenStreamIter;
@@ -395,11 +395,11 @@ impl server::Types for Rustc<'_> {
     type Span = Span;
 }
 
-impl server::FreeFunctions for Rustc<'_> {
+/*impl server::FreeFunctions for Rustc<'_> {
     fn track_env_var(&mut self, var: &str, value: Option<&str>) {
         self.sess.env_depinfo.borrow_mut().insert((Symbol::intern(var), value.map(Symbol::intern)));
     }
-}
+}*/
 
 impl server::TokenStream for Rustc<'_> {
     fn new(&mut self) -> Self::TokenStream {

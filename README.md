@@ -1,9 +1,29 @@
-<a href = "https://www.rust-lang.org/"> 
+Attempt to build rustc for wasm.
+
+```bash
+# Setup rust compiler
+$ rustup override set nightly
+$ rustup target add wasm32-wasi
+
+# Compile rustc
+$ cd src/rustc
+$ CFG_RELEASE_CHANNEL="dev" CFG_RELEASE="1.wasm" CFG_COMPILER_HOST_TRIPLE="wasm32-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-wasi --release
+
+# Run it
+$ wasmtime --dir . --dir $MIRI_SYSROOT ../../target/wasm32-wasi/release/rustc_binary.wasm -- example.rs --sysroot $MIRI_SYSROOT -Zcodegen-backend=metadata_only --target x86_64-unknown-linux-gnu
+
+# Wasmer currently fails to load libstd from sysroot. (https://github.com/CraneStation/wasmtime/issues/144)
+$ wasmer run ../../target/wasm32-wasi/release/rustc_binary.wasm --backend singlepass --dir . --dir $MIRI_SYSROOT -- example.rs --sysroot $MIRI_SYSROOT -Zcodegen-backend=metadata_only --target x86_64-unknown-linux-gnu
+```
+
+> Compilation in debug mode is currently broken. See https://github.com/rust-lang/rust/issues/60540.
+
+<a href = "https://www.rust-lang.org/">
 <img width = "90%" height = "auto" src = "https://img.shields.io/badge/Rust-Programming%20Language-black?style=flat&logo=rust" alt = "The Rust Programming Language">
 </a>
 
 This is the main source code repository for [Rust]. It contains the compiler,
-standard library, and documentation. 
+standard library, and documentation.
 
 [Rust]: https://www.rust-lang.org
 
@@ -23,7 +43,7 @@ Read ["Installation"] from [The Book].
 section.**
 
 The Rust build system uses a Python script called `x.py` to build the compiler,
-which manages the bootstrapping process. More information about it can be found 
+which manages the bootstrapping process. More information about it can be found
 by running `./x.py --help` or reading the [rustc dev guide][rustcguidebuild].
 
 [gettingstarted]: https://rustc-dev-guide.rust-lang.org/getting-started.html

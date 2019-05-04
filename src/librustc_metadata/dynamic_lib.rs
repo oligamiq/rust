@@ -5,51 +5,28 @@
 use std::ffi::CString;
 use std::path::Path;
 
-pub struct DynamicLibrary {
-    handle: *mut u8,
-}
+pub struct DynamicLibrary(());
 
 impl Drop for DynamicLibrary {
-    fn drop(&mut self) {
-        unsafe { dl::close(self.handle) }
-    }
+    fn drop(&mut self) {}
 }
 
 impl DynamicLibrary {
     /// Lazily open a dynamic library.
     pub fn open(filename: &Path) -> Result<DynamicLibrary, String> {
-        let maybe_library = dl::open(filename.as_os_str());
-
-        // The dynamic library must not be constructed if there is
-        // an error opening the library so the destructor does not
-        // run.
-        match maybe_library {
-            Err(err) => Err(err),
-            Ok(handle) => Ok(DynamicLibrary { handle }),
-        }
+        Err("dylib loading not supported".to_string())
     }
 
     /// Accesses the value at the symbol of the dynamic library.
     pub unsafe fn symbol<T>(&self, symbol: &str) -> Result<*mut T, String> {
-        // This function should have a lifetime constraint of 'a on
-        // T but that feature is still unimplemented
-
-        let raw_string = CString::new(symbol).unwrap();
-        let maybe_symbol_value = dl::symbol(self.handle, raw_string.as_ptr());
-
-        // The value must not be constructed if there is an error so
-        // the destructor does not run.
-        match maybe_symbol_value {
-            Err(err) => Err(err),
-            Ok(symbol_value) => Ok(symbol_value as *mut T),
-        }
+        unreachable!();
     }
 }
 
 #[cfg(test)]
 mod tests;
 
-#[cfg(unix)]
+#[cfg(disabled)]
 mod dl {
     use std::ffi::{CStr, CString, OsStr};
     use std::os::unix::prelude::*;

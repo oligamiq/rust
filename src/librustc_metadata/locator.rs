@@ -229,7 +229,6 @@ use rustc_span::symbol::{sym, Symbol};
 use rustc_span::Span;
 use rustc_target::spec::{Target, TargetTriple};
 
-use flate2::read::DeflateDecoder;
 use log::{debug, info, warn};
 use std::io::{Read, Result as IoResult, Write};
 use std::ops::Deref;
@@ -397,6 +396,8 @@ impl<'a> CrateLocator<'a> {
         //
         // The goal of this step is to look at as little metadata as possible.
         self.filesearch.search(|spf, kind| {
+            println!("filesearch found {:?} {:?}", kind, spf);
+
             let file = match &spf.file_name_str {
                 None => return FileDoesntMatch,
                 Some(file) => file,
@@ -426,20 +427,17 @@ impl<'a> CrateLocator<'a> {
             info!("lib candidate: {}", spf.path.display());
 
             let (rlibs, rmetas, dylibs) = candidates.entry(hash.to_string()).or_default();
-            fs::canonicalize(&spf.path)
-                .map(|p| {
-                    if seen_paths.contains(&p) {
-                        return FileDoesntMatch;
-                    };
-                    seen_paths.insert(p.clone());
-                    match found_kind {
-                        CrateFlavor::Rlib => rlibs.insert(p, kind),
-                        CrateFlavor::Rmeta => rmetas.insert(p, kind),
-                        CrateFlavor::Dylib => dylibs.insert(p, kind),
-                    };
-                    FileMatches
-                })
-                .unwrap_or(FileDoesntMatch)
+            let p = spf.path.clone();
+            if seen_paths.contains(&p) {
+                return FileDoesntMatch;
+            };
+            seen_paths.insert(p.to_owned());
+            match found_kind {
+                CrateFlavor::Rlib => rlibs.insert(p, kind),
+                CrateFlavor::Rmeta => rmetas.insert(p, kind),
+                CrateFlavor::Dylib => dylibs.insert(p, kind),
+            };
+            FileMatches
         });
         self.rejected_via_kind.extend(staticlibs);
 
@@ -551,12 +549,12 @@ impl<'a> CrateLocator<'a> {
                         if let Some(h) = self.crate_matches(&blob, &lib) {
                             (h, blob)
                         } else {
-                            info!("metadata mismatch");
+                            self.sess.warn("metadata mismatch");
                             continue;
                         }
                     }
                     Err(err) => {
-                        warn!("no metadata found: {}", err);
+                        self.sess.warn(&format!("no metadata found: {}", err));
                         continue;
                     }
                 };
@@ -618,11 +616,18 @@ impl<'a> CrateLocator<'a> {
         let rustc_version = rustc_version();
         let found_version = metadata.get_rustc_version();
         if found_version != rustc_version {
-            info!("Rejecting via version: expected {} got {}", rustc_version, found_version);
-            self.rejected_via_version
-                .push(CrateMismatch { path: libpath.to_path_buf(), got: found_version });
-            return None;
+            println!("Rejecting via version: expected {} got {}", rustc_version, found_version);
         }
+        /*if found_version != rustc_version {
+            info!("Rejecting via version: expected {} got {}",
+                  rustc_version,
+                  found_version);
+            self.rejected_via_version.push(CrateMismatch {
+                path: libpath.to_path_buf(),
+                got: found_version,
+            });
+            return None;
+        }*/
 
         let root = metadata.get_root();
         if let Some(expected_is_proc_macro) = self.is_proc_macro {
@@ -721,19 +726,6 @@ impl<'a> CrateLocator<'a> {
     }
 }
 
-/// A trivial wrapper for `Mmap` that implements `StableDeref`.
-struct StableDerefMmap(memmap::Mmap);
-
-impl Deref for StableDerefMmap {
-    type Target = [u8];
-
-    fn deref(&self) -> &[u8] {
-        self.0.deref()
-    }
-}
-
-unsafe impl stable_deref_trait::StableDeref for StableDerefMmap {}
-
 fn get_metadata_section(
     target: &Target,
     flavor: CrateFlavor,
@@ -746,7 +738,7 @@ fn get_metadata_section(
     let raw_bytes: MetadataRef = match flavor {
         CrateFlavor::Rlib => loader.get_rlib_metadata(target, filename)?,
         CrateFlavor::Dylib => {
-            let buf = loader.get_dylib_metadata(target, filename)?;
+            /*let buf = loader.get_dylib_metadata(target, filename)?;
             // The header is uncompressed
             let header_len = METADATA_HEADER.len();
             debug!("checking {} bytes of metadata-version stamp", header_len);
@@ -767,17 +759,14 @@ fn get_metadata_section(
                 Err(_) => {
                     return Err(format!("failed to decompress metadata: {}", filename.display()));
                 }
-            }
+            }*/
+            panic!("dylib metadata");
         }
         CrateFlavor::Rmeta => {
-            // mmap the file, because only a small fraction of it is read.
-            let file = std::fs::File::open(filename)
-                .map_err(|_| format!("failed to open rmeta metadata: '{}'", filename.display()))?;
-            let mmap = unsafe { memmap::Mmap::map(&file) };
-            let mmap = mmap
-                .map_err(|_| format!("failed to mmap rmeta metadata: '{}'", filename.display()))?;
+            let data = std::fs::read(filename).map_err(|_|
+                format!("failed to open rmeta metadata: '{}'", filename.display()))?;
 
-            rustc_erase_owner!(OwningRef::new(StableDerefMmap(mmap)).map_owner_box())
+            rustc_erase_owner!(OwningRef::new(data).map_owner_box())
         }
     };
     let blob = MetadataBlob::new(raw_bytes);

@@ -87,8 +87,13 @@ impl SearchPath {
             Ok(files) => files
                 .filter_map(|e| e.ok().map(|e| SearchPathFile::new(e.path())))
                 .collect::<Vec<_>>(),
-            Err(..) => vec![],
+            Err(err) => {
+                println!("Couldn't read dir {:?}: {:?}", dir, err);
+                vec![]
+            }
         };
+
+        println!("search_path files: {:?}", files);
 
         SearchPath { kind, dir, files }
     }

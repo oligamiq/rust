@@ -23,7 +23,7 @@ use rustc_errors::registry::{InvalidErrorCode, Registry};
 use rustc_errors::{ErrorReported, PResult};
 use rustc_feature::{find_gated_cfg, UnstableFeatures};
 use rustc_hir::def_id::LOCAL_CRATE;
-use rustc_interface::util::{collect_crate_types, get_builtin_codegen_backend};
+use rustc_interface::util::collect_crate_types;
 use rustc_interface::{interface, Queries};
 use rustc_lint::LintStore;
 use rustc_metadata::locator;
@@ -486,6 +486,11 @@ impl Compilation {
 #[derive(Copy, Clone)]
 pub struct RustcDefaultCalls;
 
+#[cfg(target_os = "wasi")]
+fn stdout_isatty() -> bool {
+    true
+}
+
 // FIXME remove these and use winapi 0.3 instead
 // Duplicates: bootstrap/compile.rs, librustc_errors/emitter.rs
 #[cfg(unix)]
@@ -767,7 +772,6 @@ pub fn version(binary: &str, matches: &getopts::Matches) {
         println!("commit-date: {}", unw(commit_date_str()));
         println!("host: {}", config::host_triple());
         println!("release: {}", unw(release_str()));
-        get_builtin_codegen_backend("llvm")().print_version();
     }
 }
 
@@ -1053,7 +1057,6 @@ pub fn handle_options(args: &[String]) -> Option<getopts::Matches> {
     }
 
     if cg_flags.iter().any(|x| *x == "passes=list") {
-        get_builtin_codegen_backend("llvm")().print_passes();
         return None;
     }
 

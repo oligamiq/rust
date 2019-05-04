@@ -1126,6 +1126,7 @@ impl Build {
                     && dep != "build_helper"
                     && (dep != "profiler_builtins" || self.config.profiler)
                     && (dep != "rustc_codegen_llvm" || self.config.llvm_enabled())
+                    && dep != "rustc_codegen_cranelift"
                 {
                     list.push(*dep);
                 }

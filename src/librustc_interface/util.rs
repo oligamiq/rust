@@ -134,15 +134,15 @@ pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Se
     stderr: &Option<Arc<Mutex<Vec<u8>>>>,
     f: F,
 ) -> R {
-    let mut cfg = thread::Builder::new().name("rustc".to_string());
+    /*let mut cfg = thread::Builder::new().name("rustc".to_string());
 
     if let Some(size) = get_stack_size() {
         cfg = cfg.stack_size(size);
-    }
+    }*/
 
     crate::callbacks::setup_callbacks();
 
-    let main_handler = move || {
+    //let main_handler = move || {
         rustc_ast::with_session_globals(edition, || {
             ty::tls::GCX_PTR.set(&Lock::new(0), || {
                 if let Some(stderr) = stderr {
@@ -151,9 +151,9 @@ pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Se
                 f()
             })
         })
-    };
+    /*};
 
-    scoped_thread(cfg, main_handler)
+    scoped_thread(cfg, main_handler)*/
 }
 
 #[cfg(parallel_compiler)]
@@ -205,6 +205,7 @@ pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Se
     })
 }
 
+#[cfg(not(target_os = "wasi"))]
 fn load_backend_from_dylib(path: &Path) -> fn() -> Box<dyn CodegenBackend> {
     let lib = DynamicLibrary::open(path).unwrap_or_else(|err| {
         let err = format!("couldn't load codegen backend {:?}: {:?}", path, err);
@@ -235,10 +236,14 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
     static mut LOAD: fn() -> Box<dyn CodegenBackend> = || unreachable!();
 
     INIT.call_once(|| {
-        let codegen_name = sess.opts.debugging_opts.codegen_backend.as_deref().unwrap_or("llvm");
+        let codegen_name = sess.opts.debugging_opts.codegen_backend.as_deref().unwrap_or("cranelift");
         let backend = match codegen_name {
+            #[cfg(not(target_os = "wasi"))]
             filename if filename.contains('.') => load_backend_from_dylib(filename.as_ref()),
+            "cranelift" => rustc_codegen_cranelift::__rustc_codegen_backend,
+            #[cfg(not(target_os = "wasi"))]
             codegen_name => get_builtin_codegen_backend(codegen_name),
+            _ => panic!("unknown codegen backend {}", codegen_name),
         };
 
         unsafe {
@@ -254,14 +259,18 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
 // loading, so we leave the code here. It is potentially useful for other tools
 // that want to invoke the rustc binary while linking to rustc as well.
 pub fn rustc_path<'a>() -> Option<&'a Path> {
+    /*
     static RUSTC_PATH: once_cell::sync::OnceCell<Option<PathBuf>> =
         once_cell::sync::OnceCell::new();
 
     const BIN_PATH: &str = env!("RUSTC_INSTALL_BINDIR");
 
     RUSTC_PATH.get_or_init(|| get_rustc_path_inner(BIN_PATH)).as_ref().map(|v| &**v)
+    */
+    unimplemented!("rustc_path");
 }
 
+#[cfg(not(target_os = "wasi"))]
 fn get_rustc_path_inner(bin_path: &str) -> Option<PathBuf> {
     sysroot_candidates().iter().find_map(|sysroot| {
         let candidate = sysroot.join(bin_path).join(if cfg!(target_os = "windows") {
@@ -273,6 +282,7 @@ fn get_rustc_path_inner(bin_path: &str) -> Option<PathBuf> {
     })
 }
 
+#[cfg(not(target_os = "wasi"))]
 fn sysroot_candidates() -> Vec<PathBuf> {
     let target = session::config::host_triple();
     let mut sysroot_candidates = vec![filesearch::get_or_default_sysroot()];
@@ -366,6 +376,7 @@ fn sysroot_candidates() -> Vec<PathBuf> {
     }
 }
 
+#[cfg(not(target_os = "wasi"))]
 pub fn get_builtin_codegen_backend(backend_name: &str) -> fn() -> Box<dyn CodegenBackend> {
     #[cfg(feature = "llvm")]
     {
