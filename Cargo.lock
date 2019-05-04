@@ -1955,8 +1955,6 @@ dependencies = [
 [[package]]
 name = "measureme"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d09de7dafa3aa334bc806447c7e4de69419723312f4b88b80b561dea66601ce8"
 dependencies = [
  "byteorder",
  "memmap",
@@ -3087,7 +3085,6 @@ name = "rustc"
 version = "0.0.0"
 dependencies = [
  "arena",
- "backtrace",
  "bitflags",
  "byteorder",
  "chalk-engine",
@@ -3401,7 +3398,6 @@ dependencies = [
  "jobserver",
  "libc",
  "log",
- "memmap",
  "num_cpus",
  "rustc",
  "rustc_apfloat",
@@ -3605,9 +3601,7 @@ dependencies = [
 name = "rustc_metadata"
 version = "0.0.0"
 dependencies = [
- "flate2",
  "log",
- "memmap",
  "rustc",
  "rustc_data_structures",
  "rustc_errors",

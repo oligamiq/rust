@@ -7,7 +7,6 @@ use crate::ty::{self, Ty, layout};
 use crate::ty::layout::{Size, Align, LayoutError};
 use crate::ty::query::TyCtxtAt;
 
-use backtrace::Backtrace;
 use errors::DiagnosticBuilder;
 use rustc_macros::HashStable;
 use rustc_target::spec::abi::Abi;
@@ -190,7 +189,7 @@ pub fn struct_error<'tcx>(tcx: TyCtxtAt<'tcx>, msg: &str) -> DiagnosticBuilder<'
 #[derive(Debug, Clone)]
 pub struct InterpErrorInfo<'tcx> {
     pub kind: InterpError<'tcx>,
-    backtrace: Option<Box<Backtrace>>,
+    backtrace: Option<Box<()>>,
 }
 
 
@@ -208,8 +207,7 @@ impl InterpErrorInfo<'_> {
     }
 }
 
-fn print_backtrace(backtrace: &mut Backtrace) {
-    backtrace.resolve();
+fn print_backtrace(backtrace: &mut ()) {
     eprintln!("\n\nAn error occurred in miri:\n{:?}", backtrace);
 }
 
@@ -227,7 +225,7 @@ impl<'tcx> From<InterpError<'tcx>> for InterpErrorInfo<'tcx> {
         let backtrace = match env::var("RUSTC_CTFE_BACKTRACE") {
             // Matching `RUST_BACKTRACE` -- we treat "0" the same as "not present".
             Ok(ref val) if val != "0" => {
-                let mut backtrace = Backtrace::new_unresolved();
+                let mut backtrace = ();
 
                 if val == "immediate" {
                     // Print it now.

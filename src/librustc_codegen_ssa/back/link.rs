@@ -646,7 +646,7 @@ fn link_natively<'a, B: ArchiveBuilder<'a>>(sess: &'a Session,
             status.signal() == Some(libc::SIGILL)
         }
 
-        #[cfg(windows)]
+        #[cfg(not(unix))]
         fn is_illegal_instruction(_status: &ExitStatus) -> bool {
             false
         }
@@ -969,7 +969,7 @@ pub fn exec_linker(sess: &Session, cmd: &mut Command, out_filename: &Path, tmpdi
     flush_linked_file(&output, out_filename)?;
     return output;
 
-    #[cfg(unix)]
+    #[cfg(any(unix, target_os = "wasi"))]
     fn flush_linked_file(_: &io::Result<Output>, _: &Path) -> io::Result<()> {
         Ok(())
     }
@@ -995,6 +995,11 @@ pub fn exec_linker(sess: &Session, cmd: &mut Command, out_filename: &Path, tmpdi
         }
 
         Ok(())
+    }
+
+    #[cfg(target_os = "wasi")]
+    fn command_line_too_big(_err: &io::Error) -> bool {
+        false
     }
 
     #[cfg(unix)]

@@ -278,7 +278,9 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
             filename if filename.contains(".") => {
                 load_backend_from_dylib(filename.as_ref())
             }
+            #[cfg(not(target_os = "wasi"))]
             codegen_name => get_codegen_sysroot(codegen_name),
+            _ => panic!("unknown codegen backend {}", codegen_name),
         };
 
         unsafe {
@@ -293,6 +295,7 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
 // This is used for rustdoc, but it uses similar machinery to codegen backend
 // loading, so we leave the code here. It is potentially useful for other tools
 // that want to invoke the rustc binary while linking to rustc as well.
+#[cfg(not(target_os = "wasi"))]
 pub fn rustc_path<'a>() -> Option<&'a Path> {
     static RUSTC_PATH: once_cell::sync::OnceCell<Option<PathBuf>> =
         once_cell::sync::OnceCell::new();
@@ -319,6 +322,12 @@ fn get_rustc_path_inner(bin_path: &str) -> Option<PathBuf> {
         .next()
 }
 
+#[cfg(target_os = "wasi")]
+fn sysroot_candidates() -> Vec<PathBuf> {
+    vec![]
+}
+
+#[cfg(not(target_os = "wasi"))]
 fn sysroot_candidates() -> Vec<PathBuf> {
     let target = session::config::host_triple();
     let mut sysroot_candidates = vec![filesearch::get_or_default_sysroot()];
@@ -417,6 +426,7 @@ fn sysroot_candidates() -> Vec<PathBuf> {
     }
 }
 
+#[cfg(not(target_os = "wasi"))]
 pub fn get_codegen_sysroot(backend_name: &str) -> fn() -> Box<dyn CodegenBackend> {
     // For now we only allow this function to be called once as it'll dlopen a
     // few things, which seems to work best if we only do that once. In

@@ -13,7 +13,8 @@ doctest = false
 ena = "0.13.1"
 indexmap = "1"
 log = "0.4"
-jobserver_crate = { version = "0.1.13", package = "jobserver" }
+# 0.1.14 of jobserver is the first version with non unix and non windows fallback
+jobserver_crate = { version = "0.1.14", package = "jobserver" }
 lazy_static = "1"
 rustc_serialize = { path = "../libserialize", package = "serialize" }
 graphviz = { path = "../libgraphviz" }
