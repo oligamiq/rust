@@ -10,6 +10,7 @@ path = "lib.rs"
 test = false
 
 [dependencies]
+ar = "0.7.0"
 log = "0.4"
 punycode = "0.4.0"
 rustc-demangle = "0.1.16"
@@ -20,3 +21,4 @@ rustc = { path = "../librustc" }
 rustc_target = { path = "../librustc_target" }
 rustc_data_structures = { path = "../librustc_data_structures" }
 rustc_metadata = { path = "../librustc_metadata" }
+rustc_index = { path = "../librustc_index" }

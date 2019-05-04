@@ -69,28 +69,47 @@ impl<'mir, 'tcx, M: Machine<'mir, 'tcx>> InterpCx<'mir, 'tcx, M> {
                 ref destination,
                 ..
             } => {
+                dbg!(());
+
                 let (dest, ret) = match *destination {
                     Some((ref lv, target)) => (Some(self.eval_place(lv)?), Some(target)),
                     None => (None, None),
                 };
 
+                dbg!(());
+
                 let func = self.eval_operand(func, None)?;
+
+                dbg!(());
+
                 let (fn_val, abi) = match func.layout.ty.kind {
                     ty::FnPtr(sig) => {
+                        dbg!(());
                         let caller_abi = sig.abi();
+                        dbg!(());
                         let fn_ptr = self.read_scalar(func)?.not_undef()?;
+                        dbg!(());
                         let fn_val = self.memory.get_fn(fn_ptr)?;
+                        dbg!(());
                         (fn_val, caller_abi)
                     }
                     ty::FnDef(def_id, substs) => {
+                        dbg!(());
                         let sig = func.layout.ty.fn_sig(*self.tcx);
+                        dbg!(());
                         (FnVal::Instance(self.resolve(def_id, substs)?), sig.abi())
                     },
                     _ => {
                         bug!("invalid callee of type {:?}", func.layout.ty)
                     }
                 };
+
+                dbg!(());
+
                 let args = self.eval_operands(args)?;
+
+                dbg!(());
+
                 self.eval_fn_call(
                     fn_val,
                     terminator.source_info.span,

@@ -34,6 +34,8 @@ exclude = [
 # See issue https://github.com/rust-lang/rust/issues/52378
 [profile.release]
 opt-level = 2
+#debug = true
+
 [profile.bench]
 opt-level = 2
 
@@ -69,6 +71,11 @@ rustc-workspace-hack = { path = 'src/tools/rustc-workspace-hack' }
 rustc-std-workspace-core = { path = 'src/tools/rustc-std-workspace-core' }
 rustc-std-workspace-alloc = { path = 'src/tools/rustc-std-workspace-alloc' }
 rustc-std-workspace-std = { path = 'src/tools/rustc-std-workspace-std' }
+
+measureme = { path = "./measureme/measureme" }
+
+
+#target-lexicon = { path = "../target-lexicon" }
 
 [patch."https://github.com/rust-lang/rust-clippy"]
 clippy_lints = { path = "src/tools/clippy/clippy_lints" }

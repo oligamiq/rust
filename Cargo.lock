@@ -58,6 +58,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "approx"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08abcc3b4e9339e33a3d0a5ed15d84a687350c05689d825e0f6655eef9e76a94"
+
+[[package]]
+name = "ar"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c1afd66a96a235fa8eeec0ee757ec0d2c0db7cb89b4e04ae159f37952b97bd5"
+dependencies = [
+ "byteorder",
+]
+
+[[package]]
 name = "arc-swap"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -394,6 +409,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "cgmath"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "64a4b57c8f4e3a2e9ac07e0f6abc9c24b6fc9e1b54c3478cfb598f3d0023e51c"
+dependencies = [
+ "approx",
+ "num-traits 0.1.43",
+ "rand 0.4.6",
+]
+
+[[package]]
 name = "chalk-engine"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -419,7 +445,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "45912881121cb26fad7c38c17ba7daa18764771836b34fab7d3fbd93ed633878"
 dependencies = [
  "num-integer",
- "num-traits",
+ "num-traits 0.2.6",
  "time",
 ]
 
@@ -500,11 +526,12 @@ dependencies = [
 
 [[package]]
 name = "colored"
-version = "1.6.0"
+version = "1.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0aa3473e85a3161b59845d6096b289bb577874cafeaf75ea1b1beaa6572c7fc"
+checksum = "6cdb90b60f2927f8d76139c72dbde7e10c3a2bc47c8594c9c7a66529f2687c03"
 dependencies = [
- "lazy_static 0.2.11",
+ "lazy_static 1.3.0",
+ "winconsole",
 ]
 
 [[package]]
@@ -1955,8 +1982,6 @@ dependencies = [
 [[package]]
 name = "measureme"
 version = "0.3.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d09de7dafa3aa334bc806447c7e4de69419723312f4b88b80b561dea66601ce8"
 dependencies = [
  "byteorder",
  "memmap",
@@ -2132,11 +2157,32 @@ dependencies = [
  "getrandom",
  "hex 0.3.2",
  "log",
- "num-traits",
+ "num-traits 0.2.6",
  "rand 0.7.0",
+ "rustc",
  "rustc-workspace-hack",
+ "rustc_apfloat",
+ "rustc_codegen_ssa",
+ "rustc_codegen_utils",
+ "rustc_data_structures",
+ "rustc_errors",
+ "rustc_fs_util",
+ "rustc_incremental",
+ "rustc_lint",
+ "rustc_metadata",
+ "rustc_mir",
+ "rustc_passes",
+ "rustc_privacy",
+ "rustc_resolve",
+ "rustc_target",
+ "rustc_traits",
+ "rustc_typeck",
  "rustc_version",
+ "serialize",
  "shell-escape",
+ "syntax",
+ "syntax_ext",
+ "syntax_pos",
  "vergen",
 ]
 
@@ -2187,7 +2233,16 @@ version = "0.1.39"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e83d528d2677f0518c570baf2b7abdcf0cd2d248860b68507bdcb3e91d4c0cea"
 dependencies = [
- "num-traits",
+ "num-traits 0.2.6",
+]
+
+[[package]]
+name = "num-traits"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "92e5113e9fd4cc14ded8e499429f396a20f98c772a47cc8622a736e1ec843c31"
+dependencies = [
+ "num-traits 0.2.6",
 ]
 
 [[package]]
@@ -2674,6 +2729,19 @@ dependencies = [
 
 [[package]]
 name = "rand"
+version = "0.4.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "552840b97013b1a26992c11eac34bdd778e464601a4c2054b5f0bff7c6761293"
+dependencies = [
+ "fuchsia-cprng",
+ "libc",
+ "rand_core 0.3.0",
+ "rdrand",
+ "winapi 0.3.6",
+]
+
+[[package]]
+name = "rand"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ae9d223d52ae411a33cf7e54ec6034ec165df296ccd23533d671a28252b6f66a"
@@ -2944,6 +3012,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rgb"
+version = "0.8.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2089e4031214d129e201f8c3c8c2fe97cd7322478a0d1cdf78e7029b0042efdb"
+
+[[package]]
 name = "rle-decode-fast"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3087,7 +3161,6 @@ name = "rustc"
 version = "0.0.0"
 dependencies = [
  "arena",
- "backtrace",
  "bitflags",
  "byteorder",
  "chalk-engine",
@@ -3274,10 +3347,17 @@ dependencies = [
 name = "rustc-main"
 version = "0.0.0"
 dependencies = [
+ "env_logger 0.6.2",
+ "hex 0.3.2",
  "jemalloc-sys",
+ "log",
+ "miri",
+ "rustc",
  "rustc_codegen_ssa",
  "rustc_driver",
+ "rustc_interface",
  "rustc_target",
+ "syntax",
 ]
 
 [[package]]
@@ -3401,7 +3481,6 @@ dependencies = [
  "jobserver",
  "libc",
  "log",
- "memmap",
  "num_cpus",
  "rustc",
  "rustc_apfloat",
@@ -3422,11 +3501,13 @@ dependencies = [
 name = "rustc_codegen_utils"
 version = "0.0.0"
 dependencies = [
+ "ar",
  "log",
  "punycode",
  "rustc",
  "rustc-demangle",
  "rustc_data_structures",
+ "rustc_index",
  "rustc_metadata",
  "rustc_target",
  "syntax",
@@ -3605,9 +3686,7 @@ dependencies = [
 name = "rustc_metadata"
 version = "0.0.0"
 dependencies = [
- "flate2",
  "log",
- "memmap",
  "rustc",
  "rustc_data_structures",
  "rustc_errors",
@@ -4864,7 +4943,7 @@ checksum = "39ec24b3121d976906ece63c9daad25b85969647682eee313cb5779fdd69e14e"
 name = "unstable-book-gen"
 version = "0.1.0"
 dependencies = [
- "num-traits",
+ "num-traits 0.2.6",
  "tidy",
 ]
 
@@ -5051,6 +5130,18 @@ checksum = "561ed901ae465d6185fa7864d63fbd5720d0ef718366c9a4dc83cf6170d7e9ba"
 dependencies = [
  "winapi 0.3.6",
  "winapi-util",
+]
+
+[[package]]
+name = "winconsole"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3ef84b96d10db72dd980056666d7f1e7663ce93d82fa33b63e71c966f4cf5032"
+dependencies = [
+ "cgmath",
+ "lazy_static 1.3.0",
+ "rgb",
+ "winapi 0.3.6",
 ]
 
 [[package]]

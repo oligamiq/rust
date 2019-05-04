@@ -52,3 +52,4 @@ config.stamp
 Session.vim
 .cargo
 no_llvm_build
+/error_metadata
