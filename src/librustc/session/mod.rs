@@ -35,8 +35,6 @@ use crate::util::profiling::SelfProfiler;
 
 use rustc_target::spec::{PanicStrategy, RelroLevel, Target, TargetTriple};
 use rustc_data_structures::flock;
-use rustc_data_structures::jobserver;
-use ::jobserver::Client;
 
 use std;
 use std::cell::{self, Cell, RefCell};
@@ -150,10 +148,6 @@ pub struct Session {
     pub print_fuel_crate: Option<String>,
     /// Always set to zero and incremented so that we can print fuel expended by a crate.
     pub print_fuel: AtomicU64,
-
-    /// Loaded up early on in the initialization of this `Session` to avoid
-    /// false positives about a job server in our environment.
-    pub jobserver: Client,
 
     /// Metadata about the allocators for the current crate being compiled.
     pub has_global_allocator: Once<bool>,
@@ -1243,7 +1237,6 @@ fn build_session_(
         optimization_fuel,
         print_fuel_crate,
         print_fuel,
-        jobserver: jobserver::client(),
         has_global_allocator: Once::new(),
         has_panic_handler: Once::new(),
         driver_lint_caps,

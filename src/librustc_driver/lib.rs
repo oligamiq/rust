@@ -42,7 +42,6 @@ use rustc_metadata::locator;
 use rustc_metadata::cstore::CStore;
 use rustc_codegen_utils::codegen_backend::CodegenBackend;
 use rustc_interface::interface;
-use rustc_interface::util::get_codegen_sysroot;
 use rustc_data_structures::sync::SeqCst;
 
 use serialize::json::ToJson;
@@ -458,6 +457,11 @@ impl Compilation {
 #[derive(Copy, Clone)]
 pub struct RustcDefaultCalls;
 
+#[cfg(target_env = "wasi")]
+fn stdout_isatty() -> bool {
+    true
+}
+
 // FIXME remove these and use winapi 0.3 instead
 // Duplicates: bootstrap/compile.rs, librustc_errors/emitter.rs
 #[cfg(unix)]
@@ -729,7 +733,6 @@ pub fn version(binary: &str, matches: &getopts::Matches) {
         println!("commit-date: {}", unw(commit_date_str()));
         println!("host: {}", config::host_triple());
         println!("release: {}", unw(release_str()));
-        get_codegen_sysroot("llvm")().print_version();
     }
 }
 
@@ -1027,7 +1030,6 @@ pub fn handle_options(args: &[String]) -> Option<getopts::Matches> {
     }
 
     if cg_flags.iter().any(|x| *x == "passes=list") {
-        get_codegen_sysroot("llvm")().print_passes();
         return None;
     }
 
