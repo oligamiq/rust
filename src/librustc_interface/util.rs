@@ -272,7 +272,7 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
             filename if filename.contains(".") => {
                 load_backend_from_dylib(filename.as_ref())
             }
-            #[cfg(not(target_env = "wasi"))]
+            #[cfg(not(target_os = "wasi"))]
             codegen_name => get_codegen_sysroot(codegen_name),
             _ => panic!("unknown codegen backend {}", codegen_name),
         };
@@ -286,7 +286,7 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
     backend
 }
 
-#[cfg(not(target_env = "wasi"))]
+#[cfg(not(target_os = "wasi"))]
 pub fn get_codegen_sysroot(backend_name: &str) -> fn() -> Box<dyn CodegenBackend> {
     // For now we only allow this function to be called once as it'll dlopen a
     // few things, which seems to work best if we only do that once. In

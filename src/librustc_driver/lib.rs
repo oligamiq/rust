@@ -457,7 +457,7 @@ impl Compilation {
 #[derive(Copy, Clone)]
 pub struct RustcDefaultCalls;
 
-#[cfg(target_env = "wasi")]
+#[cfg(target_os = "wasi")]
 fn stdout_isatty() -> bool {
     true
 }
