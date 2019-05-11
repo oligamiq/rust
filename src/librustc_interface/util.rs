@@ -171,13 +171,13 @@ pub fn spawn_thread_pool<F: FnOnce() -> R + Send, R: Send>(
     stderr: &Option<Arc<Mutex<Vec<u8>>>>,
     f: F,
 ) -> R {
-    let mut cfg = thread::Builder::new().name("rustc".to_string());
+    /*let mut cfg = thread::Builder::new().name("rustc".to_string());
 
     if let Some(size) = get_stack_size() {
         cfg = cfg.stack_size(size);
     }
 
-    scoped_thread(cfg, || {
+    scoped_thread(cfg, || {*/
         syntax::with_globals( || {
             ty::tls::GCX_PTR.set(&Lock::new(0), || {
                 if let Some(stderr) = stderr {
@@ -186,7 +186,7 @@ pub fn spawn_thread_pool<F: FnOnce() -> R + Send, R: Send>(
                 ty::tls::with_thread_locals(|| f())
             })
         })
-    })
+    //})
 }
 
 #[cfg(parallel_compiler)]

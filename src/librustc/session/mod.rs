@@ -1183,9 +1183,7 @@ fn build_session_(
     let print_fuel = AtomicU64::new(0);
 
     let working_dir = env::current_dir().unwrap_or_else(|e|
-        p_s.span_diagnostic
-            .fatal(&format!("Current directory is invalid: {}", e))
-            .raise()
+        PathBuf::from(".")
     );
     let working_dir = file_path_mapping.map_prefix(working_dir);
 
