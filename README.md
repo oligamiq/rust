@@ -6,12 +6,12 @@ $ rustup toolchain add wasm32-unknown-wasi
 $ cd src/rustc
 $ CFG_COMPILER_HOST_TRIPLE="wasm32-unknown-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-unknown-wasi --release
 
-$ wasmtime ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm
-# or
-$ wasmer run ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm --backend singlepass -- example.rs $(rustc --print sysroot)
+$ wasmtime --dir . --dir $(rustc --print sysroot) ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm -- example.rs --sysroot $(rustc --print sysroot) -Zcodegen-backend=cranelift --target x86_64-apple-darwin
 ```
 
 > Compilation in debug mode is currently broken. See https://github.com/rust-lang/rust/issues/60540.
+>
+> Using wasmer fails to load libstd from sysroot.
 
 
 # The Rust Programming Language

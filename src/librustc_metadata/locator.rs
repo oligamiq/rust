@@ -478,7 +478,10 @@ impl<'a> Context<'a> {
         // of the crate id (path/name/id).
         //
         // The goal of this step is to look at as little metadata as possible.
+        println!("filesearch: {:?}", self.filesearch);
         self.filesearch.search(|path, kind| {
+            println!("filesearch found {:?} {:?}", kind, path);
+
             let file = match path.file_name().and_then(|s| s.to_str()) {
                 None => return FileDoesntMatch,
                 Some(file) => file,
@@ -506,20 +509,16 @@ impl<'a> Context<'a> {
             let hash_str = hash.to_string();
             let slot = candidates.entry(hash_str).or_default();
             let (ref mut rlibs, ref mut rmetas, ref mut dylibs) = *slot;
-            fs::canonicalize(path)
-                .map(|p| {
-                    if seen_paths.contains(&p) {
-                        return FileDoesntMatch
-                    };
-                    seen_paths.insert(p.clone());
-                    match found_kind {
-                        CrateFlavor::Rlib => { rlibs.insert(p, kind); }
-                        CrateFlavor::Rmeta => { rmetas.insert(p, kind); }
-                        CrateFlavor::Dylib => { dylibs.insert(p, kind); }
-                    }
-                    FileMatches
-                })
-                .unwrap_or(FileDoesntMatch)
+            if seen_paths.contains(path) {
+                return FileDoesntMatch
+            };
+            seen_paths.insert(path.to_owned());
+            match found_kind {
+                CrateFlavor::Rlib => { rlibs.insert(path.to_owned(), kind); }
+                CrateFlavor::Rmeta => { rmetas.insert(path.to_owned(), kind); }
+                CrateFlavor::Dylib => { dylibs.insert(path.to_owned(), kind); }
+            }
+            FileMatches
         });
         self.rejected_via_kind.extend(staticlibs);
 
@@ -596,6 +595,7 @@ impl<'a> Context<'a> {
                    flavor: CrateFlavor,
                    slot: &mut Option<(Svh, MetadataBlob)>)
                    -> Option<(PathBuf, PathKind)> {
+        println!("{:?}", m);
         let mut ret: Option<(PathBuf, PathKind)> = None;
         let mut error = 0;
 
@@ -620,12 +620,12 @@ impl<'a> Context<'a> {
                         if let Some(h) = self.crate_matches(&blob, &lib) {
                             (h, blob)
                         } else {
-                            info!("metadata mismatch");
+                            self.sess.warn("metadata mismatch");
                             continue;
                         }
                     }
                     Err(err) => {
-                        warn!("no metadata found: {}", err);
+                        self.sess.warn(&format!("no metadata found: {}", err));
                         continue;
                     }
                 };
@@ -702,6 +702,9 @@ impl<'a> Context<'a> {
         let rustc_version = rustc_version();
         let found_version = metadata.get_rustc_version();
         if found_version != rustc_version {
+            println!("Rejecting via version: expected {} got {}", rustc_version, found_version);
+        }
+        /*if found_version != rustc_version {
             info!("Rejecting via version: expected {} got {}",
                   rustc_version,
                   found_version);
@@ -710,7 +713,7 @@ impl<'a> Context<'a> {
                 got: found_version,
             });
             return None;
-        }
+        }*/
 
         let root = metadata.get_root();
         if let Some(is_proc_macro) = self.is_proc_macro {
