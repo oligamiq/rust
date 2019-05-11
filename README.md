@@ -1,12 +1,22 @@
 Attempt to build rustc for wasm.
 
 ```bash
+# Setup rustc
 $ rustup override set nightly
 $ rustup toolchain add wasm32-unknown-wasi
+
+# Clone patched miri
+$ pushd ../
+$ git clone https://github.com/bjorn3/miri.git --branch wasi_rustc
+$ cargo run --bin cargo-miri -- miri setup
+$ popd
+
+# Compile rustc
 $ cd src/rustc
 $ CFG_COMPILER_HOST_TRIPLE="wasm32-unknown-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-unknown-wasi --release
 
-$ wasmtime --dir . --dir $(rustc --print sysroot) ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm -- example.rs --sysroot $(rustc --print sysroot) -Zcodegen-backend=cranelift --target x86_64-apple-darwin
+# Run it
+$ wasmtime --dir . --dir $MIRI_SYSROOT ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm -- example.rs --sysroot $MIRI_SYSROOT -Zcodegen-backend=metadata_only --target x86_64-unknown-linux
 ```
 
 > Compilation in debug mode is currently broken. See https://github.com/rust-lang/rust/issues/60540.

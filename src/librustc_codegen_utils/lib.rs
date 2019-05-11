@@ -27,6 +27,7 @@ use syntax::symbol::sym;
 
 pub mod link;
 pub mod codegen_backend;
+pub mod symbol_export;
 pub mod symbol_names;
 pub mod symbol_names_test;
 

@@ -272,7 +272,10 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
             filename if filename.contains(".") => {
                 load_backend_from_dylib(filename.as_ref())
             }
-            "cranelift" => rustc_codegen_cranelift::__rustc_codegen_backend,
+            "metadata_only" => || {
+                Box::new(rustc_codegen_utils::codegen_backend::MetadataOnlyCodegenBackend) as Box<dyn CodegenBackend>
+            },
+            //"cranelift" => rustc_codegen_cranelift::__rustc_codegen_backend,
             #[cfg(not(target_os = "wasi"))]
             codegen_name => get_codegen_sysroot(codegen_name),
             _ => panic!("unknown codegen backend {}", codegen_name),
