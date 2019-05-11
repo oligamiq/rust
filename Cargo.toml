@@ -73,7 +73,7 @@ rustc-std-workspace-std = { path = 'src/tools/rustc-std-workspace-std' }
 measureme = { path = "./measureme/measureme" }
 
 
-target-lexicon = { path = "../target-lexicon" }
+#target-lexicon = { path = "../target-lexicon" }
 
 [patch."https://github.com/rust-lang/rust-clippy"]
 clippy_lints = { path = "src/tools/clippy/clippy_lints" }
