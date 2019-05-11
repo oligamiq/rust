@@ -140,7 +140,7 @@ fn reachable_non_generics_provider<'a, 'tcx>(tcx: TyCtxt<'a, 'tcx, 'tcx>,
             } else {
                 symbol_export_level(tcx, def_id)
             };
-            debug!("EXPORTED SYMBOL (local): {} ({:?})",
+            log::debug!("EXPORTED SYMBOL (local): {} ({:?})",
                    tcx.symbol_name(Instance::mono(tcx, def_id)),
                    export_level);
             (def_id, export_level)
