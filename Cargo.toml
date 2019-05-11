@@ -69,5 +69,8 @@ rustc-workspace-hack = { path = 'src/tools/rustc-workspace-hack' }
 rustc-std-workspace-core = { path = 'src/tools/rustc-std-workspace-core' }
 rustc-std-workspace-alloc = { path = 'src/tools/rustc-std-workspace-alloc' }
 
+
+target-lexicon = { path = "../target-lexicon" }
+
 [patch."https://github.com/rust-lang/rust-clippy"]
 clippy_lints = { path = "src/tools/clippy/clippy_lints" }
