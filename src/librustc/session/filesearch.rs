@@ -129,6 +129,11 @@ pub fn get_or_default_sysroot() -> PathBuf {
         })
     }
 
+    #[cfg(target_os = "wasi")]
+    {
+        panic!("get_or_default_sysroot");
+    }
+
     match env::current_exe() {
         Ok(exe) => {
             match canonicalize(Some(exe)) {

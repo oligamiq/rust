@@ -4,9 +4,14 @@ Attempt to build rustc for wasm.
 $ rustup override set nightly
 $ rustup toolchain add wasm32-unknown-wasi
 $ cd src/rustc
-$ CFG_COMPILER_HOST_TRIPLE="wasm32-unknown-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-unknown-wasi
-$ wasmtime ../../target/wasm32-unknown-wasi/debug/rustc_binary.wasm
+$ CFG_COMPILER_HOST_TRIPLE="wasm32-unknown-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-unknown-wasi --release
+
+$ wasmtime ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm
+# or
+$ wasmer run ../../target/wasm32-unknown-wasi/release/rustc_binary.wasm --backend singlepass -- example.rs $(rustc --print sysroot)
 ```
+
+> Compilation in debug mode is currently broken. See https://github.com/rust-lang/rust/issues/60540.
 
 
 # The Rust Programming Language
