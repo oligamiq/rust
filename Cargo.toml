@@ -34,6 +34,8 @@ exclude = [
 # See issue https://github.com/rust-lang/rust/issues/52378
 [profile.release]
 opt-level = 2
+debug = true
+
 [profile.bench]
 opt-level = 2
 
