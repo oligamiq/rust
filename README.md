@@ -1,15 +1,9 @@
 Attempt to build rustc for wasm.
 
 ```bash
-# Setup rustc
+# Setup rust compiler
 $ rustup override set nightly
 $ rustup toolchain add wasm32-unknown-wasi
-
-# Clone patched miri
-$ pushd ../
-$ git clone https://github.com/bjorn3/miri.git --branch wasi_rustc
-$ cargo run --bin cargo-miri -- miri setup
-$ popd
 
 # Compile rustc
 $ cd src/rustc
