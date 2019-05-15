@@ -91,6 +91,8 @@ extern crate serialize as rustc_serialize;
 // Note that librustc doesn't actually depend on these crates, see the note in
 // `Cargo.toml` for this crate about why these are here.
 #[allow(unused_extern_crates)]
+extern crate flate2;
+#[allow(unused_extern_crates)]
 extern crate test;
 
 #[macro_use]

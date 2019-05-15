@@ -29,11 +29,13 @@ errors = { path = "../librustc_errors", package = "rustc_errors" }
 serialize = { path = "../libserialize" }
 syntax = { path = "../libsyntax" }
 syntax_pos = { path = "../libsyntax_pos" }
+backtrace = "0.3.3"
 parking_lot = "0.7"
 byteorder = { version = "1.1", features = ["i128"]}
 chalk-engine = { version = "0.9.0", default-features=false }
 rustc_fs_util = { path = "../librustc_fs_util" }
 smallvec = { version = "0.6.7", features = ["union", "may_dangle"] }
+measureme = { git = "https://github.com/rust-lang/measureme", rev = "582b99b5c6c03411076a3c8950630fff380a799a" }
 
 # Note that these dependencies are a lie, they're just here to get linkage to
 # work.
@@ -62,4 +64,5 @@ smallvec = { version = "0.6.7", features = ["union", "may_dangle"] }
 # tl;dr; this is not needed to get `rustc` to compile, but if you remove it then
 #        later crate stop compiling. If you can remove this and everything
 #        compiles, then please feel free to do so!
+flate2 = "1.0"
 tempfile = "3.0"
