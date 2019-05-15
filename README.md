@@ -11,11 +11,12 @@ $ CFG_COMPILER_HOST_TRIPLE="wasm32-unknown-wasi" RUSTC_ERROR_METADATA_DST="./err
 
 # Run it
 $ wasmtime --dir . --dir $MIRI_SYSROOT ../../target/wasm32-wasi/release/rustc_binary.wasm -- example.rs --sysroot $MIRI_SYSROOT -Zcodegen-backend=metadata_only --target x86_64-unknown-linux-gnu
+
+# Wasmer currently fails to load libstd from sysroot. (https://github.com/CraneStation/wasmtime/issues/144)
+$ wasmer run ../../target/wasm32-wasi/release/rustc_binary.wasm --backend singlepass --dir . --dir $MIRI_SYSROOT -- example.rs --sysroot $MIRI_SYSROOT -Zcodegen-backend=metadata_only --target x86_64-unknown-linux-gnu
 ```
 
 > Compilation in debug mode is currently broken. See https://github.com/rust-lang/rust/issues/60540.
->
-> Using wasmer fails to load libstd from sysroot.
 
 
 # The Rust Programming Language
