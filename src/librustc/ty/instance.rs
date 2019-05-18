@@ -248,18 +248,26 @@ impl<'a, 'b, 'tcx> Instance<'tcx> {
                    param_env: ty::ParamEnv<'tcx>,
                    def_id: DefId,
                    substs: SubstsRef<'tcx>) -> Option<Instance<'tcx>> {
+        dbg!(());
         debug!("resolve(def_id={:?}, substs={:?})", def_id, substs);
+        dbg!(());
         let result = if let Some(trait_def_id) = tcx.trait_of_item(def_id) {
+            dbg!(());
             debug!(" => associated item, attempting to find impl in param_env {:#?}", param_env);
+            dbg!(());
             let item = tcx.associated_item(def_id);
+            dbg!(());
             resolve_associated_item(tcx, &item, param_env, trait_def_id, substs)
         } else {
+            dbg!(());
             let ty = tcx.type_of(def_id);
+            dbg!(());
             let item_type = tcx.subst_and_normalize_erasing_regions(
                 substs,
                 param_env,
                 &ty,
             );
+            dbg!(());
 
             let def = match item_type.sty {
                 ty::FnDef(..) if {
@@ -269,29 +277,40 @@ impl<'a, 'b, 'tcx> Instance<'tcx> {
                 } =>
                 {
                     debug!(" => intrinsic");
+                    dbg!(());
                     ty::InstanceDef::Intrinsic(def_id)
                 }
                 _ => {
+                    dbg!(());
                     if Some(def_id) == tcx.lang_items().drop_in_place_fn() {
+                        dbg!(());
                         let ty = substs.type_at(0);
+                        dbg!(());
                         if ty.needs_drop(tcx, ty::ParamEnv::reveal_all()) {
+                            dbg!(());
                             debug!(" => nontrivial drop glue");
+                            dbg!(());
                             ty::InstanceDef::DropGlue(def_id, Some(ty))
                         } else {
+                            dbg!(());
                             debug!(" => trivial drop glue");
+                            dbg!(());
                             ty::InstanceDef::DropGlue(def_id, None)
                         }
                     } else {
                         debug!(" => free item");
+                        dbg!(());
                         ty::InstanceDef::Item(def_id)
                     }
                 }
             };
+            dbg!(());
             Some(Instance {
                 def: def,
                 substs: substs
             })
         };
+        dbg!(());
         debug!("resolve(def_id={:?}, substs={:?}) = {:?}", def_id, substs, result);
         result
     }
@@ -346,6 +365,7 @@ fn resolve_associated_item<'a, 'tcx>(
     trait_id: DefId,
     rcvr_substs: SubstsRef<'tcx>,
 ) -> Option<Instance<'tcx>> {
+    dbg!(());
     let def_id = trait_item.def_id;
     debug!("resolve_associated_item(trait_item={:?}, \
             param_env={:?}, \
@@ -353,49 +373,64 @@ fn resolve_associated_item<'a, 'tcx>(
             rcvr_substs={:?})",
             def_id, param_env, trait_id, rcvr_substs);
 
+    dbg!(());
     let trait_ref = ty::TraitRef::from_method(tcx, trait_id, rcvr_substs);
+    dbg!(());
     let vtbl = tcx.codegen_fulfill_obligation((param_env, ty::Binder::bind(trait_ref)));
 
     // Now that we know which impl is being used, we can dispatch to
     // the actual function:
+    dbg!(());
     match vtbl {
         traits::VtableImpl(impl_data) => {
+            dbg!(());
             let (def_id, substs) = traits::find_associated_item(
                 tcx, param_env, trait_item, rcvr_substs, &impl_data);
+            dbg!(());
             let substs = tcx.erase_regions(&substs);
+            dbg!(());
             Some(ty::Instance::new(def_id, substs))
         }
         traits::VtableGenerator(generator_data) => {
+            dbg!(());
             Some(Instance {
                 def: ty::InstanceDef::Item(generator_data.generator_def_id),
                 substs: generator_data.substs.substs
             })
         }
         traits::VtableClosure(closure_data) => {
+            dbg!(());
             let trait_closure_kind = tcx.lang_items().fn_trait_kind(trait_id).unwrap();
+            dbg!(());
             Some(Instance::resolve_closure(tcx, closure_data.closure_def_id, closure_data.substs,
                                            trait_closure_kind))
         }
         traits::VtableFnPointer(ref data) => {
+            dbg!(());
             Some(Instance {
                 def: ty::InstanceDef::FnPtrShim(trait_item.def_id, data.fn_ty),
                 substs: rcvr_substs
             })
         }
         traits::VtableObject(ref data) => {
+            dbg!(());
             let index = tcx.get_vtable_index_of_object_method(data, def_id);
+            dbg!(());
             Some(Instance {
                 def: ty::InstanceDef::Virtual(def_id, index),
                 substs: rcvr_substs
             })
         }
         traits::VtableBuiltin(..) => {
+            dbg!(());
             if tcx.lang_items().clone_trait().is_some() {
+                dbg!(());
                 Some(Instance {
                     def: ty::InstanceDef::CloneShim(def_id, trait_ref.self_ty()),
                     substs: rcvr_substs
                 })
             } else {
+                dbg!(());
                 None
             }
         }

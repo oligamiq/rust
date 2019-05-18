@@ -258,7 +258,7 @@ pub fn register_plugins<'a>(
 
     let disambiguator = util::compute_crate_disambiguator(sess);
     sess.crate_disambiguator.set(disambiguator);
-    rustc_incremental::prepare_session_directory(sess, &crate_name, disambiguator);
+    //rustc_incremental::prepare_session_directory(sess, &crate_name, disambiguator);
 
     if sess.opts.incremental.is_some() {
         time(sess, "garbage collect incremental cache directory", || {

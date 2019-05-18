@@ -735,6 +735,8 @@ impl<'a, 'mir, 'tcx, M: Machine<'a, 'mir, 'tcx>> Memory<'a, 'mir, 'tcx, M> {
             .get_bytes_mut(&tcx, dest, size * length)?
             .as_mut_ptr();
 
+        println!("Before unsafe");
+
         // SAFE: The above indexing would have panicked if there weren't at least `size` bytes
         // behind `src` and `dest`. Also, we use the overlapping-safe `ptr::copy` if `src` and
         // `dest` could possibly overlap.
@@ -766,6 +768,8 @@ impl<'a, 'mir, 'tcx, M: Machine<'a, 'mir, 'tcx>> Memory<'a, 'mir, 'tcx, M> {
                 }
             }
         }
+
+        println!("After unsafe");
 
         // copy definedness to the destination
         self.copy_undef_mask(src, dest, size, length)?;

@@ -69,29 +69,50 @@ impl<'a, 'mir, 'tcx, M: Machine<'a, 'mir, 'tcx>> InterpretCx<'a, 'mir, 'tcx, M> 
                 ref destination,
                 ..
             } => {
+                dbg!(());
+
                 let (dest, ret) = match *destination {
                     Some((ref lv, target)) => (Some(self.eval_place(lv)?), Some(target)),
                     None => (None, None),
                 };
 
+                dbg!(());
+
                 let func = self.eval_operand(func, None)?;
+
+                dbg!(());
+
                 let (fn_def, abi) = match func.layout.ty.sty {
                     ty::FnPtr(sig) => {
+                        dbg!(());
                         let caller_abi = sig.abi();
+                        dbg!(());
                         let fn_ptr = self.read_scalar(func)?.to_ptr()?;
+                        dbg!(());
                         let instance = self.memory.get_fn(fn_ptr)?;
+                        dbg!(());
                         (instance, caller_abi)
                     }
                     ty::FnDef(def_id, substs) => {
+                        dbg!(());
                         let sig = func.layout.ty.fn_sig(*self.tcx);
+                        dbg!(());
                         (self.resolve(def_id, substs)?, sig.abi())
                     },
                     _ => {
+                        dbg!(());
                         let msg = format!("can't handle callee of type {:?}", func.layout.ty);
+                        dbg!(());
                         return err!(Unimplemented(msg));
                     }
                 };
+
+                dbg!(());
+
                 let args = self.eval_operands(args)?;
+
+                dbg!(());
+
                 self.eval_fn_call(
                     fn_def,
                     terminator.source_info.span,

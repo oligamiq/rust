@@ -968,9 +968,9 @@ pub(super) struct CurrentDepGraph {
 
 impl CurrentDepGraph {
     fn new(prev_graph_node_count: usize) -> CurrentDepGraph {
-        use std::time::{SystemTime, UNIX_EPOCH};
-
-        let duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        //use std::time::{SystemTime, UNIX_EPOCH};
+        //let duration = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+        let duration = std::time::Duration::from_secs(0);
         let nanos = duration.as_secs() * 1_000_000_000 +
                     duration.subsec_nanos() as u64;
         let mut stable_hasher = StableHasher::new();

@@ -23,22 +23,25 @@ pub fn codegen_fulfill_obligation<'a, 'tcx>(ty: TyCtxt<'a, 'tcx, 'tcx>,
                                           (ty::ParamEnv<'tcx>, ty::PolyTraitRef<'tcx>))
                                           -> Vtable<'tcx, ()>
 {
+    dbg!(());
     // Remove any references to regions; this helps improve caching.
     let trait_ref = ty.erase_regions(&trait_ref);
-
+dbg!(());
     debug!("codegen_fulfill_obligation(trait_ref={:?}, def_id={:?})",
         (param_env, trait_ref), trait_ref.def_id());
-
+dbg!(());
     // Do the initial selection for the obligation. This yields the
     // shallow result we are looking for -- that is, what specific impl.
     ty.infer_ctxt().enter(|infcx| {
+        dbg!(());
         let mut selcx = SelectionContext::new(&infcx);
-
+dbg!(());
         let obligation_cause = ObligationCause::dummy();
+        dbg!(());
         let obligation = Obligation::new(obligation_cause,
                                          param_env,
                                          trait_ref.to_poly_trait_predicate());
-
+dbg!(());
         let selection = match selcx.select(&obligation) {
             Ok(Some(selection)) => selection,
             Ok(None) => {
@@ -58,17 +61,21 @@ pub fn codegen_fulfill_obligation<'a, 'tcx>(ty: TyCtxt<'a, 'tcx, 'tcx>,
         };
 
         debug!("fulfill_obligation: selection={:?}", selection);
-
+dbg!(());
         // Currently, we use a fulfillment context to completely resolve
         // all nested obligations. This is because they can inform the
         // inference of the impl's type parameters.
         let mut fulfill_cx = FulfillmentContext::new();
+        dbg!(());
         let vtable = selection.map(|predicate| {
             debug!("fulfill_obligation: register_predicate_obligation {:?}", predicate);
+            dbg!(());
             fulfill_cx.register_predicate_obligation(&infcx, predicate);
+            dbg!(());
         });
+        dbg!(());
         let vtable = infcx.drain_fulfillment_cx_or_panic(&mut fulfill_cx, &vtable);
-
+dbg!(());
         info!("Cache miss: {:?} => {:?}", trait_ref, vtable);
         vtable
     })

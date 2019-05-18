@@ -213,24 +213,24 @@ impl SelfProfiler {
     }
 
     #[inline]
-    fn record(&self, event_id: &str, event_kind: StringId, timestamp_kind: TimestampKind) {
-        let thread_id = thread_id_to_u64(std::thread::current().id());
+    fn record(&self, _event_id: &str, _event_kind: StringId, _timestamp_kind: TimestampKind) {
+        /*let thread_id = thread_id_to_u64(std::thread::current().id());
 
         let event_id = self.profiler.alloc_string(event_id);
-        self.profiler.record_event(event_kind, event_id, thread_id, timestamp_kind);
+        self.profiler.record_event(event_kind, event_id, thread_id, timestamp_kind);*/
     }
 
     #[inline]
     fn record_query(
         &self,
-        query_name: QueryName,
-        event_kind: StringId,
-        timestamp_kind: TimestampKind,
+        _query_name: QueryName,
+        _event_kind: StringId,
+        _timestamp_kind: TimestampKind,
     ) {
-        let dep_node_name = SelfProfiler::get_query_name_string_id(query_name);
+        /*let dep_node_name = SelfProfiler::get_query_name_string_id(query_name);
 
         let thread_id = thread_id_to_u64(std::thread::current().id());
 
-        self.profiler.record_event(event_kind, dep_node_name, thread_id, timestamp_kind);
+        self.profiler.record_event(event_kind, dep_node_name, thread_id, timestamp_kind);*/
     }
 }

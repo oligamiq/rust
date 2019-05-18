@@ -271,10 +271,14 @@ impl<'a, 'mir, 'tcx: 'mir, M: Machine<'a, 'mir, 'tcx>> InterpretCx<'a, 'mir, 'tc
         def_id: DefId,
         substs: SubstsRef<'tcx>
     ) -> EvalResult<'tcx, ty::Instance<'tcx>> {
+        dbg!(());
         trace!("resolve: {:?}, {:#?}", def_id, substs);
         trace!("param_env: {:#?}", self.param_env);
+        dbg!(());
         let substs = self.subst_and_normalize_erasing_regions(substs)?;
+        dbg!(());
         trace!("substs: {:#?}", substs);
+        dbg!(());
         ty::Instance::resolve(
             *self.tcx,
             self.param_env,

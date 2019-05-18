@@ -603,27 +603,39 @@ impl<'cx, 'gcx, 'tcx> SelectionContext<'cx, 'gcx, 'tcx> {
         debug!("select({:?})", obligation);
         debug_assert!(!obligation.predicate.has_escaping_bound_vars());
 
+        dbg!(());
+
         let stack = self.push_stack(TraitObligationStackList::empty(), obligation);
+
+        dbg!(());
 
         let candidate = match self.candidate_from_obligation(&stack) {
             Err(SelectionError::Overflow) => {
                 // In standard mode, overflow must have been caught and reported
                 // earlier.
+                dbg!(());
                 assert!(self.query_mode == TraitQueryMode::Canonical);
+                dbg!(());
                 return Err(SelectionError::Overflow);
             }
             Err(e) => {
+                dbg!(());
                 return Err(e);
             }
             Ok(None) => {
+                dbg!(());
                 return Ok(None);
             }
             Ok(Some(candidate)) => candidate,
         };
 
+        dbg!(());
+
         match self.confirm_candidate(obligation, candidate) {
             Err(SelectionError::Overflow) => {
+                dbg!(());
                 assert!(self.query_mode == TraitQueryMode::Canonical);
+                dbg!(());
                 Err(SelectionError::Overflow)
             }
             Err(e) => Err(e),
@@ -2752,56 +2764,80 @@ impl<'cx, 'gcx, 'tcx> SelectionContext<'cx, 'gcx, 'tcx> {
 
         match candidate {
             BuiltinCandidate { has_nested } => {
+                dbg!(());
                 let data = self.confirm_builtin_candidate(obligation, has_nested);
+                dbg!(());
                 Ok(VtableBuiltin(data))
             }
 
             ParamCandidate(param) => {
+                dbg!(());
                 let obligations = self.confirm_param_candidate(obligation, param);
+                dbg!(());
                 Ok(VtableParam(obligations))
             }
 
-            ImplCandidate(impl_def_id) => Ok(VtableImpl(self.confirm_impl_candidate(
-                obligation,
-                impl_def_id,
-            ))),
+            ImplCandidate(impl_def_id) => {
+                dbg!(());
+                let res = VtableImpl(self.confirm_impl_candidate(
+                    obligation,
+                    impl_def_id,
+                ));
+                dbg!(());
+                Ok(res)
+            },
 
             AutoImplCandidate(trait_def_id) => {
+                dbg!(());
                 let data = self.confirm_auto_impl_candidate(obligation, trait_def_id);
+                dbg!(());
                 Ok(VtableAutoImpl(data))
             }
 
             ProjectionCandidate => {
+                dbg!(());
                 self.confirm_projection_candidate(obligation);
+                dbg!(());
                 Ok(VtableParam(Vec::new()))
             }
 
             ClosureCandidate => {
+                dbg!(());
                 let vtable_closure = self.confirm_closure_candidate(obligation)?;
+                dbg!(());
                 Ok(VtableClosure(vtable_closure))
             }
 
             GeneratorCandidate => {
+                dbg!(());
                 let vtable_generator = self.confirm_generator_candidate(obligation)?;
+                dbg!(());
                 Ok(VtableGenerator(vtable_generator))
             }
 
             FnPointerCandidate => {
+                dbg!(());
                 let data = self.confirm_fn_pointer_candidate(obligation)?;
+                dbg!(());
                 Ok(VtableFnPointer(data))
             }
 
             TraitAliasCandidate(alias_def_id) => {
+                dbg!(());
                 let data = self.confirm_trait_alias_candidate(obligation, alias_def_id);
+                dbg!(());
                 Ok(VtableTraitAlias(data))
             }
 
             ObjectCandidate => {
+                dbg!(());
                 let data = self.confirm_object_candidate(obligation);
+                dbg!(());
                 Ok(VtableObject(data))
             }
 
             BuiltinObjectCandidate => {
+                dbg!(());
                 // This indicates something like `(Trait+Send) :
                 // Send`. In this case, we know that this holds
                 // because that's what the object type is telling us,
@@ -2811,7 +2847,9 @@ impl<'cx, 'gcx, 'tcx> SelectionContext<'cx, 'gcx, 'tcx> {
             }
 
             BuiltinUnsizeCandidate => {
+                dbg!(());
                 let data = self.confirm_builtin_unsize_candidate(obligation)?;
+                dbg!(());
                 Ok(VtableBuiltin(data))
             }
         }

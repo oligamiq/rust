@@ -88,8 +88,8 @@ impl rustc_driver::Callbacks for MiriCompilerCalls {
 }
 
 fn init_early_loggers() {
-    env::set_var("MIRI_LOG", "trace");
-    env::set_var("RUSTC_LOG", "trace");
+    //env::set_var("MIRI_LOG", "trace");
+    //env::set_var("RUSTC_LOG", "trace");
     env::set_var("MIRI_BACKTRACE", "1");
     // Note that our `extern crate log` is *not* the same as rustc's; as a result, we have to
     // initialize them both, and we always initialize `miri`'s first.
