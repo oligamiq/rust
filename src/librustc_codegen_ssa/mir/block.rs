@@ -480,12 +480,28 @@ impl<'a, 'tcx, Bx: BuilderMethods<'a, 'tcx>> FunctionCx<'a, 'tcx, Bx> {
         };
         let def = instance.map(|i| i.def);
 
-        if let Some(ty::InstanceDef::DropGlue(_, None)) = def {
-            // Empty drop glue; a no-op.
-            let &(_, target) = destination.as_ref().unwrap();
-            helper.maybe_sideeffect(self.mir, &mut bx, &[target]);
-            helper.funclet_br(self, &mut bx, target);
-            return;
+        match def {
+            Some(ty::InstanceDef::DropGlue(_, None)) => {
+                // Empty drop glue; a no-op.
+                let &(_, target) = destination.as_ref().unwrap();
+                helper.maybe_sideeffect(self.mir, &mut bx, &[target]);
+                helper.funclet_br(self, &mut bx, target);
+                return;
+            }
+            Some(ty::InstanceDef::Intrinsic(def_id)) => {
+                let intrinsic = bx.tcx().item_name(def_id).as_str();
+                match intrinsic.as_ref() {
+                    // For normal codegen, this Miri-specific intrinsic is just a NOP.
+                    "miri_start_panic" => {
+                        let target = destination.as_ref().unwrap().1;
+                        helper.maybe_sideeffect(self.mir, &mut bx, &[target]);
+                        helper.funclet_br(self, &mut bx, target);
+                        return;
+                    }
+                    _ => {}
+                }
+            }
+            _ => {}
         }
 
         // FIXME(eddyb) avoid computing this if possible, when `instance` is
@@ -529,14 +545,6 @@ impl<'a, 'tcx, Bx: BuilderMethods<'a, 'tcx>> FunctionCx<'a, 'tcx, Bx> {
                 assert_eq!(fn_abi.ret.layout.abi, layout::Abi::Uninhabited);
                 bx.unreachable();
             }
-            return;
-        }
-
-        // For normal codegen, this Miri-specific intrinsic is just a NOP.
-        if intrinsic == Some("miri_start_panic") {
-            let target = destination.as_ref().unwrap().1;
-            helper.maybe_sideeffect(self.mir, &mut bx, &[target]);
-            helper.funclet_br(self, &mut bx, target);
             return;
         }
 
