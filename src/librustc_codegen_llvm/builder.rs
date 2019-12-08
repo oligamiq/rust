@@ -53,6 +53,7 @@ impl BackendTypes for Builder<'_, 'll, 'tcx> {
     type Value = <CodegenCx<'ll, 'tcx> as BackendTypes>::Value;
     type Function = <CodegenCx<'ll, 'tcx> as BackendTypes>::Function;
     type BasicBlock = <CodegenCx<'ll, 'tcx> as BackendTypes>::BasicBlock;
+    type CallInst = <CodegenCx<'ll, 'tcx> as BackendTypes>::CallInst;
     type Type = <CodegenCx<'ll, 'tcx> as BackendTypes>::Type;
     type Funclet = <CodegenCx<'ll, 'tcx> as BackendTypes>::Funclet;
 
@@ -213,7 +214,7 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
         then: &'ll BasicBlock,
         catch: &'ll BasicBlock,
         funclet: Option<&Funclet<'ll>>,
-    ) -> &'ll Value {
+    ) -> (&'ll Value, &'ll Value) {
 
         debug!("invoke {:?} with args ({:?})",
                llfn,
@@ -223,7 +224,7 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
         let bundle = funclet.map(|funclet| funclet.bundle());
         let bundle = bundle.as_ref().map(|b| &*b.raw);
 
-        unsafe {
+        let ret_value = unsafe {
             llvm::LLVMRustBuildInvoke(self.llbuilder,
                                       llfn,
                                       args.as_ptr(),
@@ -232,7 +233,8 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
                                       catch,
                                       bundle,
                                       UNNAMED)
-        }
+        };
+        (ret_value, ret_value)
     }
 
     fn unreachable(&mut self) {
@@ -380,7 +382,7 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
         };
 
         let intrinsic = self.get_intrinsic(&name);
-        let res = self.call(intrinsic, &[lhs, rhs], None);
+        let (_inst, res) = self.call(intrinsic, &[lhs, rhs], None);
         (
             self.extract_value(res, 0),
             self.extract_value(res, 1),
@@ -1020,7 +1022,7 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
         llfn: &'ll Value,
         args: &[&'ll Value],
         funclet: Option<&Funclet<'ll>>,
-    ) -> &'ll Value {
+    ) -> (&'ll Value, &'ll Value) {
 
         debug!("call {:?} with args ({:?})",
                llfn,
@@ -1030,7 +1032,7 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
         let bundle = funclet.map(|funclet| funclet.bundle());
         let bundle = bundle.as_ref().map(|b| &*b.raw);
 
-        unsafe {
+        let ret_value = unsafe {
             llvm::LLVMRustBuildCall(
                 self.llbuilder,
                 llfn,
@@ -1038,7 +1040,8 @@ impl BuilderMethods<'a, 'tcx> for Builder<'a, 'll, 'tcx> {
                 args.len() as c_uint,
                 bundle, UNNAMED
             )
-        }
+        };
+        (ret_value, ret_value)
     }
 
     fn zext(&mut self, val: &'ll Value, dest_ty: &'ll Type) -> &'ll Value {

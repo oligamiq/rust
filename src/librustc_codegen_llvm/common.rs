@@ -88,6 +88,7 @@ impl BackendTypes for CodegenCx<'ll, 'tcx> {
     type Function = &'ll Value;
 
     type BasicBlock = &'ll BasicBlock;
+    type CallInst = &'ll Value;
     type Type = &'ll Type;
     type Funclet = Funclet<'ll>;
 

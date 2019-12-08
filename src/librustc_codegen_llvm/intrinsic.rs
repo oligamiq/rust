@@ -110,18 +110,18 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
             _ if simple.is_some() => {
                 self.call(simple.unwrap(),
                         &args.iter().map(|arg| arg.immediate()).collect::<Vec<_>>(),
-                        None)
+                        None).1
             }
             "unreachable" => {
                 return;
             },
             "likely" => {
                 let expect = self.get_intrinsic(&("llvm.expect.i1"));
-                self.call(expect, &[args[0].immediate(), self.const_bool(true)], None)
+                self.call(expect, &[args[0].immediate(), self.const_bool(true)], None).1
             }
             "unlikely" => {
                 let expect = self.get_intrinsic(&("llvm.expect.i1"));
-                self.call(expect, &[args[0].immediate(), self.const_bool(false)], None)
+                self.call(expect, &[args[0].immediate(), self.const_bool(false)], None).1
             }
             "try" => {
                 try_intrinsic(self,
@@ -133,7 +133,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
             }
             "breakpoint" => {
                 let llfn = self.get_intrinsic(&("llvm.debugtrap"));
-                self.call(llfn, &[], None)
+                self.call(llfn, &[], None).1
             }
             "va_start" => {
                 self.va_start(args[0].immediate())
@@ -143,7 +143,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
             }
             "va_copy" => {
                 let intrinsic = self.cx().get_intrinsic(&("llvm.va_copy"));
-                self.call(intrinsic, &[args[0].immediate(), args[1].immediate()], None)
+                self.call(intrinsic, &[args[0].immediate(), args[1].immediate()], None).1
             }
             "va_arg" => {
                 match fn_abi.ret.layout.abi {
@@ -314,7 +314,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                     self.const_i32(rw),
                     args[1].immediate(),
                     self.const_i32(cache_type)
-                ], None)
+                ], None).1
             },
             "ctlz" | "ctlz_nonzero" | "cttz" | "cttz_nonzero" | "ctpop" | "bswap" |
             "bitreverse" | "add_with_overflow" | "sub_with_overflow" |
@@ -331,19 +331,19 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                                 let llfn = self.get_intrinsic(
                                     &format!("llvm.{}.i{}", name, width),
                                 );
-                                self.call(llfn, &[args[0].immediate(), y], None)
+                                self.call(llfn, &[args[0].immediate(), y], None).1
                             }
                             "ctlz_nonzero" | "cttz_nonzero" => {
                                 let y = self.const_bool(true);
                                 let llvm_name = &format!("llvm.{}.i{}", &name[..4], width);
                                 let llfn = self.get_intrinsic(llvm_name);
-                                self.call(llfn, &[args[0].immediate(), y], None)
+                                self.call(llfn, &[args[0].immediate(), y], None).1
                             }
                             "ctpop" => self.call(
                                 self.get_intrinsic(&format!("llvm.ctpop.i{}", width)),
                                 &[args[0].immediate()],
                                 None
-                            ),
+                            ).1,
                             "bswap" => {
                                 if width == 8 {
                                     args[0].immediate() // byte swap a u8/i8 is just a no-op
@@ -354,7 +354,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                                         ),
                                         &[args[0].immediate()],
                                         None,
-                                    )
+                                    ).1
                                 }
                             }
                             "bitreverse" => {
@@ -364,7 +364,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                                     ),
                                     &[args[0].immediate()],
                                     None,
-                                )
+                                ).1
                             }
                             "add_with_overflow" | "sub_with_overflow" | "mul_with_overflow" => {
                                 let intrinsic = format!("llvm.{}{}.with.overflow.i{}",
@@ -373,7 +373,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                                 let llfn = self.get_intrinsic(&intrinsic);
 
                                 // Convert `i1` to a `bool`, and write it to the out parameter
-                                let pair = self.call(llfn, &[
+                                let (_inst, pair) = self.call(llfn, &[
                                     args[0].immediate(),
                                     args[1].immediate()
                                 ], None);
@@ -445,7 +445,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                                 let llvm_name = &format!("llvm.fsh{}.i{}",
                                                         if is_left { 'l' } else { 'r' }, width);
                                 let llfn = self.get_intrinsic(llvm_name);
-                                self.call(llfn, &[val, val, raw_shift], None)
+                                self.call(llfn, &[val, val, raw_shift], None).1
                             },
                             "saturating_add" | "saturating_sub" => {
                                 let is_add = name == "saturating_add";
@@ -457,14 +457,14 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
                                                              if is_add { "add" } else { "sub" },
                                                              width);
                                     let llfn = self.get_intrinsic(llvm_name);
-                                    self.call(llfn, &[lhs, rhs], None)
+                                    self.call(llfn, &[lhs, rhs], None).1
                                 } else {
                                     let llvm_name = &format!("llvm.{}{}.with.overflow.i{}",
                                                              if signed { 's' } else { 'u' },
                                                              if is_add { "add" } else { "sub" },
                                                              width);
                                     let llfn = self.get_intrinsic(llvm_name);
-                                    let pair = self.call(llfn, &[lhs, rhs], None);
+                                    let (_inst, pair) = self.call(llfn, &[lhs, rhs], None);
                                     let val = self.extract_value(pair, 0);
                                     let overflow = self.extract_value(pair, 1);
                                     let llty = self.type_ix(width);
@@ -744,7 +744,7 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
 
     fn expect(&mut self, cond: Self::Value, expected: bool) -> Self::Value {
         let expect = self.get_intrinsic(&"llvm.expect.i1");
-        self.call(expect, &[cond, self.const_bool(expected)], None)
+        self.call(expect, &[cond, self.const_bool(expected)], None).1
     }
 
     fn sideeffect(&mut self) {
@@ -756,12 +756,12 @@ impl IntrinsicCallMethods<'tcx> for Builder<'a, 'll, 'tcx> {
 
     fn va_start(&mut self, va_list: &'ll Value) -> &'ll Value {
         let intrinsic = self.cx().get_intrinsic("llvm.va_start");
-        self.call(intrinsic, &[va_list], None)
+        self.call(intrinsic, &[va_list], None).1
     }
 
     fn va_end(&mut self, va_list: &'ll Value) -> &'ll Value {
         let intrinsic = self.cx().get_intrinsic("llvm.va_end");
-        self.call(intrinsic, &[va_list], None)
+        self.call(intrinsic, &[va_list], None).1
     }
 }
 
@@ -920,7 +920,7 @@ fn codegen_msvc_try(
 
     // Note that no invoke is used here because by definition this function
     // can't panic (that's what it's catching).
-    let ret = bx.call(llfn, &[func, data, local_ptr], None);
+    let (_inst, ret) = bx.call(llfn, &[func, data, local_ptr], None);
     let i32_align = bx.tcx().data_layout.i32_align.abi;
     bx.store(ret, dest, i32_align);
 }
@@ -997,7 +997,7 @@ fn codegen_gnu_try(
 
     // Note that no invoke is used here because by definition this function
     // can't panic (that's what it's catching).
-    let ret = bx.call(llfn, &[func, data, local_ptr], None);
+    let (_inst, ret) = bx.call(llfn, &[func, data, local_ptr], None);
     let i32_align = bx.tcx().data_layout.i32_align.abi;
     bx.store(ret, dest, i32_align);
 }
@@ -1352,10 +1352,10 @@ fn generic_simd_intrinsic(
 
         let llvm_name = &format!("llvm.{0}.v{1}{2}", name, in_len, ety);
         let intrinsic = bx.get_intrinsic(&llvm_name);
-        let c = bx.call(intrinsic,
+        let (inst, c) = bx.call(intrinsic,
                         &args.iter().map(|arg| arg.immediate()).collect::<Vec<_>>(),
                         None);
-        unsafe { llvm::LLVMRustSetHasUnsafeAlgebra(c) };
+        unsafe { llvm::LLVMRustSetHasUnsafeAlgebra(inst) };
         Ok(c)
     }
 
@@ -1535,7 +1535,7 @@ fn generic_simd_intrinsic(
                                          mask_ty,
                                          llvm_elem_vec_ty], llvm_elem_vec_ty));
         llvm::SetUnnamedAddr(f, false);
-        let v = bx.call(f, &[args[1].immediate(), alignment, mask, args[0].immediate()],
+        let (_inst, v) = bx.call(f, &[args[1].immediate(), alignment, mask, args[0].immediate()],
                         None);
         return Ok(v);
     }
@@ -1636,7 +1636,7 @@ fn generic_simd_intrinsic(
                                                   alignment_ty,
                                                   mask_ty], ret_t));
         llvm::SetUnnamedAddr(f, false);
-        let v = bx.call(f, &[args[0].immediate(), args[1].immediate(), alignment, mask],
+        let (_inst, v) = bx.call(f, &[args[0].immediate(), args[1].immediate(), alignment, mask],
                         None);
         return Ok(v);
     }
@@ -1919,7 +1919,7 @@ unsupported {} from `{}` with element `{}` of size `{}` to `{}`"#,
             bx.type_func(&[vec_ty, vec_ty], vec_ty)
         );
         llvm::SetUnnamedAddr(f, false);
-        let v = bx.call(f, &[lhs, rhs], None);
+        let (_inst, v) = bx.call(f, &[lhs, rhs], None);
         return Ok(v);
     }
 

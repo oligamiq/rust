@@ -64,7 +64,7 @@ pub trait BuilderMethods<'a, 'tcx>:
         llfn: Self::Value,
         args: &[Self::Value],
         funclet: Option<&Self::Funclet>,
-    ) -> Self::Value;
+    ) -> (Self::CallInst, Self::Value);
     fn invoke(
         &mut self,
         llfn: Self::Value,
@@ -72,7 +72,7 @@ pub trait BuilderMethods<'a, 'tcx>:
         then: Self::BasicBlock,
         catch: Self::BasicBlock,
         funclet: Option<&Self::Funclet>,
-    ) -> Self::Value;
+    ) -> (Self::CallInst, Self::Value);
     fn unreachable(&mut self);
 
     fn add(&mut self, lhs: Self::Value, rhs: Self::Value) -> Self::Value;
@@ -272,5 +272,5 @@ pub trait BuilderMethods<'a, 'tcx>:
     fn lifetime_end(&mut self, ptr: Self::Value, size: Size);
 
     unsafe fn delete_basic_block(&mut self, bb: Self::BasicBlock);
-    fn do_not_inline(&mut self, llret: Self::Value);
+    fn do_not_inline(&mut self, llret: Self::CallInst);
 }

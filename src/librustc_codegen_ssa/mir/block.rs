@@ -117,31 +117,31 @@ impl<'a, 'tcx> TerminatorCodegenHelper<'tcx> {
             } else {
                 fx.unreachable_block()
             };
-            let invokeret = bx.invoke(fn_ptr,
+            let (invoke_inst, invoke_ret) = bx.invoke(fn_ptr,
                                       &llargs,
                                       ret_bx,
                                       self.llblock(fx, cleanup),
                                       self.funclet(fx));
-            bx.apply_attrs_callsite(&fn_abi, invokeret);
+            bx.apply_attrs_callsite(&fn_abi, invoke_inst);
 
             if let Some((ret_dest, target)) = destination {
                 let mut ret_bx = fx.build_block(target);
                 fx.set_debug_loc(&mut ret_bx, self.terminator.source_info);
-                fx.store_return(&mut ret_bx, ret_dest, &fn_abi.ret, invokeret);
+                fx.store_return(&mut ret_bx, ret_dest, &fn_abi.ret, invoke_ret);
             }
         } else {
-            let llret = bx.call(fn_ptr, &llargs, self.funclet(fx));
-            bx.apply_attrs_callsite(&fn_abi, llret);
+            let (call_inst, call_ret) = bx.call(fn_ptr, &llargs, self.funclet(fx));
+            bx.apply_attrs_callsite(&fn_abi, call_inst);
             if fx.mir[self.bb].is_cleanup {
                 // Cleanup is always the cold path. Don't inline
                 // drop glue. Also, when there is a deeply-nested
                 // struct, there are "symmetry" issues that cause
                 // exponential inlining - see issue #41696.
-                bx.do_not_inline(llret);
+                bx.do_not_inline(call_inst);
             }
 
             if let Some((ret_dest, target)) = destination {
-                fx.store_return(bx, ret_dest, &fn_abi.ret, llret);
+                fx.store_return(bx, ret_dest, &fn_abi.ret, call_ret);
                 self.funclet_br(fx, bx, target);
             } else {
                 bx.unreachable();

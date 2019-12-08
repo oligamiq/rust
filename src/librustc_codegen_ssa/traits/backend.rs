@@ -18,6 +18,7 @@ pub trait BackendTypes {
     type Function: CodegenObject;
 
     type BasicBlock: Copy;
+    type CallInst: Copy;
     type Type: CodegenObject;
     type Funclet;
 

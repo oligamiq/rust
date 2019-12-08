@@ -157,7 +157,7 @@ fn inline_asm_call(
                 alignstack,
                 llvm::AsmDialect::from_generic(dia),
             );
-            Some(bx.call(v, inputs, None))
+            Some(bx.call(v, inputs, None).1)
         } else {
             // LLVM has detected an issue with our constraints, bail out
             None

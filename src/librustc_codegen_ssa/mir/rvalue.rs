@@ -496,8 +496,8 @@ impl<'a, 'tcx, Bx: BuilderMethods<'a, 'tcx>> FunctionCx<'a, 'tcx, Bx> {
                 };
                 let instance = ty::Instance::mono(bx.tcx(), def_id);
                 let r = bx.cx().get_fn_addr(instance);
-                let call = bx.call(r, &[llsize, llalign], None);
-                let val = bx.pointercast(call, llty_ptr);
+                let (_call_inst, call_ret) = bx.call(r, &[llsize, llalign], None);
+                let val = bx.pointercast(call_ret, llty_ptr);
 
                 let operand = OperandRef {
                     val: OperandValue::Immediate(val),
