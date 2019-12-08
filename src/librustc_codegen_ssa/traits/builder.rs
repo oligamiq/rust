@@ -59,6 +59,12 @@ pub trait BuilderMethods<'a, 'tcx>:
         else_llbb: Self::BasicBlock,
         cases: impl ExactSizeIterator<Item = (u128, Self::BasicBlock)> + TrustedLen,
     );
+    fn call(
+        &mut self,
+        llfn: Self::Value,
+        args: &[Self::Value],
+        funclet: Option<&Self::Funclet>,
+    ) -> Self::Value;
     fn invoke(
         &mut self,
         llfn: Self::Value,
@@ -160,6 +166,7 @@ pub trait BuilderMethods<'a, 'tcx>:
 
     fn trunc(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
     fn sext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
+    fn zext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
     fn fptoui(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
     fn fptosi(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
     fn uitofp(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
@@ -263,14 +270,6 @@ pub trait BuilderMethods<'a, 'tcx>:
 
     /// Called for `StorageDead`
     fn lifetime_end(&mut self, ptr: Self::Value, size: Size);
-
-    fn call(
-        &mut self,
-        llfn: Self::Value,
-        args: &[Self::Value],
-        funclet: Option<&Self::Funclet>,
-    ) -> Self::Value;
-    fn zext(&mut self, val: Self::Value, dest_ty: Self::Type) -> Self::Value;
 
     unsafe fn delete_basic_block(&mut self, bb: Self::BasicBlock);
     fn do_not_inline(&mut self, llret: Self::Value);
