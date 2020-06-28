@@ -43,6 +43,9 @@ debug-assertions = false
 debug = false
 debug-assertions = false
 
+[profile.release]
+lto = "off"
+
 [profile.release.package.compiler_builtins]
 # For compiler-builtins we always use a high number of codegen units.
 # The goal here is to place every single intrinsic into its own object
