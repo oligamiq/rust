@@ -193,6 +193,7 @@ pub fn default_output_for_target(sess: &Session) -> CrateType {
 
 /// Checks if target supports crate_type as output
 pub fn invalid_output_for_target(sess: &Session, crate_type: CrateType) -> bool {
+    return false;
     match crate_type {
         CrateType::Cdylib | CrateType::Dylib | CrateType::ProcMacro => {
             if !sess.target.target.options.dynamic_linking {

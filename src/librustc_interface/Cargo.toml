@@ -47,6 +47,8 @@ rustc_ty = { path = "../librustc_ty" }
 tempfile = "3.0.5"
 once_cell = "1"
 
+rustc_codegen_cranelift = { path = "../librustc_codegen_cranelift" }
+
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3", features = ["libloaderapi"] }
 

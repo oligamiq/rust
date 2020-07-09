@@ -59,7 +59,7 @@ cfg_if! {
         // Note that we don't need a Drop impl to execute `flock(fd, LOCK_UN)`. Lock acquired by
         // `flock` is associated with the file descriptor and closing the file release it
         // automatically.
-    } else if #[cfg(unix)] {
+    } else if #[cfg(aunix)] {
         use std::mem;
         use std::os::unix::prelude::*;
 
@@ -206,8 +206,9 @@ cfg_if! {
             pub fn new(_p: &Path, _wait: bool, _create: bool, _exclusive: bool)
                 -> io::Result<Lock>
             {
-                let msg = "file locks not supported on this platform";
-                Err(io::Error::new(io::ErrorKind::Other, msg))
+                //let msg = "file locks not supported on this platform";
+                //Err(io::Error::new(io::ErrorKind::Other, msg))
+                Ok(Lock(()))
             }
         }
     }

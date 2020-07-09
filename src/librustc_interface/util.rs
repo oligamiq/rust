@@ -106,7 +106,7 @@ impl Write for Sink {
 
 #[cfg(not(parallel_compiler))]
 pub fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -> R {
-    struct Ptr(*mut ());
+    /*struct Ptr(*mut ());
     unsafe impl Send for Ptr {}
     unsafe impl Sync for Ptr {}
 
@@ -124,7 +124,8 @@ pub fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: 
     match thread.unwrap().join() {
         Ok(()) => result.unwrap(),
         Err(p) => panic::resume_unwind(p),
-    }
+    }*/
+    f()
 }
 
 #[cfg(not(parallel_compiler))]
@@ -247,6 +248,7 @@ pub fn get_codegen_backend(sess: &Session) -> Box<dyn CodegenBackend> {
             .map(|name| &name[..])
             .unwrap_or(DEFAULT_CODEGEN_BACKEND);
         let backend = match codegen_name {
+            "cranelift" => rustc_codegen_cranelift::__rustc_codegen_backend,
             filename if filename.contains('.') => load_backend_from_dylib(filename.as_ref()),
             codegen_name => get_builtin_codegen_backend(codegen_name),
         };

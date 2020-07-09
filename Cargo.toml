@@ -83,7 +83,10 @@ rustc-std-workspace-core = { path = 'src/tools/rustc-std-workspace-core' }
 rustc-std-workspace-alloc = { path = 'src/tools/rustc-std-workspace-alloc' }
 rustc-std-workspace-std = { path = 'src/tools/rustc-std-workspace-std' }
 
-ppv-lite86 = { path = "../cg_clif/cryptocorrosion/utils-simd/ppv-lite86"}
+libc = { git = "https://gitlab.redox-os.org/redox-os/liblibc.git", branch = "redox" }
+
+ppv-lite86 = { path = "../cg_clif/cryptocorrosion/utils-simd/ppv-lite86" }
+compiler_builtins = { path = "../compiler-builtins" }
 
 [patch."https://github.com/rust-lang/rust-clippy"]
 clippy_lints = { path = "src/tools/clippy/clippy_lints" }

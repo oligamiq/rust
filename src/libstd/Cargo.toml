@@ -11,7 +11,7 @@ edition = "2018"
 [lib]
 name = "std"
 path = "lib.rs"
-crate-type = ["dylib", "rlib"]
+#crate-type = ["dylib", "rlib"]
 
 [dependencies]
 alloc = { path = "../liballoc" }
@@ -19,7 +19,7 @@ cfg-if = { version = "0.1.8", features = ['rustc-dep-of-std'] }
 panic_unwind = { path = "../libpanic_unwind", optional = true }
 panic_abort = { path = "../libpanic_abort" }
 core = { path = "../libcore" }
-libc = { version = "0.2.51", default-features = false, features = ['rustc-dep-of-std'] }
+libc = { version = "=0.2.66", default-features = false, features = ['rustc-dep-of-std'] }
 compiler_builtins = { version = "0.1.32" }
 profiler_builtins = { path = "../libprofiler_builtins", optional = true }
 unwind = { path = "../libunwind" }

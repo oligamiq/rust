@@ -7,7 +7,7 @@ edition = "2018"
 [lib]
 name = "test"
 path = "lib.rs"
-crate-type = ["dylib", "rlib"]
+#crate-type = ["dylib", "rlib"]
 
 [dependencies]
 getopts = { version = "0.2.21", features = ['rustc-dep-of-std'] }
