@@ -93,7 +93,7 @@ impl SearchPath {
             }
         };
 
-        println!("search_path files: {:?}", files);
+        //println!("search_path files: {:?}", files);
 
         SearchPath { kind, dir, files }
     }
