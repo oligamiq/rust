@@ -7,7 +7,7 @@ $ rustup target add wasm32-wasi
 
 # Compile rustc
 $ cd src/rustc
-$ CFG_RELEASE_CHANNEL="dev" CFG_RELEASE="1.wasm" CFG_COMPILER_HOST_TRIPLE="wasm32-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-wasi --release
+$ CFG_RELEASE_CHANNEL="dev" CFG_RELEASE="1.99.0" CFG_COMPILER_HOST_TRIPLE="wasm32-wasi" RUSTC_ERROR_METADATA_DST="./error_metadata" RUSTFLAGS="-Zforce-unstable-if-unmarked" cargo +nightly build --target wasm32-wasi --release
 
 # Run it
 $ wasmtime --dir . --dir $MIRI_SYSROOT ../../target/wasm32-wasi/release/rustc_binary.wasm -- example.rs --sysroot $MIRI_SYSROOT -Zcodegen-backend=metadata_only --target x86_64-unknown-linux-gnu
