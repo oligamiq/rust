@@ -694,11 +694,11 @@ impl<'a> CrateLocator<'a> {
             {
                 // Make sure there's at most one rlib and at most one dylib.
                 if loc.file_name().unwrap().to_str().unwrap().ends_with(".rlib") {
-                    rlibs.insert(fs::canonicalize(&loc).unwrap(), PathKind::ExternFlag);
+                    rlibs.insert(loc.to_owned(), PathKind::ExternFlag);
                 } else if loc.file_name().unwrap().to_str().unwrap().ends_with(".rmeta") {
-                    rmetas.insert(fs::canonicalize(&loc).unwrap(), PathKind::ExternFlag);
+                    rmetas.insert(loc.to_owned(), PathKind::ExternFlag);
                 } else {
-                    dylibs.insert(fs::canonicalize(&loc).unwrap(), PathKind::ExternFlag);
+                    dylibs.insert(loc.to_owned(), PathKind::ExternFlag);
                 }
             } else {
                 self.rejected_via_filename
