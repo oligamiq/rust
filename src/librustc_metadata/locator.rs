@@ -229,6 +229,7 @@ use rustc_span::symbol::{sym, Symbol};
 use rustc_span::Span;
 use rustc_target::spec::{Target, TargetTriple};
 
+use flate2::read::DeflateDecoder;
 use log::{debug, info, warn};
 use std::io::{Read, Result as IoResult, Write};
 use std::ops::Deref;
@@ -396,8 +397,6 @@ impl<'a> CrateLocator<'a> {
         //
         // The goal of this step is to look at as little metadata as possible.
         self.filesearch.search(|spf, kind| {
-            println!("filesearch found {:?} {:?}", kind, spf);
-
             let file = match &spf.file_name_str {
                 None => return FileDoesntMatch,
                 Some(file) => file,
@@ -549,12 +548,12 @@ impl<'a> CrateLocator<'a> {
                         if let Some(h) = self.crate_matches(&blob, &lib) {
                             (h, blob)
                         } else {
-                            self.sess.warn("metadata mismatch");
+                            info!("metadata mismatch");
                             continue;
                         }
                     }
                     Err(err) => {
-                        self.sess.warn(&format!("no metadata found: {}", err));
+                        warn!("no metadata found: {}", err);
                         continue;
                     }
                 };
@@ -616,18 +615,11 @@ impl<'a> CrateLocator<'a> {
         let rustc_version = rustc_version();
         let found_version = metadata.get_rustc_version();
         if found_version != rustc_version {
-            println!("Rejecting via version: expected {} got {}", rustc_version, found_version);
-        }
-        /*if found_version != rustc_version {
-            info!("Rejecting via version: expected {} got {}",
-                  rustc_version,
-                  found_version);
-            self.rejected_via_version.push(CrateMismatch {
-                path: libpath.to_path_buf(),
-                got: found_version,
-            });
+            info!("Rejecting via version: expected {} got {}", rustc_version, found_version);
+            self.rejected_via_version
+                .push(CrateMismatch { path: libpath.to_path_buf(), got: found_version });
             return None;
-        }*/
+        }
 
         let root = metadata.get_root();
         if let Some(expected_is_proc_macro) = self.is_proc_macro {
@@ -738,7 +730,7 @@ fn get_metadata_section(
     let raw_bytes: MetadataRef = match flavor {
         CrateFlavor::Rlib => loader.get_rlib_metadata(target, filename)?,
         CrateFlavor::Dylib => {
-            /*let buf = loader.get_dylib_metadata(target, filename)?;
+            let buf = loader.get_dylib_metadata(target, filename)?;
             // The header is uncompressed
             let header_len = METADATA_HEADER.len();
             debug!("checking {} bytes of metadata-version stamp", header_len);
@@ -759,8 +751,7 @@ fn get_metadata_section(
                 Err(_) => {
                     return Err(format!("failed to decompress metadata: {}", filename.display()));
                 }
-            }*/
-            panic!("dylib metadata");
+            }
         }
         CrateFlavor::Rmeta => {
             let data = std::fs::read(filename).map_err(|_|
