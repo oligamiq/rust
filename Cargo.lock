@@ -2477,9 +2477,9 @@ dependencies = [
 
 [[package]]
 name = "psm"
-version = "0.1.10"
+version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "092d385624a084892d07374caa7b0994956692cf40650419a1f1a787a8d229cf"
+checksum = "96e0536f6528466dbbbbe6b986c34175a8d0ff25b794c4bacda22e068cd2f2c5"
 dependencies = [
  "cc",
 ]
@@ -3539,6 +3539,7 @@ dependencies = [
  "rustc_serialize",
  "smallvec 1.4.0",
  "stable_deref_trait",
+ "stacker",
  "winapi 0.3.8",
 ]
 
@@ -4493,9 +4494,9 @@ checksum = "ffbc596e092fe5f598b12ef46cc03754085ac2f4d8c739ad61c4ae266cc3b3fa"
 
 [[package]]
 name = "stacker"
-version = "0.1.9"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72dd941b456e1c006d6b9f27c526d5b69281288aeea8cba82c19d3843d8ccdd2"
+checksum = "8376bcbe35bcfba504adfbcde5aeb019ead0b43ae5c0a071e0570ee3377de5a1"
 dependencies = [
  "cc",
  "cfg-if",
@@ -4671,8 +4672,6 @@ checksum = "ab0e7238dcc7b40a7be719a25365910f6807bd864f4cce6b2e6b873658e2b19d"
 [[package]]
 name = "tempfile"
 version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7a6e24d9338a0a5be79593e2fa15a648add6138caa803e2d5bc782c371732ca9"
 dependencies = [
  "cfg-if",
  "libc",
