@@ -1,0 +1,60 @@
+<meta charset="utf-8">
+<script type="module">
+    (async function () {
+        document.body.innerText = "Downloading";
+        let wasm = await WebAssembly.compileStreaming(fetch("/target/wasm32-wasi/release/rustc_binary.wasm"));
+        document.body.innerText = "Instantiating";
+
+        let inst = await WebAssembly.instantiate(wasm, {
+            "wasi_snapshot_preview1": {
+                proc_exit() { console.log("proc_exit"); },
+                random_get() { console.log("random_get"); },
+                args_sizes_get(argc, argv_buf_size) {
+                    console.log("args_sizes_get(", argc, ", ", argv_buf_size, ")");
+                    return -1;
+                },
+                args_get(argv, argv_buf) {
+                    console.log("args_get(", argv, ", ", argv_buf, ")");
+                    return -1;
+                },
+                clock_time_get() { console.log("clock_time_get"); return 0; },
+                fd_close() { console.log("fd_close"); },
+                fd_filestat_get() { console.log("fd_filestat_get"); },
+                fd_read() { console.log("fd_read"); },
+                fd_readdir() { console.log("fd_readdir"); },
+                fd_seek() { console.log("fd_seek"); },
+                fd_write(fd, iovs_ptr, iovs_len, nwritten_ptr) {
+                    let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                    let buffer32 = new Uint32Array(inst.exports.memory.buffer);
+                    console.log("fd_write(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nwritten_ptr);
+                    buffer32[nwritten_ptr / 4] = 0;
+                    for (let i = 0; i < iovs_len; i++) {
+                        let [ptr, len] = [buffer32[iovs_ptr/4 + 2*i], buffer32[iovs_ptr/4 + 2*i + 1]];
+                        document.body.innerText += new TextDecoder("utf-8").decode(buffer8.slice(ptr, ptr+len));
+                        console.log(ptr, len);
+
+                        buffer32[nwritten_ptr / 4] += len;
+                    }
+                    return 0; // errno
+                },
+                path_create_directory() { console.log("path_create_directory"); },
+                path_filestat_get() { console.log("path_filestat_get"); },
+                path_link() { console.log("path_link"); },
+                path_open() { console.log("path_open"); },
+                path_readlink() { console.log("path_readlink"); },
+                path_remove_directory() { console.log("path_remove_directory"); },
+                path_rename() { console.log("path_rename"); },
+                path_unlink_file() { console.log("path_unlink_file"); },
+                sched_yield() { console.log("sched_yield"); },
+                fd_prestat_get() { console.log("fd_prestat_get"); },
+                fd_prestat_dir_name() { console.log("fd_prestat_dir_name"); },
+                environ_sizes_get() { console.log("environ_sizes_get"); },
+                environ_get() { console.log("environ_get"); }
+            }
+        });
+        document.body.innerText = "Executing\n";
+        console.log(inst.exports);
+        inst.exports.main();
+        document.body.innerText = "Done";
+    })();
+</script>
