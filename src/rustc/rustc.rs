@@ -26,6 +26,6 @@ fn main() {
         static _F6: unsafe extern "C" fn(*mut c_void) = jemalloc_sys::free;
     }
 
-    //rustc_driver::set_sigpipe_handler();
+    rustc_driver::set_sigpipe_handler();
     rustc_driver::main()
 }
