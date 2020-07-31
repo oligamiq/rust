@@ -225,7 +225,7 @@ fn get_linker(
             new_path.extend(env::split_paths(&path));
         }
     }
-    cmd.env("PATH", env::join_paths(new_path).unwrap());
+    //cmd.env("PATH", env::join_paths(new_path).unwrap());
 
     cmd
 }

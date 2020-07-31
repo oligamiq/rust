@@ -3800,6 +3800,8 @@ dependencies = [
 name = "rustc_metadata"
 version = "0.0.0"
 dependencies = [
+ "flate2",
+ "libc",
  "log",
  "rustc_ast",
  "rustc_attr",
