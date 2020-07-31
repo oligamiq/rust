@@ -5,17 +5,41 @@
         let wasm = await WebAssembly.compileStreaming(fetch("/target/wasm32-wasi/release/rustc_binary.wasm"));
         document.body.innerText = "Instantiating";
 
+        let args = ["rustc", "-h", "--sysroot", "/sysroot"];
+
         let inst = await WebAssembly.instantiate(wasm, {
             "wasi_snapshot_preview1": {
                 proc_exit() { console.log("proc_exit"); },
                 random_get() { console.log("random_get"); },
                 args_sizes_get(argc, argv_buf_size) {
+                    let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                    let buffer32 = new Uint32Array(inst.exports.memory.buffer);
                     console.log("args_sizes_get(", argc, ", ", argv_buf_size, ")");
-                    return -1;
+                    buffer32[argc / 4] = args.length;
+                    let buf_size = 0;
+                    for (let arg of args) {
+                        buf_size += arg.length + 1;
+                    }
+                    buffer32[argv_buf_size / 4] = buf_size;
+                    console.log(buffer32[argc / 4], buffer32[argv_buf_size / 4]);
+                    return 0;
                 },
                 args_get(argv, argv_buf) {
+                    let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                    let buffer32 = new Uint32Array(inst.exports.memory.buffer);
                     console.log("args_get(", argv, ", ", argv_buf, ")");
-                    return -1;
+                    let orig_argv_buf = argv_buf;
+                    for (let i = 0; i < args.length; i++) {
+                        buffer32[argv / 4] = argv_buf;
+                        argv += 4;
+                        let arg = new TextEncoder("utf-8").encode(args[i]);
+                        buffer8.set(arg, argv_buf);
+                        buffer8[argv_buf + arg.length] = 0;
+                        argv_buf += arg.length + 1;
+                    }
+                    console.log(buffer8.slice(orig_argv_buf, argv_buf));
+                    console.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_argv_buf, argv_buf)));
+                    return 0;
                 },
                 clock_time_get() { console.log("clock_time_get"); return 0; },
                 fd_close() { console.log("fd_close"); },
@@ -29,8 +53,8 @@
                     console.log("fd_write(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nwritten_ptr);
                     buffer32[nwritten_ptr / 4] = 0;
                     for (let i = 0; i < iovs_len; i++) {
-                        let [ptr, len] = [buffer32[iovs_ptr/4 + 2*i], buffer32[iovs_ptr/4 + 2*i + 1]];
-                        document.body.innerText += new TextDecoder("utf-8").decode(buffer8.slice(ptr, ptr+len));
+                        let [ptr, len] = [buffer32[iovs_ptr / 4 + 2 * i], buffer32[iovs_ptr / 4 + 2 * i + 1]];
+                        document.body.innerText += new TextDecoder("utf-8").decode(buffer8.slice(ptr, ptr + len));
                         console.log(ptr, len);
 
                         buffer32[nwritten_ptr / 4] += len;
