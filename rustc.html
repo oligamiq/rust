@@ -74,7 +74,7 @@
             return new_readonly_file(await (await (await fetch(path)).blob()).arrayBuffer());
         }
 
-        let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot", "--target", "x86_64-unknown-linux-gnu"];
+        let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot", "--target", "x86_64-unknown-linux-gnu", "-Cpanic=abort", "-Ccodegen-units=1"];
         let env = ["RUSTC_LOG=trace"];
         let fds = [
             {
@@ -93,7 +93,14 @@
                 write: write_stdio,
             },
             new_directory(".", {
-                "hello.rs": new_readonly_file(new TextEncoder("utf-8").encode("#![no_std]")),
+                "hello.rs": new_readonly_file(new TextEncoder("utf-8").encode(`#![feature(start)]
+                #![no_std]
+                #[panic_handler]
+                fn panic_handler(_: &core::panic::PanicInfo) -> ! {
+                    loop {}
+                }
+                #[start]
+                fn start(argc: isize, argv: *const *const u8) -> isize { 0 }`)),
             }),
             new_directory("/sysroot", {
                 "lib": new_directory("lib", {
