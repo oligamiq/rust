@@ -16,7 +16,7 @@
         }
 
         get size() {
-            return BigInt(this.data.byteLength);
+            return this.data.byteLength;
         }
 
         open() {
@@ -29,7 +29,7 @@
                 ino: 0n,
                 file_type: this.file_type,
                 nlink: 0n,
-                size: this.size,
+                size: BigInt(this.size),
                 atim: 0n,
                 mtim: 0n,
                 ctim: 0n,
@@ -64,7 +64,17 @@
         }
 
         write(buffer) {
-            return -2;
+            this.file.data.set(
+                buffer.slice(
+                    0,
+                    this.size - this.file_pos,
+                ), this.file_pos
+            );
+            if (this.size - this.file_pos > buffer.byteLength) {
+                this.file.data = this.file.data.transfer(this.file_pos + buffer.byteLength);
+            }
+            this.file_pos += buffer.byteLength;
+            return 0;
         }
 
         stat() {
@@ -145,24 +155,6 @@
         let wasm = await WebAssembly.compileStreaming(fetch("/target/wasm32-wasi/release/rustc_binary.wasm"));
         //let wasm = await WebAssembly.compileStreaming(fetch("/rust_out.wasm"));
         document.body.innerText = "Instantiating";
-
-        function write_le_u32(buf, ptr, num) {
-            buf[ptr] = num;
-            buf[ptr + 1] = num >> 8;
-            buf[ptr + 2] = num >> 16;
-            buf[ptr + 3] = num >> 24;
-        }
-
-        function write_le_u64(buf, ptr, num) {
-            buf[ptr] = Number(num);
-            buf[ptr + 1] = Number(num >> 8n);
-            buf[ptr + 2] = Number(num >> 16n);
-            buf[ptr + 3] = Number(num >> 24n);
-            buf[ptr + 4] = Number(num >> 32n);
-            buf[ptr + 5] = Number(num >> 40n);
-            buf[ptr + 6] = Number(num >> 48n);
-            buf[ptr + 7] = Number(num >> 56n);
-        }
 
         function fd_err() {
             return -1;
