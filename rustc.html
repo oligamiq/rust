@@ -73,6 +73,20 @@
         open() {
             return this;
         }
+
+        get_entry_for_path(path) {
+            let entry = this;
+            for (let component of path.split("/")) {
+                if (component == "") break;
+                if (entry.directory[component] != undefined) {
+                    entry = entry.directory[component];
+                } else {
+                    console.log(component);
+                    return null;
+                }
+            }
+            return entry;
+        }
     }
 
     class PreopenDirectory extends Directory {
@@ -355,17 +369,9 @@
                     if (fds[fd] != undefined && fds[fd].directory != undefined) {
                         let path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
                         console.log("file =", path);
-
-                        let opened_fd = fd;
-                        for (let component of path.split("/")) {
-                            if (component == "") break;
-                            if (fds[opened_fd].directory[component] != undefined) {
-                                fds.push(fds[opened_fd].directory[component]);
-                                opened_fd = fds.length - 1;
-                            } else {
-                                console.log(component);
-                                return -4;
-                            }
+                        let entry = fds[fd].get_entry_for_path(path);
+                        if (entry == null) {
+                            return -1;
                         }
                         // FIXME write filestat_t
                         return 0;
@@ -390,17 +396,12 @@
                     if (fds[fd] != undefined && fds[fd].directory != undefined) {
                         let path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
                         console.log(path);
-                        let opened_fd = fd;
-                        for (let component of path.split("/")) {
-                            if (component == "") break;
-                            if (fds[opened_fd].directory[component] != undefined) {
-                                fds.push(fds[opened_fd].directory[component].open());
-                                opened_fd = fds.length - 1;
-                            } else {
-                                console.log(component);
-                                return -3;
-                            }
+                        let entry = fds[fd].get_entry_for_path(path);
+                        if (entry == null) {
+                            return -1;
                         }
+                        fds.push(entry.open());
+                        let opened_fd = fds.length - 1;
                         buffer.setUint32(opened_fd_ptr, opened_fd, true);
                     } else {
                         return -1;
