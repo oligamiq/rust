@@ -11,6 +11,24 @@
         const FILETYPE_DIRECTORY = 3;
         const FILETYPE_REGULAR_FILE = 4;
 
+        function write_le_u32(buf, ptr, num) {
+            buf[ptr] = num;
+            buf[ptr+1] = num >> 8;
+            buf[ptr+2] = num >> 16;
+            buf[ptr+3] = num >> 24;
+        }
+
+        function write_le_u64(buf, ptr, num) {
+            buf[ptr] = Number(num);
+            buf[ptr+1] = Number(num >> 8n);
+            buf[ptr+2] = Number(num >> 16n);
+            buf[ptr+3] = Number(num >> 24n);
+            buf[ptr+4] = Number(num >> 32n);
+            buf[ptr+5] = Number(num >> 40n);
+            buf[ptr+6] = Number(num >> 48n);
+            buf[ptr+7] = Number(num >> 56n);
+        }
+
         function fd_err() {
             return -1;
         }
@@ -49,7 +67,7 @@
             };
         }
 
-        let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot"];
+        let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot", "--target", "x86_64-unknown-linux-gnu"];
         let env = ["RUSTC_LOG=trace"];
         let fds = [
             {
@@ -74,8 +92,12 @@
                 "lib": new_directory("lib", {
                     "rustlib": new_directory("rustlib", {
                         "wasm32-wasi": new_directory("wasm32-wasi", {
+                            "lib": new_directory("lib", {}),
+                        }),
+                        "x86_64-unknown-linux-gnu": new_directory("x86_64-unknown-linux-gnu", {
                             "lib": new_directory("lib", {
-                                "libcore.rlib": new_readonly_file([]),
+                                "libcore-b4a7d25c83ac0d14.rlib": new_readonly_file(await fetch("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rlib")),
+                                "libcore-b4a7d25c83ac0d14.rmeta": new_readonly_file(await fetch("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rmeta")),
                             }),
                         }),
                     }),
@@ -170,8 +192,8 @@
                         return -1;
                     }
                 },
-                fd_readdir(fd, buf, buf_len, big_cookie, bufused) {
-                    console.log("fd_readdir(", fd, ", ", buf, ", ", buf_len, ", ", big_cookie, ", ", bufused, ")");
+                fd_readdir(fd, buf, buf_len, cookie, bufused) {
+                    console.warn("fd_readdir(", fd, ", ", buf, ", ", buf_len, ", ", cookie, ", ", bufused, ")");
                     // 8 ,  3408816 ,  128 ,  0n ,  1032332
                     if (fds[fd] != undefined && fds[fd].directory != undefined) {
                         let buffer8 = new Uint8Array(inst.exports.memory.buffer);
@@ -179,27 +201,37 @@
 
                         buffer32[bufused / 4] = 0;
 
-                        let cookie = Number(big_cookie);
-                        console.log(cookie,  Object.keys(fds[fd].directory).slice(cookie));
-                        for (let name of Object.keys(fds[fd].directory).slice(cookie)) {
+                        console.log(cookie, Object.keys(fds[fd].directory).slice(Number(cookie)));
+                        if (cookie >= BigInt(Object.keys(fds[fd].directory).length)) {
+                            console.log("end of dir");
+                            return 0;
+                        }
+                        let next_cookie = cookie + 1n;
+                        for (let name of Object.keys(fds[fd].directory).slice(Number(cookie))) {
                             let entry = fds[fd].directory[name];
                             console.log(name, entry);
-                            let encoded_name = new TextEncoder("utf-8").encode(Object.keys(fds[fd].directory)[cookie]);
+                            let encoded_name = new TextEncoder("utf-8").encode(name);
 
-                            let offset = 16 + encoded_name.length;
+                            let offset = 24 + encoded_name.length;
 
-                            if ((buf_len - bufused) < offset) {
+                            if ((buf_len - buffer32[bufused / 4]) < offset) {
+                                console.log("too small buf");
                                 break;
                             } else {
-                                dest32[buf/4] = cookie + 1;
-                                dest32[buf/4 + 1] = 0; // inode
-                                dest32[buf/4 + 2] = encoded_name.length; // name
-                                dest32[buf/4 + 3] = entry.file_type;
-                                dest8.set(encoded_name, buf + 16);
+                                console.log("next_cookie =", next_cookie, buf);
+                                write_le_u64(buffer8, buf, next_cookie);
+                                next_cookie += 1n;
+                                write_le_u64(buffer8, buf + 8, 1n); // inode
+                                write_le_u32(buffer8, buf + 16, encoded_name.length); // name
+                                buffer8[buf + 20] = entry.file_type;
+                                buffer8.set(encoded_name, buf + 24);
+                                console.log("buffer =", buffer8.slice(buf, buf + offset));
                                 buf += offset;
                                 buffer32[bufused / 4] += offset;
+                                console.log();
                             }
                         }
+                        console.log("used =", buffer32[bufused / 4]);
                         return 0;
                     } else {
                         return -1;
@@ -249,6 +281,7 @@
                         console.log(path);
                         let opened_fd = fd;
                         for (let component of path.split("/")) {
+                            if (component == "") break;
                             if (fds[opened_fd].directory[component] != undefined) {
                                 fds.push(fds[opened_fd].directory[component]);
                                 opened_fd = fds.length - 1;
