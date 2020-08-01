@@ -183,6 +183,7 @@
             new Stdio(),
             new Stdio(),
             new Stdio(),
+            new PreopenDirectory("/tmp", {}),
             new PreopenDirectory(".", {
                 "hello.rs": new File(new TextEncoder("utf-8").encode(`#![feature(start)]
                 #![no_std]
@@ -201,9 +202,9 @@
                         }),
                         "x86_64-unknown-linux-gnu": new Directory({
                             "lib": new Directory({
-                                "libcore-b4a7d25c83ac0d14.rmeta": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rmeta"),
-                                "librustc_std_workspace_core-18038143f92ab7ad.rmeta": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_core-18038143f92ab7ad.rmeta"),
-                                "libcompiler_builtins-f0b22b2b55b20afb.rmeta": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-f0b22b2b55b20afb.rmeta"),
+                                "libcore-b4a7d25c83ac0d14.rlib": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rlib"),
+                                "librustc_std_workspace_core-18038143f92ab7ad.rlib": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_core-18038143f92ab7ad.rlib"),
+                                "libcompiler_builtins-f0b22b2b55b20afb.rlib": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-f0b22b2b55b20afb.rlib"),
                             }),
                         }),
                     }),
