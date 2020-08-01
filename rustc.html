@@ -279,7 +279,7 @@
 
                 clock_time_get(id, precision, time) {
                     let buffer = new DataView(inst.exports.memory.buffer);
-                    console.log("clock_time_get(", id, ", ", precision, ", ", time, ")");
+                    //console.log("clock_time_get(", id, ", ", precision, ", ", time, ")");
                     buffer.setBigUint64(time, 0n, true);
                     return 0;
                 },
@@ -305,7 +305,7 @@
                 fd_read(fd, iovs_ptr, iovs_len, nread_ptr) {
                     let buffer = new DataView(inst.exports.memory.buffer);
                     let buffer8 = new Uint8Array(inst.exports.memory.buffer);
-                    console.log("fd_read(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nread_ptr, ")");
+                    //console.log("fd_read(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nread_ptr, ")");
                     if (fds[fd] != undefined) {
                         buffer.setUint32(nread_ptr, 0, true);
                         for (let i = 0; i < iovs_len; i++) {
@@ -370,11 +370,12 @@
                 fd_write(fd, iovs_ptr, iovs_len, nwritten_ptr) {
                     let buffer = new DataView(inst.exports.memory.buffer);
                     let buffer8 = new Uint8Array(inst.exports.memory.buffer);
-                    console.log("fd_write(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nwritten_ptr, ")");
+                    //console.log("fd_write(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nwritten_ptr, ")");
                     if (fds[fd] != undefined) {
                         buffer.setUint32(nwritten_ptr, 0, true);
                         for (let i = 0; i < iovs_len; i++) {
                             let [ptr, len] = [buffer.getUint32(iovs_ptr + 8 * i, true), buffer.getUint32(iovs_ptr + 8 * i + 4, true)];
+                            console.log(ptr, len, buffer8.slice(ptr, ptr + len));
                             let err = fds[fd].write(buffer8.slice(ptr, ptr + len));
                             if (err != 0) {
                                 return err;
@@ -386,7 +387,9 @@
                         return -1;
                     }
                 },
-                path_create_directory() { console.log("path_create_directory"); },
+                path_create_directory() {
+                    console.log("path_create_directory");
+                },
                 path_filestat_get(fd, flags, path_ptr, path_len, buf) {
                     let buffer = new DataView(inst.exports.memory.buffer);
                     let buffer8 = new Uint8Array(inst.exports.memory.buffer);
@@ -477,7 +480,10 @@
         document.body.innerText = "Executing\n";
         console.log(inst.exports);
         try { inst.exports._start(); } catch (e) { }
-        inst.exports.main();
+        try { inst.exports.main(); } catch(e) { console.error(e); }
         document.body.innerText += "\nDone";
+
+        console.log(fds[4].directory["hello.hello.7rcbfp3g-cgu.0.rcgu.o"].data);
+        document.body.innerHTML += "<br><a href='" + URL.createObjectURL(new Blob([fds[4].directory["hello.hello.7rcbfp3g-cgu.0.rcgu.o"].data], {type: "application/elf"})) + "'>Download object</a>";
     })();
 </script>
