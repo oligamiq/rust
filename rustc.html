@@ -50,6 +50,7 @@
         }
 
         let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot"];
+        let env = ["RUSTC_LOG=trace"];
         let fds = [
             {
                 file_type: FILETYPE_UNKNOWN,
@@ -115,6 +116,37 @@
                     console.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_argv_buf, argv_buf)));
                     return 0;
                 },
+
+                environ_sizes_get(environ_count, environ_size) {
+                    let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                    let buffer32 = new Uint32Array(inst.exports.memory.buffer);
+                    console.log("environ_sizes_get(", environ_count, ", ", environ_size, ")");
+                    buffer32[environ_count / 4] = env.length;
+                    let buf_size = 0;
+                    for (let environ of env) {
+                        buf_size += environ.length + 1;
+                    }
+                    buffer32[environ_size / 4] = buf_size;
+                    console.log(buffer32[environ_count / 4], buffer32[environ_size / 4]);
+                    return 0;
+                },
+                environ_get(environ, environ_buf) {
+                    let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                    let buffer32 = new Uint32Array(inst.exports.memory.buffer);
+                    console.log("environ_get(", environ, ", ", environ_buf, ")");
+                    let orig_environ_buf = environ_buf;
+                    for (let i = 0; i < env.length; i++) {
+                        buffer32[environ / 4] = environ_buf;
+                        environ += 4;
+                        let e = new TextEncoder("utf-8").encode(env[i]);
+                        buffer8.set(e, environ_buf);
+                        buffer8[environ_buf + e.length] = 0;
+                        environ_buf += e.length + 1;
+                    }
+                    console.log(new TextDecoder("utf-8").decode(buffer8.slice(orig_environ_buf, environ_buf)));
+                    return 0;
+                },
+
                 clock_time_get() { console.log("clock_time_get"); return 0; },
                 fd_close() { console.log("fd_close"); },
                 fd_filestat_get() { console.log("fd_filestat_get"); },
@@ -260,8 +292,6 @@
                         return -1;
                     }
                 },
-                environ_sizes_get() { console.log("environ_sizes_get"); },
-                environ_get() { console.log("environ_get"); }
             }
         });
         document.body.innerText = "Executing\n";
