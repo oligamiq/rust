@@ -23,15 +23,15 @@
         let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot"];
         let fds = [
             {
-                fd_read: read_stdio,
+                read: read_stdio,
                 write: fd_err,
             },
             {
-                fd_read: fd_err,
+                read: fd_err,
                 write: write_stdio,
             },
             {
-                fd_read: fd_err,
+                read: fd_err,
                 write: write_stdio,
             },
             {
@@ -39,8 +39,18 @@
                 directory: {
                     "hello.rs": function() {
                         let fd = fds.length;
+                        let file_pos = 0;
+                        let data = new TextEncoder("utf-8").encode("fn a");
                         fds.push({
-                            fd_read: fd_err,
+                            read: function(len) {
+                                if (file_pos < data.length) {
+                                    let slice = data.slice(file_pos, file_pos + len);
+                                    file_pos += slice.length;
+                                    return [slice, 0];
+                                } else {
+                                    return [[], 0];
+                                }
+                            },
                             write: fd_err,
                         });
                         return fd;
@@ -92,7 +102,19 @@
                 fd_read(fd, iovs_ptr, iovs_len, nread_ptr) {
                     console.log("fd_read(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nread_ptr, ")");
                     if (fds[fd] != undefined) {
-                        return fds[fd].fd_read(inst.exports.memory.buffer, fd, iovs_ptr, iovs_len, nread_ptr);
+                        let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                        let buffer32 = new Uint32Array(inst.exports.memory.buffer);
+                        buffer32[nread_ptr / 4] = 0;
+                        for (let i = 0; i < iovs_len; i++) {
+                            let [ptr, len] = [buffer32[iovs_ptr / 4 + 2 * i], buffer32[iovs_ptr / 4 + 2 * i + 1]];
+                            let [data, err] = fds[fd].read(len);
+                            if (err != 0) {
+                                return err;
+                            }
+                            buffer8.set(data, ptr);
+                            buffer32[nread_ptr / 4] += data.length;
+                        }
+                        return 0;
                     } else {
                         return -1;
                     }
