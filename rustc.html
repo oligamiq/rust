@@ -7,6 +7,10 @@
         let wasm = await WebAssembly.compileStreaming(fetch("/target/wasm32-wasi/release/rustc_binary.wasm"));
         document.body.innerText = "Instantiating";
 
+        const FILETYPE_UNKNOWN = 0;
+        const FILETYPE_DIRECTORY = 3;
+        const FILETYPE_REGULAR_FILE = 4;
+
         function fd_err() {
             return -1;
         }
@@ -20,48 +24,63 @@
             return 0;
         }
 
+        function new_readonly_file(data) {
+            let file_pos = 0;
+            return {
+                file_type: FILETYPE_REGULAR_FILE,
+                read: function (len) {
+                    if (file_pos < data.length) {
+                        let slice = data.slice(file_pos, file_pos + len);
+                        file_pos += slice.length;
+                        return [slice, 0];
+                    } else {
+                        return [[], 0];
+                    }
+                },
+                write: fd_err,
+            };
+        }
+
+        function new_directory(name, contents) {
+            return {
+                file_type: FILETYPE_DIRECTORY,
+                prestat_name: new TextEncoder("utf-8").encode(name),
+                directory: contents,
+            };
+        }
+
         let args = ["rustc", "./hello.rs", "--sysroot", "/sysroot"];
         let fds = [
             {
+                file_type: FILETYPE_UNKNOWN,
                 read: read_stdio,
                 write: fd_err,
             },
             {
+                file_type: FILETYPE_UNKNOWN,
                 read: fd_err,
                 write: write_stdio,
             },
             {
+                file_type: FILETYPE_UNKNOWN,
                 read: fd_err,
                 write: write_stdio,
             },
-            {
-                prestat_name: new TextEncoder("utf-8").encode("."),
-                directory: {
-                    "hello.rs": function() {
-                        let fd = fds.length;
-                        let file_pos = 0;
-                        let data = new TextEncoder("utf-8").encode("fn a");
-                        fds.push({
-                            read: function(len) {
-                                if (file_pos < data.length) {
-                                    let slice = data.slice(file_pos, file_pos + len);
-                                    file_pos += slice.length;
-                                    return [slice, 0];
-                                } else {
-                                    return [[], 0];
-                                }
-                            },
-                            write: fd_err,
-                        });
-                        return fd;
-                    }
-                }
-            },
-            {
-                prestat_name: new TextEncoder("utf-8").encode("/sysroot"),
-                directory: {}
-            },
-        ]
+            new_directory(".", {
+                "hello.rs": new_readonly_file(new TextEncoder("utf-8").encode("#![no_std]")),
+            }),
+            new_directory("/sysroot", {
+                "lib": new_directory("lib", {
+                    "rustlib": new_directory("rustlib", {
+                        "wasm32-wasi": new_directory("wasm32-wasi", {
+                            "lib": new_directory("lib", {
+                                "libcore.rlib": new_readonly_file([]),
+                            }),
+                        }),
+                    }),
+                }),
+            }),
+        ];
 
         let inst = await WebAssembly.instantiate(wasm, {
             "wasi_snapshot_preview1": {
@@ -119,7 +138,41 @@
                         return -1;
                     }
                 },
-                fd_readdir() { console.log("fd_readdir"); },
+                fd_readdir(fd, buf, buf_len, big_cookie, bufused) {
+                    console.log("fd_readdir(", fd, ", ", buf, ", ", buf_len, ", ", big_cookie, ", ", bufused, ")");
+                    // 8 ,  3408816 ,  128 ,  0n ,  1032332
+                    if (fds[fd] != undefined && fds[fd].directory != undefined) {
+                        let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                        let buffer32 = new Uint32Array(inst.exports.memory.buffer);
+
+                        buffer32[bufused / 4] = 0;
+
+                        let cookie = Number(big_cookie);
+                        console.log(cookie,  Object.keys(fds[fd].directory).slice(cookie));
+                        for (let name of Object.keys(fds[fd].directory).slice(cookie)) {
+                            let entry = fds[fd].directory[name];
+                            console.log(name, entry);
+                            let encoded_name = new TextEncoder("utf-8").encode(Object.keys(fds[fd].directory)[cookie]);
+
+                            let offset = 16 + encoded_name.length;
+
+                            if ((buf_len - bufused) < offset) {
+                                break;
+                            } else {
+                                dest32[buf/4] = cookie + 1;
+                                dest32[buf/4 + 1] = 0; // inode
+                                dest32[buf/4 + 2] = encoded_name.length; // name
+                                dest32[buf/4 + 3] = entry.file_type;
+                                dest8.set(encoded_name, buf + 16);
+                                buf += offset;
+                                buffer32[bufused / 4] += offset;
+                            }
+                        }
+                        return 0;
+                    } else {
+                        return -1;
+                    }
+                },
                 fd_seek() { console.log("fd_seek"); },
                 fd_write(fd, iovs_ptr, iovs_len, nwritten_ptr) {
                     console.log("fd_write(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nwritten_ptr, ")");
@@ -164,13 +217,15 @@
                         console.log(path);
                         let opened_fd = fd;
                         for (let component of path.split("/")) {
-                            if (fds[fd].directory[component] != undefined) {
-                                opened_fd = fds[fd].directory[component]();
+                            if (fds[opened_fd].directory[component] != undefined) {
+                                fds.push(fds[opened_fd].directory[component]);
+                                opened_fd = fds.length - 1;
                             } else {
+                                console.log(component);
                                 return -3;
                             }
                         }
-                        buffer32[opened_fd_ptr/4] = opened_fd;
+                        buffer32[opened_fd_ptr / 4] = opened_fd;
                     } else {
                         return -1;
                     }
