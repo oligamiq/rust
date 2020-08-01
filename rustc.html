@@ -64,15 +64,18 @@
         }
 
         write(buffer) {
+            console.log(this.file.data, this.file_pos, buffer.byteLength);
+            if (this.file_pos + buffer.byteLength > this.size) {
+                let old = this.file.data;
+                this.file.data = new Uint8Array(this.file_pos + buffer.byteLength);
+                this.file.data.set(old);
+            }
             this.file.data.set(
                 buffer.slice(
                     0,
                     this.size - this.file_pos,
                 ), this.file_pos
             );
-            if (this.size - this.file_pos > buffer.byteLength) {
-                this.file.data = this.file.data.transfer(this.file_pos + buffer.byteLength);
-            }
             this.file_pos += buffer.byteLength;
             return 0;
         }
