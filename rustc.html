@@ -43,11 +43,14 @@
         }
 
         function new_readonly_file(data) {
+            console.log(data);
+            data = new Uint8Array(data);
             let file_pos = 0;
             return {
                 file_type: FILETYPE_REGULAR_FILE,
+                size: BigInt(data.byteLength),
                 read: function (len) {
-                    if (file_pos < data.length) {
+                    if (file_pos < data.byteLength) {
                         let slice = data.slice(file_pos, file_pos + len);
                         file_pos += slice.length;
                         return [slice, 0];
@@ -96,8 +99,8 @@
                         }),
                         "x86_64-unknown-linux-gnu": new_directory("x86_64-unknown-linux-gnu", {
                             "lib": new_directory("lib", {
-                                "libcore-b4a7d25c83ac0d14.rlib": new_readonly_file(await fetch("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rlib")),
-                                "libcore-b4a7d25c83ac0d14.rmeta": new_readonly_file(await fetch("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rmeta")),
+                                "libcore-b4a7d25c83ac0d14.rlib": new_readonly_file(await(await (await fetch("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rlib")).blob()).arrayBuffer()),
+                                "libcore-b4a7d25c83ac0d14.rmeta": new_readonly_file(await(await (await fetch("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rmeta")).blob()).arrayBuffer()),
                             }),
                         }),
                     }),
@@ -171,7 +174,23 @@
 
                 clock_time_get() { console.log("clock_time_get"); return 0; },
                 fd_close() { console.log("fd_close"); },
-                fd_filestat_get() { console.log("fd_filestat_get"); },
+                fd_filestat_get(fd, buf) {
+                    console.warn("fd_filestat_get(", fd, ", ", buf, ")");
+                    if (fds[fd] != undefined && fds[fd].size != undefined) {
+                        let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                        write_le_u64(buffer8, buf, 0n); // dev
+                        write_le_u64(buffer8, buf + 8, 0n); // ino
+                        buffer8[buf + 16] = fds[fd].file_type; // filetype
+                        write_le_u64(buffer8, buf + 24, 0n); // nlink
+                        write_le_u64(buffer8, buf + 32, fds[fd].size); // size
+                        write_le_u64(buffer8, buf + 38, 0n); // atim
+                        write_le_u64(buffer8, buf + 46, 0n); // mtim
+                        write_le_u64(buffer8, buf + 52, 0n); // ctim
+                        return 0;
+                    } else {
+                        return -1;
+                    }
+                },
                 fd_read(fd, iovs_ptr, iovs_len, nread_ptr) {
                     console.log("fd_read(", fd, ", ", iovs_ptr, ", ", iovs_len, ", ", nread_ptr, ")");
                     if (fds[fd] != undefined) {
@@ -258,9 +277,30 @@
                     }
                 },
                 path_create_directory() { console.log("path_create_directory"); },
-                path_filestat_get(fd, buf) {
-                    console.log("path_filestat_get(", fd, ", ", buf, ")");
-                    return -1;
+                path_filestat_get(fd, flags, path_ptr, path_len, buf) {
+                    console.warn("path_filestat_get(", fd, ", ", flags, ", ", path_ptr, ", ", path_len, ", ", buf, ")");
+                    if (fds[fd] != undefined && fds[fd].directory != undefined) {
+                        let buffer8 = new Uint8Array(inst.exports.memory.buffer);
+                        let buffer32 = new Uint32Array(inst.exports.memory.buffer);
+                        let path = new TextDecoder("utf-8").decode(buffer8.slice(path_ptr, path_ptr + path_len));
+                        console.log("file =", path);
+
+                        let opened_fd = fd;
+                        for (let component of path.split("/")) {
+                            if (component == "") break;
+                            if (fds[opened_fd].directory[component] != undefined) {
+                                fds.push(fds[opened_fd].directory[component]);
+                                opened_fd = fds.length - 1;
+                            } else {
+                                console.log(component);
+                                return -4;
+                            }
+                        }
+                        // FIXME write filestat_t
+                        return 0;
+                    } else {
+                        return -1;
+                    }
                 },
                 path_link() { console.log("path_link"); },
                 path_open(fd, dirflags, path_ptr, path_len, oflags, fs_rights_base, fs_rights_inheriting, fdflags, opened_fd_ptr) {
@@ -331,6 +371,6 @@
         console.log(inst.exports);
         try { inst.exports._start(); } catch (e) { }
         inst.exports.main();
-        document.body.innerText = "Done";
+        document.body.innerText += "\nDone";
     })();
 </script>
