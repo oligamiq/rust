@@ -188,14 +188,7 @@
             new Stdio(),
             new PreopenDirectory("/tmp", {}),
             new PreopenDirectory(".", {
-                "hello.rs": new File(new TextEncoder("utf-8").encode(`#![feature(start)]
-                #![no_std]
-                #[panic_handler]
-                fn panic_handler(_: &core::panic::PanicInfo) -> ! {
-                    loop {}
-                }
-                #[start]
-                fn start(argc: isize, argv: *const *const u8) -> isize { 0 }`)),
+                "hello.rs": new File(new TextEncoder("utf-8").encode(`fn main() { println!("Hello World!"); }`)),
             }),
             new PreopenDirectory("/sysroot", {
                 "lib": new Directory({
@@ -204,11 +197,28 @@
                             "lib": new Directory({}),
                         }),
                         "x86_64-unknown-linux-gnu": new Directory({
-                            "lib": new Directory({
-                                "libcore-b4a7d25c83ac0d14.rlib": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-b4a7d25c83ac0d14.rlib"),
-                                "librustc_std_workspace_core-18038143f92ab7ad.rlib": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/librustc_std_workspace_core-18038143f92ab7ad.rlib"),
-                                "libcompiler_builtins-f0b22b2b55b20afb.rlib": await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-f0b22b2b55b20afb.rlib"),
-                            }),
+                            "lib": new Directory(await (async function () {
+                                let dir = {};
+                                for (let file of [
+                                    "libcore-b4a7d25c83ac0d14.rlib",
+                                    "librustc_std_workspace_core-18038143f92ab7ad.rlib",
+                                    "libcompiler_builtins-f0b22b2b55b20afb.rlib",
+                                    "liballoc-072489b01506fb72.rlib",
+                                    "librustc_std_workspace_alloc-eeb0fd7b28eabbfd.rlib",
+                                    "liblibc-f3a5d2870a74e12d.rlib",
+                                    "libunwind-d85e8e3df3b56ff5.rlib",
+                                    "libcfg_if-6b32ca81b3ffdff5.rlib",
+                                    "libbacktrace_sys-93675d780e5d0925.rlib",
+                                    "libbacktrace-30a7c0899d033fc0.rlib",
+                                    "librustc_demangle-92b41332709a8741.rlib",
+                                    "libhashbrown-f92f11aad8210abe.rlib",
+                                    "libstd-358912be09271fe6.rlib",
+                                    "libpanic_abort-9fa38857c2678ded.rlib",
+                                ]) {
+                                    dir[file] = await load_external_file("/sysroot/lib/rustlib/x86_64-unknown-linux-gnu/lib/" + file);
+                                }
+                                return dir;
+                            })()),
                         }),
                     }),
                 }),
@@ -480,10 +490,12 @@
         document.body.innerText = "Executing\n";
         console.log(inst.exports);
         try { inst.exports._start(); } catch (e) { }
-        try { inst.exports.main(); } catch(e) { console.error(e); }
+        try { inst.exports.main(); } catch (e) { console.error(e); }
         document.body.innerText += "\nDone";
 
+        console.log(fds[4].directory);
         console.log(fds[4].directory["hello.hello.7rcbfp3g-cgu.0.rcgu.o"].data);
-        document.body.innerHTML += "<br><a href='" + URL.createObjectURL(new Blob([fds[4].directory["hello.hello.7rcbfp3g-cgu.0.rcgu.o"].data], {type: "application/elf"})) + "'>Download object</a>";
+        document.body.innerHTML += "<br><a href='" + URL.createObjectURL(new Blob([fds[4].directory["hello.hello.7rcbfp3g-cgu.0.rcgu.o"].data], { type: "application/elf" })) + "'>Download object</a>";
+        document.body.innerHTML += "<br><a href='" + URL.createObjectURL(new Blob([fds[4].directory["hello.allocator_shim.rcgu.o"].data], { type: "application/elf" })) + "'>Download allocator shim</a>";
     })();
 </script>
