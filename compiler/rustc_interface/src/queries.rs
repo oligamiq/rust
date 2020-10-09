@@ -62,8 +62,8 @@ impl<T> Default for Query<T> {
     }
 }
 
-pub struct Queries<'tcx> {
-    compiler: &'tcx Compiler,
+pub struct Queries<'a, 'tcx> {
+    compiler: &'tcx Compiler<'a>,
     gcx: OnceCell<GlobalCtxt<'tcx>>,
 
     arena: WorkerLocal<Arena<'tcx>>,
@@ -81,8 +81,8 @@ pub struct Queries<'tcx> {
     ongoing_codegen: Query<Box<dyn Any>>,
 }
 
-impl<'tcx> Queries<'tcx> {
-    pub fn new(compiler: &'tcx Compiler) -> Queries<'tcx> {
+impl<'a, 'tcx> Queries<'a, 'tcx> {
+    pub fn new(compiler: &'tcx Compiler<'a>) -> Queries<'a, 'tcx> {
         Queries {
             compiler,
             gcx: OnceCell::new(),
@@ -104,7 +104,7 @@ impl<'tcx> Queries<'tcx> {
     fn session(&self) -> &Lrc<Session> {
         &self.compiler.sess
     }
-    fn codegen_backend(&self) -> &Lrc<Box<dyn CodegenBackend>> {
+    fn codegen_backend(&self) -> &Lrc<Box<dyn CodegenBackend + 'a>> {
         &self.compiler.codegen_backend()
     }
 
@@ -328,7 +328,7 @@ impl<'tcx> Queries<'tcx> {
         }
     }
 
-    pub fn linker(&'tcx self) -> Result<Linker> {
+    pub fn linker(&'tcx self) -> Result<Linker<'a>> {
         let dep_graph = self.dep_graph()?;
         let prepare_outputs = self.prepare_outputs()?;
         let ongoing_codegen = self.ongoing_codegen()?;
@@ -346,15 +346,15 @@ impl<'tcx> Queries<'tcx> {
     }
 }
 
-pub struct Linker {
+pub struct Linker<'a> {
     sess: Lrc<Session>,
     dep_graph: DepGraph,
     prepare_outputs: OutputFilenames,
     ongoing_codegen: Box<dyn Any>,
-    codegen_backend: Lrc<Box<dyn CodegenBackend>>,
+    codegen_backend: Lrc<Box<dyn CodegenBackend + 'a>>,
 }
 
-impl Linker {
+impl<'a> Linker<'a> {
     pub fn link(self) -> Result<()> {
         let codegen_results =
             self.codegen_backend.join_codegen(self.ongoing_codegen, &self.sess, &self.dep_graph)?;
@@ -375,10 +375,10 @@ impl Linker {
     }
 }
 
-impl Compiler {
+impl<'a> Compiler<'a> {
     pub fn enter<F, T>(&self, f: F) -> T
     where
-        F: for<'tcx> FnOnce(&'tcx Queries<'tcx>) -> T,
+        F: for<'tcx> FnOnce(&'tcx Queries<'a, 'tcx>) -> T,
     {
         let mut _timer = None;
         let queries = Queries::new(&self);

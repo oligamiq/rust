@@ -27,9 +27,9 @@ pub type Result<T> = result::Result<T, ErrorReported>;
 /// Represents a compiler session.
 /// Can be used to run `rustc_interface` queries.
 /// Created by passing `Config` to `run_compiler`.
-pub struct Compiler {
+pub struct Compiler<'a> {
     pub(crate) sess: Lrc<Session>,
-    codegen_backend: Lrc<Box<dyn CodegenBackend>>,
+    codegen_backend: Lrc<Box<dyn CodegenBackend + 'a>>,
     pub(crate) input: Input,
     pub(crate) input_path: Option<PathBuf>,
     pub(crate) output_dir: Option<PathBuf>,
@@ -40,11 +40,11 @@ pub struct Compiler {
         Option<fn(&Session, &mut ty::query::Providers, &mut ty::query::Providers)>,
 }
 
-impl Compiler {
+impl<'a> Compiler<'a> {
     pub fn session(&self) -> &Lrc<Session> {
         &self.sess
     }
-    pub fn codegen_backend(&self) -> &Lrc<Box<dyn CodegenBackend>> {
+    pub fn codegen_backend(&self) -> &Lrc<Box<dyn CodegenBackend + 'a>> {
         &self.codegen_backend
     }
     pub fn input(&self) -> &Input {
@@ -120,7 +120,7 @@ pub fn parse_cfgspecs(cfgspecs: Vec<String>) -> FxHashSet<(String, Option<String
 }
 
 /// The compiler configuration
-pub struct Config {
+pub struct Config<'a> {
     /// Command line options
     pub opts: config::Options,
 
@@ -156,13 +156,13 @@ pub struct Config {
 
     /// This is a callback from the driver that is called to create a codegen backend.
     pub make_codegen_backend:
-        Option<Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send>>,
+        Option<Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send + 'a>>,
 
     /// Registry of diagnostics codes.
     pub registry: Registry,
 }
 
-pub fn create_compiler_and_run<R>(config: Config, f: impl FnOnce(&Compiler) -> R) -> R {
+pub fn create_compiler_and_run<R>(config: Config<'_>, f: impl for<'a> FnOnce(&Compiler<'a>) -> R) -> R {
     let registry = &config.registry;
     let (sess, codegen_backend) = util::create_session(
         config.opts,
@@ -202,7 +202,7 @@ pub fn create_compiler_and_run<R>(config: Config, f: impl FnOnce(&Compiler) -> R
     })
 }
 
-pub fn run_compiler<R: Send>(mut config: Config, f: impl FnOnce(&Compiler) -> R + Send) -> R {
+pub fn run_compiler<R: Send>(mut config: Config<'_>, f: impl for<'a> FnOnce(&Compiler<'a>) -> R + Send) -> R {
     tracing::trace!("run_compiler");
     let stderr = config.stderr.take();
     util::setup_callbacks_and_run_in_thread_pool_with_globals(

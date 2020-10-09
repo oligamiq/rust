@@ -56,18 +56,18 @@ pub fn add_configuration(
     }
 }
 
-pub fn create_session(
+pub fn create_session<'a>(
     sopts: config::Options,
     cfg: FxHashSet<(String, Option<String>)>,
     diagnostic_output: DiagnosticOutput,
-    file_loader: Option<Box<dyn FileLoader + Send + Sync + 'static>>,
+    file_loader: Option<Box<dyn FileLoader + Send + Sync>>,
     input_path: Option<PathBuf>,
     lint_caps: FxHashMap<lint::LintId, lint::Level>,
     make_codegen_backend: Option<
-        Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send>,
+        Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send + 'a>,
     >,
     descriptions: Registry,
-) -> (Lrc<Session>, Lrc<Box<dyn CodegenBackend>>) {
+) -> (Lrc<Session>, Lrc<Box<dyn CodegenBackend + 'a>>) {
     let codegen_backend = if let Some(make_codegen_backend) = make_codegen_backend {
         make_codegen_backend(&sopts)
     } else {

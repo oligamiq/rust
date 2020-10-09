@@ -136,13 +136,13 @@ pub fn diagnostics_registry() -> Registry {
 
 // Parse args and run the compiler. This is the primary entry point for rustc.
 // The FileLoader provides a way to load files from sources other than the file system.
-pub fn run_compiler(
+pub fn run_compiler<'a>(
     at_args: &[String],
     callbacks: &mut (dyn Callbacks + Send),
-    file_loader: Option<Box<dyn FileLoader + Send + Sync>>,
-    emitter: Option<Box<dyn Write + Send>>,
+    file_loader: Option<Box<dyn FileLoader + Send + Sync + 'a>>,
+    emitter: Option<Box<dyn Write + Send + 'a>>,
     make_codegen_backend: Option<
-        Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send>,
+        Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send + 'a>,
     >,
 ) -> interface::Result<()> {
     let mut args = Vec::new();

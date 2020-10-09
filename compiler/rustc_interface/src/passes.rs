@@ -622,7 +622,7 @@ fn write_out_deps(
 
 pub fn prepare_outputs(
     sess: &Session,
-    compiler: &Compiler,
+    compiler: &Compiler<'_>,
     krate: &ast::Crate,
     boxed_resolver: &Steal<Rc<RefCell<BoxedResolver>>>,
     crate_name: &str,
@@ -728,7 +728,7 @@ impl<'tcx> QueryContext<'tcx> {
 }
 
 pub fn create_global_ctxt<'tcx>(
-    compiler: &'tcx Compiler,
+    compiler: &'tcx Compiler<'_>,
     lint_store: Lrc<LintStore>,
     krate: &'tcx Crate<'tcx>,
     dep_graph: DepGraph,
