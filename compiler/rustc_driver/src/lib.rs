@@ -35,7 +35,7 @@ use rustc_session::config::{ErrorOutputType, Input, OutputType, PrintRequest};
 use rustc_session::getopts;
 use rustc_session::lint::{Lint, LintId};
 use rustc_session::{config, DiagnosticOutput, Session};
-use rustc_session::{early_error, early_warn};
+use rustc_session::{early_error, early_error_no_abort, early_warn};
 use rustc_span::source_map::{FileLoader, FileName};
 use rustc_span::symbol::sym;
 
@@ -233,7 +233,8 @@ fn run_compiler(
             if let Some(err) = input_err {
                 // Immediately stop compilation if there was an issue reading
                 // the input (for example if the input stream is not UTF-8).
-                early_error(config.opts.error_format, &err.to_string());
+                early_error_no_abort(config.opts.error_format, &err.to_string());
+                return Err(ErrorReported);
             }
 
             config.input = input;
