@@ -84,7 +84,7 @@ mod windows_msvc_base;
 mod windows_uwp_gnu_base;
 mod windows_uwp_msvc_base;
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Encodable, Decodable)]
 pub enum LinkerFlavor {
     Em,
     Gcc,
@@ -94,7 +94,7 @@ pub enum LinkerFlavor {
     PtxLinker,
 }
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd, Encodable, Decodable)]
 pub enum LldFlavor {
     Wasm,
     Ld64,
@@ -281,7 +281,7 @@ impl ToJson for MergeFunctions {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Hash, Debug, Encodable, Decodable)]
 pub enum RelocModel {
     Static,
     Pic,
@@ -321,7 +321,7 @@ impl ToJson for RelocModel {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Hash, Debug, Encodable, Decodable)]
 pub enum CodeModel {
     Tiny,
     Small,
@@ -358,7 +358,7 @@ impl ToJson for CodeModel {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Hash, Debug, Encodable, Decodable)]
 pub enum TlsModel {
     GeneralDynamic,
     LocalDynamic,
@@ -395,7 +395,7 @@ impl ToJson for TlsModel {
 }
 
 /// Everything is flattened to a single enum to make the json encoding/decoding less annoying.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Debug, Encodable, Decodable)]
 pub enum LinkOutputKind {
     /// Dynamically linked non position-independent executable.
     DynamicNoPicExe,
@@ -448,7 +448,7 @@ impl fmt::Display for LinkOutputKind {
 
 pub type LinkArgs = BTreeMap<LinkerFlavor, Vec<String>>;
 
-#[derive(Clone, Copy, Hash, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Hash, Debug, PartialEq, Eq, Encodable, Decodable)]
 pub enum SplitDebuginfo {
     /// Split debug-information is disabled, meaning that on supported platforms
     /// you can find all debug information in the executable itself. This is
@@ -543,7 +543,7 @@ macro_rules! supported_targets {
     };
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Encodable, Decodable)]
 pub enum StackProbeType {
     /// Don't emit any stack probes.
     None,
@@ -821,7 +821,7 @@ supported_targets! {
 /// Everything `rustc` knows about how to compile for a specific target.
 ///
 /// Every field here must be specified, and has no default value.
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Encodable, Decodable)]
 pub struct Target {
     /// Target triple to pass to LLVM.
     pub llvm_target: String,
@@ -854,7 +854,7 @@ impl HasTargetSpec for Target {
 /// `TargetOptions` as a separate structure is mostly an implementation detail of `Target`
 /// construction, all its fields logically belong to `Target` and available from `Target`
 /// through `Deref` impls.
-#[derive(PartialEq, Clone, Debug)]
+#[derive(PartialEq, Clone, Debug, Encodable, Decodable)]
 pub struct TargetOptions {
     /// Whether the target is built-in or loaded from a custom target specification.
     pub is_builtin: bool,

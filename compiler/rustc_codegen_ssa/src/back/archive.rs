@@ -1,14 +1,20 @@
+use rustc_errors::Handler;
 use rustc_session::Session;
 use rustc_span::symbol::Symbol;
+use rustc_target::spec::Target;
 
 use std::io;
 use std::path::{Path, PathBuf};
 
-pub fn find_library(name: Symbol, search_paths: &[PathBuf], sess: &Session) -> PathBuf {
+pub fn find_library(
+    target: &Target,
+    diagnostic: &Handler,
+    name: Symbol,
+    search_paths: &[PathBuf],
+) -> PathBuf {
     // On Windows, static libraries sometimes show up as libfoo.a and other
     // times show up as foo.lib
-    let oslibname =
-        format!("{}{}{}", sess.target.staticlib_prefix, name, sess.target.staticlib_suffix);
+    let oslibname = format!("{}{}{}", target.staticlib_prefix, name, target.staticlib_suffix);
     let unixlibname = format!("lib{}.a", name);
 
     for path in search_paths {
@@ -24,11 +30,13 @@ pub fn find_library(name: Symbol, search_paths: &[PathBuf], sess: &Session) -> P
             }
         }
     }
-    sess.fatal(&format!(
-        "could not find native static library `{}`, \
+    diagnostic
+        .fatal(&format!(
+            "could not find native static library `{}`, \
                          perhaps an -L flag is missing?",
-        name
-    ));
+            name
+        ))
+        .raise();
 }
 
 pub trait ArchiveBuilder<'a> {

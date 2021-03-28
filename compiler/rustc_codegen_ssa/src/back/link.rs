@@ -1619,7 +1619,7 @@ fn linker_with_args<'a, B: ArchiveBuilder<'a>>(
     // FIXME: Move `/LIBPATH` addition for uwp targets from the linker construction
     // to the linker args construction.
     assert!(base_cmd.get_args().is_empty() || sess.target.vendor == "uwp");
-    let cmd = &mut *codegen_results.linker_info.to_linker(base_cmd, &sess, flavor);
+    let cmd = &mut *codegen_results.linker_info.to_linker(base_cmd, flavor, sess.diagnostic());
     let link_output_kind = link_output_kind(sess, crate_type);
 
     // NO-OPT-OUT, OBJECT-FILES-MAYBE, CUSTOMIZATION-POINT

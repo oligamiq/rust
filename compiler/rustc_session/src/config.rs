@@ -122,7 +122,7 @@ pub enum CFGuard {
     Checks,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Encodable, Decodable)]
 pub enum OptLevel {
     No,         // -O0
     Less,       // -O1
@@ -136,7 +136,7 @@ impl_stable_hash_via_hash!(OptLevel);
 
 /// This is what the `LtoCli` values get mapped to after resolving defaults and
 /// and taking other command line options into account.
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Encodable, Decodable)]
 pub enum Lto {
     /// Don't do any LTO whatsoever
     No,
@@ -215,7 +215,7 @@ pub enum InstrumentCoverage {
     Off,
 }
 
-#[derive(Clone, PartialEq, Hash)]
+#[derive(Clone, PartialEq, Hash, Encodable, Decodable)]
 pub enum LinkerPluginLto {
     LinkerPlugin(PathBuf),
     LinkerPluginAuto,
@@ -255,7 +255,7 @@ pub enum SymbolManglingVersion {
 
 impl_stable_hash_via_hash!(SymbolManglingVersion);
 
-#[derive(Clone, Copy, Debug, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Hash, Encodable, Decodable)]
 pub enum DebugInfo {
     None,
     Limited,

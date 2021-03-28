@@ -228,7 +228,7 @@ impl HasDataLayout for TargetDataLayout {
 }
 
 /// Endianness of the target, which must match cfg(target-endian).
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, PartialEq, Encodable, Decodable)]
 pub enum Endian {
     Little,
     Big,

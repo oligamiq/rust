@@ -124,7 +124,7 @@ pub(super) fn post_wasi_fallback() -> CrtObjects {
 }
 
 /// Which logic to use to determine whether to fall back to the "self-contained" mode or not.
-#[derive(Clone, Copy, PartialEq, Hash, Debug)]
+#[derive(Clone, Copy, PartialEq, Hash, Debug, Encodable, Decodable)]
 pub enum CrtObjectsFallback {
     Musl,
     Mingw,
