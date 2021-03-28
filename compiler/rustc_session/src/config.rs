@@ -378,7 +378,7 @@ pub enum TrimmedDefPaths {
 
 impl Default for TrimmedDefPaths {
     fn default() -> Self {
-        Self::Never
+        Self::GoodPath
     }
 }
 
