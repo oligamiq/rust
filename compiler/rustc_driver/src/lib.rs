@@ -301,7 +301,6 @@ fn run_compiler(
             RustcDefaultCalls::list_metadata(
                 sess,
                 &*compiler.codegen_backend().metadata_loader(),
-                &matches,
                 compiler.input(),
             )
         })
@@ -619,11 +618,9 @@ impl RustcDefaultCalls {
     pub fn list_metadata(
         sess: &Session,
         metadata_loader: &dyn MetadataLoader,
-        matches: &getopts::Matches,
         input: &Input,
     ) -> Compilation {
-        let r = matches.opt_strs("Z");
-        if r.iter().any(|s| *s == "ls") {
+        if sess.opts.debugging_opts.ls {
             match *input {
                 Input::File(ref ifile) => {
                     let path = &(*ifile);
