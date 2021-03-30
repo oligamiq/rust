@@ -187,7 +187,7 @@ impl Borrow<Fingerprint> for DefPathHash {
 /// end up with the same [StableCrateId]. The compiler will check for such
 /// collisions when loading crates and abort compilation in order to avoid
 /// further trouble.
-#[derive(Copy, Clone, Hash, PartialEq, Eq, PartialOrd, Ord, Debug, Encodable, Decodable)]
+#[derive(Copy, Clone, Hash, HashStable_Generic, PartialEq, Eq, PartialOrd, Ord, Debug, Encodable, Decodable)]
 pub struct StableCrateId(u64);
 
 impl StableCrateId {

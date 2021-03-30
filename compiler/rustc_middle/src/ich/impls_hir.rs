@@ -6,7 +6,7 @@ use rustc_attr as attr;
 use rustc_data_structures::fingerprint::Fingerprint;
 use rustc_data_structures::stable_hasher::{HashStable, StableHasher, ToStableHashKey};
 use rustc_hir as hir;
-use rustc_hir::def_id::{CrateNum, DefId, LocalDefId, CRATE_DEF_INDEX};
+use rustc_hir::def_id::{CrateNum, DefId, LocalDefId, StableCrateId, CRATE_DEF_INDEX};
 use rustc_hir::definitions::DefPathHash;
 use smallvec::SmallVec;
 use std::mem;
@@ -152,6 +152,15 @@ impl<'a> ToStableHashKey<StableHashingContext<'a>> for CrateNum {
     fn to_stable_hash_key(&self, hcx: &StableHashingContext<'a>) -> DefPathHash {
         let def_id = DefId { krate: *self, index: CRATE_DEF_INDEX };
         def_id.to_stable_hash_key(hcx)
+    }
+}
+
+impl<'a> ToStableHashKey<StableHashingContext<'a>> for StableCrateId {
+    type KeyType = DefPathHash;
+
+    #[inline]
+    fn to_stable_hash_key(&self, _hcx: &StableHashingContext<'a>) -> DefPathHash {
+        DefPathHash::new(*self, 0) // FIXME is it allowed to use 0 here?
     }
 }
 
