@@ -1000,10 +1000,6 @@ pub struct GlobalCtxt<'tcx> {
     /// Merge this with `selection_cache`?
     pub evaluation_cache: traits::EvaluationCache<'tcx>,
 
-    /// The definite name of the current crate after taking into account
-    /// attributes, commandline parameters, etc.
-    pub crate_name: Symbol,
-
     /// Data layout specification for the current target.
     pub data_layout: TargetDataLayout,
 
@@ -1126,7 +1122,6 @@ impl<'tcx> TyCtxt<'tcx> {
         dep_graph: DepGraph,
         on_disk_cache: Option<query::OnDiskCache<'tcx>>,
         queries: &'tcx dyn query::QueryEngine<'tcx>,
-        crate_name: &str,
         output_filenames: &OutputFilenames,
     ) -> GlobalCtxt<'tcx> {
         let data_layout = TargetDataLayout::parse(&s.target).unwrap_or_else(|err| {
@@ -1172,7 +1167,6 @@ impl<'tcx> TyCtxt<'tcx> {
             pred_rcache: Default::default(),
             selection_cache: Default::default(),
             evaluation_cache: Default::default(),
-            crate_name: Symbol::intern(crate_name),
             data_layout,
             layout_interner: Default::default(),
             stability_interner: Default::default(),
@@ -1283,7 +1277,7 @@ impl<'tcx> TyCtxt<'tcx> {
         // statements within the query system and we'd run into endless
         // recursion otherwise.
         let (crate_name, crate_disambiguator) = if def_id.is_local() {
-            (self.crate_name, self.sess.local_crate_disambiguator())
+            (self.sess.crate_name(), self.sess.local_crate_disambiguator())
         } else {
             (
                 self.cstore.crate_name_untracked(def_id.krate),
@@ -2756,7 +2750,7 @@ pub fn provide(providers: &mut ty::query::Providers) {
     providers.module_exports = |tcx, id| tcx.gcx.export_map.get(&id).map(|v| &v[..]);
     providers.crate_name = |tcx, id| {
         assert_eq!(id, LOCAL_CRATE);
-        tcx.crate_name
+        tcx.sess.crate_name()
     };
     providers.maybe_unused_trait_import = |tcx, id| tcx.maybe_unused_trait_imports.contains(&id);
     providers.maybe_unused_extern_crates = |tcx, cnum| {

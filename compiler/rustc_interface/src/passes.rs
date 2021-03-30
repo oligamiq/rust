@@ -31,7 +31,7 @@ use rustc_query_impl::Queries as TcxQueries;
 use rustc_resolve::{Resolver, ResolverArenas};
 use rustc_session::config::{CrateType, Input, OutputFilenames, OutputType, PpMode, PpSourceMode};
 use rustc_session::lint;
-use rustc_session::output::{filename_for_input, filename_for_metadata};
+use rustc_session::output::{filename_for_input, filename_for_metadata, find_crate_name};
 use rustc_session::search_paths::PathKind;
 use rustc_session::Session;
 use rustc_span::symbol::{Ident, Symbol};
@@ -103,7 +103,6 @@ pub fn configure_and_expand(
     lint_store: Lrc<LintStore>,
     metadata_loader: Box<MetadataLoaderDyn>,
     krate: ast::Crate,
-    crate_name: &str,
 ) -> Result<(ast::Crate, BoxedResolver)> {
     tracing::trace!("configure_and_expand");
     // Currently, we ignore the name resolution data structures for the purposes of dependency
@@ -111,7 +110,6 @@ pub fn configure_and_expand(
     // item, much like we do for macro expansion. In other words, the hash reflects not just
     // its contents but the results of name resolution on those contents. Hopefully we'll push
     // this back at some point.
-    let crate_name = crate_name.to_string();
     let (result, resolver) = BoxedResolver::new(static move |mut action| {
         let _ = action;
         let sess = &*sess;
@@ -120,7 +118,6 @@ pub fn configure_and_expand(
             sess,
             &lint_store,
             krate,
-            &crate_name,
             &resolver_arenas,
             &*metadata_loader,
         );
@@ -153,8 +150,8 @@ pub fn register_plugins<'a>(
     sess: &'a Session,
     metadata_loader: &'a dyn MetadataLoader,
     register_lints: impl Fn(&Session, &mut LintStore),
+    input: &Input,
     mut krate: ast::Crate,
-    crate_name: &str,
 ) -> Result<(ast::Crate, Lrc<LintStore>)> {
     krate = sess.time("attributes_injection", || {
         rustc_builtin_macros::cmdline_attrs::inject(
@@ -171,9 +168,13 @@ pub fn register_plugins<'a>(
     let crate_types = util::collect_crate_types(sess, &krate.attrs);
     sess.init_crate_types(crate_types);
 
+    // parse `#[crate_name]` even if `--crate-name` was passed, to make sure it matches.
+    let crate_name = find_crate_name(sess, &krate.attrs, input);
+    sess.init_crate_name(Symbol::intern(&crate_name));
+
     let disambiguator = util::compute_crate_disambiguator(sess);
     sess.crate_disambiguator.set(disambiguator).expect("not yet initialized");
-    rustc_incremental::prepare_session_directory(sess, &crate_name, disambiguator);
+    rustc_incremental::prepare_session_directory(sess, disambiguator);
 
     if sess.opts.incremental.is_some() {
         sess.time("incr_comp_garbage_collect_session_directories", || {
@@ -216,9 +217,9 @@ fn pre_expansion_lint(
     sess: &Session,
     lint_store: &LintStore,
     krate: &ast::Crate,
-    crate_name: &str,
+    module_name: &str,
 ) {
-    sess.prof.generic_activity_with_arg("pre_AST_expansion_lint_checks", crate_name).run(|| {
+    sess.prof.generic_activity_with_arg("pre_AST_expansion_lint_checks", module_name).run(|| {
         rustc_lint::check_ast_crate(
             sess,
             lint_store,
@@ -234,14 +235,13 @@ fn configure_and_expand_inner<'a>(
     sess: &'a Session,
     lint_store: &'a LintStore,
     mut krate: ast::Crate,
-    crate_name: &str,
     resolver_arenas: &'a ResolverArenas<'a>,
     metadata_loader: &'a MetadataLoaderDyn,
 ) -> Result<(ast::Crate, Resolver<'a>)> {
     tracing::trace!("configure_and_expand_inner");
-    pre_expansion_lint(sess, lint_store, &krate, crate_name);
+    pre_expansion_lint(sess, lint_store, &krate, &sess.crate_name().as_str());
 
-    let mut resolver = Resolver::new(sess, &krate, crate_name, metadata_loader, &resolver_arenas);
+    let mut resolver = Resolver::new(sess, &krate, metadata_loader, &resolver_arenas);
     rustc_builtin_macros::register_builtin_macros(&mut resolver);
 
     krate = sess.time("crate_injection", || {
@@ -298,7 +298,7 @@ fn configure_and_expand_inner<'a>(
             should_test: sess.opts.test,
             span_debug: sess.opts.debugging_opts.span_debug,
             proc_macro_backtrace: sess.opts.debugging_opts.proc_macro_backtrace,
-            ..rustc_expand::expand::ExpansionConfig::default(crate_name.to_string())
+            ..rustc_expand::expand::ExpansionConfig::default(sess.crate_name().to_string())
         };
 
         let extern_mod_loaded = |ident: Ident, attrs, items, span| {
@@ -476,7 +476,6 @@ fn generated_output_paths(
     sess: &Session,
     outputs: &OutputFilenames,
     exact_name: bool,
-    crate_name: &str,
 ) -> Vec<PathBuf> {
     let mut out_filenames = Vec::new();
     for output_type in sess.opts.output_types.keys() {
@@ -486,7 +485,8 @@ fn generated_output_paths(
             // by appending `.rlib`, `.exe`, etc., so we can skip this transformation.
             OutputType::Exe if !exact_name => {
                 for crate_type in sess.crate_types().iter() {
-                    let p = filename_for_input(sess, *crate_type, crate_name, outputs);
+                    let p =
+                        filename_for_input(sess, *crate_type, &sess.crate_name().as_str(), outputs);
                     out_filenames.push(p);
                 }
             }
@@ -655,7 +655,6 @@ pub fn prepare_outputs(
     compiler: &Compiler,
     krate: &ast::Crate,
     boxed_resolver: &Steal<Rc<RefCell<BoxedResolver>>>,
-    crate_name: &str,
 ) -> Result<OutputFilenames> {
     let _timer = sess.timer("prepare_outputs");
 
@@ -668,8 +667,7 @@ pub fn prepare_outputs(
         sess,
     );
 
-    let output_paths =
-        generated_output_paths(sess, &outputs, compiler.output_file.is_some(), &crate_name);
+    let output_paths = generated_output_paths(sess, &outputs, compiler.output_file.is_some());
 
     // Ensure the source file isn't accidentally overwritten during compilation.
     if let Some(ref input_path) = compiler.input_path {
@@ -762,7 +760,6 @@ pub fn create_global_ctxt<'tcx>(
     dep_graph: DepGraph,
     mut resolver_outputs: ResolverOutputs,
     outputs: OutputFilenames,
-    crate_name: &str,
     queries: &'tcx OnceCell<TcxQueries<'tcx>>,
     global_ctxt: &'tcx OnceCell<GlobalCtxt<'tcx>>,
     arena: &'tcx WorkerLocal<Arena<'tcx>>,
@@ -770,7 +767,7 @@ pub fn create_global_ctxt<'tcx>(
     let sess = &compiler.session();
     let defs: &'tcx Definitions = arena.alloc(mem::replace(
         &mut resolver_outputs.definitions,
-        Definitions::new(crate_name, sess.local_crate_disambiguator()),
+        Definitions::new(&sess.crate_name().as_str(), sess.local_crate_disambiguator()),
     ));
 
     let query_result_on_disk_cache = rustc_incremental::load_query_result_cache(sess, defs);
@@ -801,7 +798,6 @@ pub fn create_global_ctxt<'tcx>(
                 dep_graph,
                 query_result_on_disk_cache,
                 queries.as_dyn(),
-                &crate_name,
                 &outputs,
             )
         })
@@ -970,8 +966,7 @@ fn encode_and_write_metadata(
 
     let need_metadata_file = tcx.sess.opts.output_types.contains_key(&OutputType::Metadata);
     if need_metadata_file {
-        let crate_name = &tcx.crate_name(LOCAL_CRATE).as_str();
-        let out_filename = filename_for_metadata(tcx.sess, crate_name, outputs);
+        let out_filename = filename_for_metadata(tcx.sess, outputs);
         // To avoid races with another rustc process scanning the output directory,
         // we need to write the file somewhere else and atomically move it to its
         // final destination, with an `fs::rename` call. In order for the rename to

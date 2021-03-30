@@ -2182,7 +2182,8 @@ impl<'a, 'tcx> InferCtxtExt<'tcx> for InferCtxt<'a, 'tcx> {
         let suggested_limit = current_limit * 2;
         err.help(&format!(
             "consider adding a `#![recursion_limit=\"{}\"]` attribute to your crate (`{}`)",
-            suggested_limit, self.tcx.crate_name,
+            suggested_limit,
+            self.tcx.sess.crate_name(),
         ));
     }
 

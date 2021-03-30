@@ -128,6 +128,9 @@ pub struct Session {
     /// in order to avoid redundantly verbose output (Issue #24690, #44953).
     pub one_time_diagnostics: Lock<FxHashSet<(DiagnosticMessageId, Option<Span>, String)>>,
     crate_types: OnceCell<Vec<CrateType>>,
+    /// The definite name of the current crate after taking into account
+    /// attributes, commandline parameters, etc.
+    crate_name: OnceCell<Symbol>,
     /// The `crate_disambiguator` is constructed out of all the `-C metadata`
     /// arguments passed to the compiler. Its value together with the crate-name
     /// forms a unique global identifier for the crate. It is used to allow
@@ -345,7 +348,15 @@ impl Session {
     }
 
     pub fn init_crate_types(&self, crate_types: Vec<CrateType>) {
-        self.crate_types.set(crate_types).expect("`crate_types` was initialized twice")
+        self.crate_types.set(crate_types).expect("`crate_types` was initialized twice");
+    }
+
+    pub fn crate_name(&self) -> Symbol {
+        self.crate_name.get().unwrap().clone()
+    }
+
+    pub fn init_crate_name(&self, crate_name: Symbol) {
+        self.crate_name.set(crate_name).expect("`crate_name` was initialized twice");
     }
 
     #[inline]
@@ -1456,6 +1467,7 @@ pub fn build_session(
         working_dir,
         one_time_diagnostics: Default::default(),
         crate_types: OnceCell::new(),
+        crate_name: OnceCell::new(),
         crate_disambiguator: OnceCell::new(),
         features: OnceCell::new(),
         lint_store: OnceCell::new(),

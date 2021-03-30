@@ -181,11 +181,7 @@ pub fn in_incr_comp_dir(incr_comp_session_dir: &Path, file_name: &str) -> PathBu
 /// a dep-graph and work products from a previous session.
 /// If the call fails, the fn may leave behind an invalid session directory.
 /// The garbage collection will take care of it.
-pub fn prepare_session_directory(
-    sess: &Session,
-    crate_name: &str,
-    crate_disambiguator: CrateDisambiguator,
-) {
+pub fn prepare_session_directory(sess: &Session, crate_disambiguator: CrateDisambiguator) {
     if sess.opts.incremental.is_none() {
         return;
     }
@@ -195,7 +191,7 @@ pub fn prepare_session_directory(
     debug!("prepare_session_directory");
 
     // {incr-comp-dir}/{crate-name-and-disambiguator}
-    let crate_dir = crate_path(sess, crate_name, crate_disambiguator);
+    let crate_dir = crate_path(sess, crate_disambiguator);
     debug!("crate-dir: {}", crate_dir.display());
     if create_dir(sess, &crate_dir, "crate").is_err() {
         return;
@@ -624,11 +620,7 @@ fn string_to_timestamp(s: &str) -> Result<SystemTime, ()> {
     Ok(UNIX_EPOCH + duration)
 }
 
-fn crate_path(
-    sess: &Session,
-    crate_name: &str,
-    crate_disambiguator: CrateDisambiguator,
-) -> PathBuf {
+fn crate_path(sess: &Session, crate_disambiguator: CrateDisambiguator) -> PathBuf {
     let incr_dir = sess.opts.incremental.as_ref().unwrap().clone();
 
     // The full crate disambiguator is really long. 64 bits of it should be
@@ -636,7 +628,7 @@ fn crate_path(
     let crate_disambiguator = crate_disambiguator.to_fingerprint().to_smaller_hash();
     let crate_disambiguator = base_n::encode(crate_disambiguator as u128, INT_ENCODE_BASE);
 
-    let crate_name = format!("{}-{}", crate_name, crate_disambiguator);
+    let crate_name = format!("{}-{}", sess.crate_name(), crate_disambiguator);
     incr_dir.join(crate_name)
 }
 

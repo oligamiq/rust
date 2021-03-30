@@ -231,7 +231,8 @@ pub fn report_autoderef_recursion_limit_error<'tcx>(tcx: TyCtxt<'tcx>, span: Spa
         .span_label(span, "deref recursion limit reached")
         .help(&format!(
             "consider adding a `#![recursion_limit=\"{}\"]` attribute to your crate (`{}`)",
-            suggested_limit, tcx.crate_name,
+            suggested_limit,
+            tcx.sess.crate_name(),
         ))
         .emit();
     }

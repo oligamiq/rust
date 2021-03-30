@@ -6,13 +6,9 @@ use rustc_span::symbol::sym;
 use rustc_span::Span;
 use std::path::{Path, PathBuf};
 
-pub fn out_filename(
-    sess: &Session,
-    crate_type: CrateType,
-    outputs: &OutputFilenames,
-    crate_name: &str,
-) -> PathBuf {
-    let default_filename = filename_for_input(sess, crate_type, crate_name, outputs);
+pub fn out_filename(sess: &Session, crate_type: CrateType, outputs: &OutputFilenames) -> PathBuf {
+    let default_filename =
+        filename_for_input(sess, crate_type, &sess.crate_name().as_str(), outputs);
     let out_filename = outputs
         .outputs
         .get(&OutputType::Exe)
@@ -122,12 +118,8 @@ pub fn validate_crate_name(sess: &Session, s: &str, sp: Option<Span>) {
     }
 }
 
-pub fn filename_for_metadata(
-    sess: &Session,
-    crate_name: &str,
-    outputs: &OutputFilenames,
-) -> PathBuf {
-    let libname = format!("{}{}", crate_name, sess.opts.cg.extra_filename);
+pub fn filename_for_metadata(sess: &Session, outputs: &OutputFilenames) -> PathBuf {
+    let libname = format!("{}{}", sess.crate_name().as_str(), sess.opts.cg.extra_filename);
 
     let out_filename = outputs
         .single_output_file

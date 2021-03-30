@@ -306,13 +306,7 @@ impl CodegenBackend for LlvmCodegenBackend {
         // Run the linker on any artifacts that resulted from the LLVM run.
         // This should produce either a finished executable or library.
         let target_cpu = crate::llvm_util::target_cpu(sess);
-        link_binary::<LlvmArchiveBuilder<'_>>(
-            sess,
-            &codegen_results,
-            outputs,
-            &codegen_results.crate_name.as_str(),
-            target_cpu,
-        );
+        link_binary::<LlvmArchiveBuilder<'_>>(sess, &codegen_results, outputs, target_cpu);
 
         Ok(())
     }

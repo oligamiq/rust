@@ -52,7 +52,6 @@ pub struct CrateLoader<'a> {
     // Immutable configuration.
     sess: &'a Session,
     metadata_loader: &'a MetadataLoaderDyn,
-    local_crate_name: Symbol,
     // Mutable output.
     cstore: CStore,
     used_extern_options: FxHashSet<Symbol>,
@@ -193,20 +192,15 @@ impl CStore {
 }
 
 impl<'a> CrateLoader<'a> {
-    pub fn new(
-        sess: &'a Session,
-        metadata_loader: &'a MetadataLoaderDyn,
-        local_crate_name: &str,
-    ) -> Self {
+    pub fn new(sess: &'a Session, metadata_loader: &'a MetadataLoaderDyn) -> Self {
         let local_crate_stable_id =
-            StableCrateId::new(local_crate_name, sess.local_crate_disambiguator());
+            StableCrateId::new(&sess.crate_name().as_str(), sess.local_crate_disambiguator());
         let mut stable_crate_ids = FxHashMap::default();
         stable_crate_ids.insert(local_crate_stable_id, LOCAL_CRATE);
 
         CrateLoader {
             sess,
             metadata_loader,
-            local_crate_name: Symbol::intern(local_crate_name),
             cstore: CStore {
                 // We add an empty entry for LOCAL_CRATE (which maps to zero) in
                 // order to make array indices in `metas` match with the
@@ -302,7 +296,7 @@ impl<'a> CrateLoader<'a> {
 
     fn verify_no_symbol_conflicts(&self, root: &CrateRoot<'_>) -> Result<(), CrateError> {
         // Check for (potential) conflicts with the local crate
-        if self.local_crate_name == root.name()
+        if self.sess.crate_name() == root.name()
             && self.sess.local_crate_disambiguator() == root.disambiguator()
         {
             return Err(CrateError::SymbolConflictsCurrent(root.name()));
@@ -929,7 +923,7 @@ impl<'a> CrateLoader<'a> {
                     &format!(
                         "external crate `{}` unused in `{}`: remove the dependency or add `use {} as _;`",
                         name,
-                        self.local_crate_name,
+                        self.sess.crate_name(),
                         name),
                     diag,
                 );
