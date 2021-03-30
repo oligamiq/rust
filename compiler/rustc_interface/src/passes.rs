@@ -767,7 +767,7 @@ pub fn create_global_ctxt<'tcx>(
     let sess = &compiler.session();
     let defs: &'tcx Definitions = arena.alloc(mem::replace(
         &mut resolver_outputs.definitions,
-        Definitions::new(&sess.crate_name().as_str(), sess.local_crate_disambiguator()),
+        Definitions::new(sess.local_crate_id()),
     ));
 
     let query_result_on_disk_cache = rustc_incremental::load_query_result_cache(sess, defs);

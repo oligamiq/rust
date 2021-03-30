@@ -23,6 +23,7 @@ use rustc_errors::registry::Registry;
 use rustc_errors::{Applicability, Diagnostic, DiagnosticBuilder, DiagnosticId, ErrorReported};
 use rustc_lint_defs::FutureBreakage;
 pub use rustc_span::crate_disambiguator::CrateDisambiguator;
+use rustc_span::def_id::StableCrateId;
 use rustc_span::edition::Edition;
 use rustc_span::source_map::{FileLoader, MultiSpan, RealFileLoader, SourceMap, Span};
 use rustc_span::{sym, SourceFileHashAlgorithm, Symbol};
@@ -357,6 +358,10 @@ impl Session {
 
     pub fn init_crate_name(&self, crate_name: Symbol) {
         self.crate_name.set(crate_name).expect("`crate_name` was initialized twice");
+    }
+
+    pub fn local_crate_id(&self) -> StableCrateId {
+        StableCrateId::new(&self.crate_name().as_str(), self.local_crate_disambiguator())
     }
 
     #[inline]

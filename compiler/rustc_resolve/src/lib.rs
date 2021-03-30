@@ -1203,8 +1203,7 @@ impl<'a> Resolver<'a> {
         let mut module_map = FxHashMap::default();
         module_map.insert(root_local_def_id, graph_root);
 
-        let definitions =
-            Definitions::new(&session.crate_name().as_str(), session.local_crate_disambiguator());
+        let definitions = Definitions::new(session.local_crate_id());
         let root = definitions.get_root_def();
 
         let mut visibilities = FxHashMap::default();

@@ -193,10 +193,8 @@ impl CStore {
 
 impl<'a> CrateLoader<'a> {
     pub fn new(sess: &'a Session, metadata_loader: &'a MetadataLoaderDyn) -> Self {
-        let local_crate_stable_id =
-            StableCrateId::new(&sess.crate_name().as_str(), sess.local_crate_disambiguator());
         let mut stable_crate_ids = FxHashMap::default();
-        stable_crate_ids.insert(local_crate_stable_id, LOCAL_CRATE);
+        stable_crate_ids.insert(sess.local_crate_id(), LOCAL_CRATE);
 
         CrateLoader {
             sess,
