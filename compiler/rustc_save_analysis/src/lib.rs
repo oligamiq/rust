@@ -91,16 +91,16 @@ impl<'tcx> SaveContext<'tcx> {
     }
 
     // Returns path to the compilation output (e.g., libfoo-12345678.rmeta)
-    pub fn compilation_output(&self, crate_name: &str) -> PathBuf {
+    pub fn compilation_output(&self) -> PathBuf {
         let sess = &self.tcx.sess;
         // Save-analysis is emitted per whole session, not per each crate type
         let crate_type = sess.crate_types()[0];
         let outputs = &*self.tcx.output_filenames(LOCAL_CRATE);
 
         if outputs.outputs.contains_key(&OutputType::Metadata) {
-            filename_for_metadata(sess, crate_name, outputs)
+            filename_for_metadata(sess, outputs)
         } else if outputs.outputs.should_codegen() {
-            out_filename(sess, crate_type, outputs, crate_name)
+            out_filename(sess, crate_type, outputs)
         } else {
             // Otherwise it's only a DepInfo, in which case we return early and
             // not even reach the analysis stage.
@@ -988,11 +988,11 @@ impl SaveHandler for CallbackHandler<'_> {
 
 pub fn process_crate<'l, 'tcx, H: SaveHandler>(
     tcx: TyCtxt<'tcx>,
-    cratename: &str,
     input: &'l Input,
     config: Option<Config>,
     mut handler: H,
 ) {
+    let cratename = tcx.sess.local_crate_name().as_str();
     with_no_trimmed_paths(|| {
         tcx.dep_graph.with_ignore(|| {
             info!("Dumping crate {}", cratename);
@@ -1015,8 +1015,8 @@ pub fn process_crate<'l, 'tcx, H: SaveHandler>(
 
             let mut visitor = DumpVisitor::new(save_ctxt);
 
-            visitor.dump_crate_info(cratename, tcx.hir().krate());
-            visitor.dump_compilation_options(input, cratename);
+            visitor.dump_crate_info(&cratename, tcx.hir().krate());
+            visitor.dump_compilation_options(input);
             visitor.process_crate(tcx.hir().krate());
 
             handler.save(&visitor.save_ctxt, &visitor.analysis())

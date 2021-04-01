@@ -310,7 +310,6 @@ impl CodegenBackend for LlvmCodegenBackend {
             sess,
             &codegen_results,
             outputs,
-            &codegen_results.crate_name.as_str(),
             target_cpu,
         );
 

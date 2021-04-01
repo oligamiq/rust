@@ -1863,7 +1863,6 @@ impl<B: ExtraBackendMethods> OngoingCodegen<B> {
 
         (
             CodegenResults {
-                crate_name: self.crate_name,
                 metadata: self.metadata,
                 windows_subsystem: self.windows_subsystem,
                 linker_info: self.linker_info,

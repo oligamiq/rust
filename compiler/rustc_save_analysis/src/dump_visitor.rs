@@ -157,7 +157,7 @@ impl<'tcx> DumpVisitor<'tcx> {
         self.dumper.crate_prelude(data);
     }
 
-    pub fn dump_compilation_options(&mut self, input: &Input, crate_name: &str) {
+    pub fn dump_compilation_options(&mut self, input: &Input) {
         // Apply possible `remap-path-prefix` remapping to the input source file
         // (and don't include remapping args anymore)
         let (program, arguments) = {
@@ -193,7 +193,7 @@ impl<'tcx> DumpVisitor<'tcx> {
             directory: self.tcx.sess.working_dir.0.clone(),
             program,
             arguments,
-            output: self.save_ctxt.compilation_output(crate_name),
+            output: self.save_ctxt.compilation_output(),
         };
 
         self.dumper.compilation_opts(data);

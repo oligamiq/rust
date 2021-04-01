@@ -128,6 +128,11 @@ pub struct Session {
     /// in order to avoid redundantly verbose output (Issue #24690, #44953).
     pub one_time_diagnostics: Lock<FxHashSet<(DiagnosticMessageId, Option<Span>, String)>>,
 
+    /// The definite name of the current crate after taking into account
+    /// attributes, commandline parameters, etc.
+    // This is set immediately after the `Session` has been created.
+    local_crate_name: Option<Symbol>,
+
     // This is set immediately after the `Session` has been created.
     crate_types: Option<Vec<CrateType>>,
 
@@ -336,6 +341,15 @@ impl Session {
             })
             .collect();
         self.parse_sess.span_diagnostic.emit_future_breakage_report(diags_and_breakage);
+    }
+
+    pub fn local_crate_name(&self) -> Symbol {
+        self.local_crate_name.unwrap()
+    }
+
+    pub fn init_local_crate_name(&mut self, local_crate_name: Symbol) {
+        assert!(self.local_crate_name.is_none(), "`local_crate_name` was initialized twice");
+        self.local_crate_name = Some(local_crate_name)
     }
 
     pub fn local_crate_disambiguator(&self) -> CrateDisambiguator {
@@ -946,10 +960,10 @@ impl Session {
 
     /// We want to know if we're allowed to do an optimization for crate foo from -z fuel=foo=n.
     /// This expends fuel if applicable, and records fuel if applicable.
-    pub fn consider_optimizing<T: Fn() -> String>(&self, crate_name: &str, msg: T) -> bool {
+    pub fn consider_optimizing<T: Fn() -> String>(&self, msg: T) -> bool {
         let mut ret = true;
         if let Some(ref c) = self.optimization_fuel_crate {
-            if c == crate_name {
+            if c == &*self.local_crate_name().as_str() {
                 assert_eq!(self.threads(), 1);
                 let mut fuel = self.optimization_fuel.lock();
                 ret = fuel.remaining != 0;
@@ -962,7 +976,7 @@ impl Session {
             }
         }
         if let Some(ref c) = self.print_fuel_crate {
-            if c == crate_name {
+            if c == &*self.local_crate_name().as_str() {
                 assert_eq!(self.threads(), 1);
                 self.print_fuel.fetch_add(1, SeqCst);
             }
@@ -1416,6 +1430,7 @@ pub fn build_session(
         local_crate_source_file,
         working_dir,
         one_time_diagnostics: Default::default(),
+        local_crate_name: None,
         crate_types: None,
         crate_disambiguator: OnceCell::new(),
         features: OnceCell::new(),

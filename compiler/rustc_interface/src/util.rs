@@ -96,9 +96,11 @@ pub fn create_session(
     if sess.opts.debugging_opts.link_only {
         let crate_types = collect_crate_types(&sess, &[]);
         sess.init_crate_types(crate_types);
+        sess.init_local_crate_name(Symbol::intern(&output::find_crate_name(&sess, &[], input)));
     } else if let Ok(crate_attrs) = parse_crate_attrs(&sess, &input) {
         let crate_types = collect_crate_types(&sess, &crate_attrs);
         sess.init_crate_types(crate_types);
+        sess.init_local_crate_name(Symbol::intern(&output::find_crate_name(&sess, &crate_attrs, input)));
     }
 
     codegen_backend.init(&sess);

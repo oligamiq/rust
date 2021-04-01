@@ -409,19 +409,17 @@ fn run_compiler(
             }
 
             if sess.opts.debugging_opts.save_analysis {
-                let crate_name = queries.crate_name()?.peek().clone();
                 queries.global_ctxt()?.peek_mut().enter(|tcx| {
                     let result = tcx.analysis(LOCAL_CRATE);
 
                     sess.time("save_analysis", || {
                         save::process_crate(
                             tcx,
-                            &crate_name,
                             &compiler.input(),
                             None,
                             DumpHandler::new(
                                 compiler.output_dir().as_ref().map(|p| &**p),
-                                &crate_name,
+                                &*tcx.sess.local_crate_name().as_str(),
                             ),
                         )
                     });
@@ -724,7 +722,7 @@ impl RustcDefaultCalls {
                     let crate_types = collect_crate_types(sess, attrs);
                     for &style in &crate_types {
                         let fname =
-                            rustc_session::output::filename_for_input(sess, style, &id, &t_outputs);
+                            rustc_session::output::filename_for_input(sess, style, &t_outputs);
                         println!("{}", fname.file_name().unwrap().to_string_lossy());
                     }
                 }

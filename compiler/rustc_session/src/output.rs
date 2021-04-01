@@ -10,9 +10,8 @@ pub fn out_filename(
     sess: &Session,
     crate_type: CrateType,
     outputs: &OutputFilenames,
-    crate_name: &str,
 ) -> PathBuf {
-    let default_filename = filename_for_input(sess, crate_type, crate_name, outputs);
+    let default_filename = filename_for_input(sess, crate_type, outputs);
     let out_filename = outputs
         .outputs
         .get(&OutputType::Exe)
@@ -124,10 +123,9 @@ pub fn validate_crate_name(sess: &Session, s: &str, sp: Option<Span>) {
 
 pub fn filename_for_metadata(
     sess: &Session,
-    crate_name: &str,
     outputs: &OutputFilenames,
 ) -> PathBuf {
-    let libname = format!("{}{}", crate_name, sess.opts.cg.extra_filename);
+    let libname = format!("{}{}", sess.local_crate_name(), sess.opts.cg.extra_filename);
 
     let out_filename = outputs
         .single_output_file
@@ -142,10 +140,9 @@ pub fn filename_for_metadata(
 pub fn filename_for_input(
     sess: &Session,
     crate_type: CrateType,
-    crate_name: &str,
     outputs: &OutputFilenames,
 ) -> PathBuf {
-    let libname = format!("{}{}", crate_name, sess.opts.cg.extra_filename);
+    let libname = format!("{}{}", sess.local_crate_name(), sess.opts.cg.extra_filename);
 
     match crate_type {
         CrateType::Rlib => outputs.out_directory.join(&format!("lib{}.rlib", libname)),

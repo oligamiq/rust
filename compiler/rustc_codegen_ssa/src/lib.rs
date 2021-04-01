@@ -150,7 +150,6 @@ pub struct CrateInfo {
 
 #[derive(Encodable, Decodable)]
 pub struct CodegenResults {
-    pub crate_name: Symbol,
     pub modules: Vec<CompiledModule>,
     pub allocator_module: Option<CompiledModule>,
     pub metadata_module: Option<CompiledModule>,

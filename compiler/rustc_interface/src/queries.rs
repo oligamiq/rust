@@ -17,7 +17,7 @@ use rustc_middle::ty::{GlobalCtxt, ResolverOutputs, TyCtxt};
 use rustc_query_impl::Queries as TcxQueries;
 use rustc_serialize::json;
 use rustc_session::config::{self, OutputFilenames, OutputType};
-use rustc_session::{output::find_crate_name, Session};
+use rustc_session::Session;
 use rustc_span::symbol::sym;
 use std::any::Any;
 use std::cell::{Ref, RefCell, RefMut};
@@ -79,7 +79,6 @@ pub struct Queries<'tcx> {
 
     dep_graph_future: Query<Option<DepGraphFuture>>,
     parse: Query<ast::Crate>,
-    crate_name: Query<String>,
     register_plugins: Query<(ast::Crate, Lrc<LintStore>)>,
     expansion: Query<(ast::Crate, Steal<Rc<RefCell<BoxedResolver>>>, Lrc<LintStore>)>,
     dep_graph: Query<DepGraph>,
@@ -99,7 +98,6 @@ impl<'tcx> Queries<'tcx> {
             hir_arena: WorkerLocal::new(|_| rustc_ast_lowering::Arena::default()),
             dep_graph_future: Default::default(),
             parse: Default::default(),
-            crate_name: Default::default(),
             register_plugins: Default::default(),
             expansion: Default::default(),
             dep_graph: Default::default(),
@@ -138,7 +136,6 @@ impl<'tcx> Queries<'tcx> {
 
     pub fn register_plugins(&self) -> Result<&Query<(ast::Crate, Lrc<LintStore>)>> {
         self.register_plugins.compute(|| {
-            let crate_name = self.crate_name()?.peek().clone();
             let krate = self.parse()?.take();
 
             let empty: &(dyn Fn(&Session, &mut LintStore) + Sync + Send) = &|_, _| {};
@@ -147,7 +144,6 @@ impl<'tcx> Queries<'tcx> {
                 &*self.codegen_backend().metadata_loader(),
                 self.compiler.register_lints.as_deref().unwrap_or_else(|| empty),
                 krate,
-                &crate_name,
             );
 
             // Compute the dependency graph (in the background). We want to do
@@ -161,23 +157,11 @@ impl<'tcx> Queries<'tcx> {
         })
     }
 
-    pub fn crate_name(&self) -> Result<&Query<String>> {
-        self.crate_name.compute(|| {
-            Ok({
-                let parse_result = self.parse()?;
-                let krate = parse_result.peek();
-                // parse `#[crate_name]` even if `--crate-name` was passed, to make sure it matches.
-                find_crate_name(self.session(), &krate.attrs, &self.compiler.input)
-            })
-        })
-    }
-
     pub fn expansion(
         &self,
     ) -> Result<&Query<(ast::Crate, Steal<Rc<RefCell<BoxedResolver>>>, Lrc<LintStore>)>> {
         tracing::trace!("expansion");
         self.expansion.compute(|| {
-            let crate_name = self.crate_name()?.peek().clone();
             let (krate, lint_store) = self.register_plugins()?.take();
             let _timer = self.session().timer("configure_and_expand");
             passes::configure_and_expand(
@@ -185,7 +169,6 @@ impl<'tcx> Queries<'tcx> {
                 lint_store.clone(),
                 self.codegen_backend().metadata_loader(),
                 krate,
-                &crate_name,
             )
             .map(|(krate, resolver)| {
                 (krate, Steal::new(Rc::new(RefCell::new(resolver))), lint_store)
@@ -239,21 +222,17 @@ impl<'tcx> Queries<'tcx> {
         self.prepare_outputs.compute(|| {
             let expansion_result = self.expansion()?;
             let (krate, boxed_resolver, _) = &*expansion_result.peek();
-            let crate_name = self.crate_name()?;
-            let crate_name = crate_name.peek();
             passes::prepare_outputs(
                 self.session(),
                 self.compiler,
                 &krate,
                 &boxed_resolver,
-                &crate_name,
             )
         })
     }
 
     pub fn global_ctxt(&'tcx self) -> Result<&Query<QueryContext<'tcx>>> {
         self.global_ctxt.compute(|| {
-            let crate_name = self.crate_name()?.peek().clone();
             let outputs = self.prepare_outputs()?.peek().clone();
             let lint_store = self.expansion()?.peek().2.clone();
             let hir = self.lower_to_hir()?.peek();
@@ -267,7 +246,6 @@ impl<'tcx> Queries<'tcx> {
                 dep_graph,
                 resolver_outputs.steal(),
                 outputs,
-                &crate_name,
                 &self.queries,
                 &self.gcx,
                 &self.arena,
