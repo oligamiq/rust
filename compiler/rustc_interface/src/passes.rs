@@ -168,9 +168,6 @@ pub fn register_plugins<'a>(
     // these need to be set "early" so that expansion sees `quote` if enabled.
     sess.init_features(features);
 
-    let crate_types = util::collect_crate_types(sess, &krate.attrs);
-    sess.init_crate_types(crate_types);
-
     let disambiguator = util::compute_crate_disambiguator(sess);
     sess.crate_disambiguator.set(disambiguator).expect("not yet initialized");
     rustc_incremental::prepare_session_directory(sess, &crate_name, disambiguator);
@@ -672,7 +669,7 @@ pub fn prepare_outputs(
         generated_output_paths(sess, &outputs, compiler.output_file.is_some(), &crate_name);
 
     // Ensure the source file isn't accidentally overwritten during compilation.
-    if let Some(ref input_path) = compiler.input_path {
+    if let Input::File(ref input_path) = compiler.input {
         if sess.opts.will_create_output_file() {
             if output_contains_path(&output_paths, input_path) {
                 sess.err(&format!(

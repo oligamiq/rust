@@ -9,6 +9,7 @@ use rustc_data_structures::jobserver;
 use rustc_data_structures::stable_hasher::StableHasher;
 use rustc_data_structures::sync::Lrc;
 use rustc_errors::registry::Registry;
+use rustc_errors::ErrorReported;
 use rustc_metadata::dynamic_lib::DynamicLibrary;
 #[cfg(parallel_compiler)]
 use rustc_middle::ty::tls;
@@ -66,7 +67,7 @@ pub fn create_session(
     cfg: FxHashSet<(String, Option<String>)>,
     diagnostic_output: DiagnosticOutput,
     file_loader: Option<Box<dyn FileLoader + Send + Sync + 'static>>,
-    input_path: Option<PathBuf>,
+    input: &Input,
     lint_caps: FxHashMap<lint::LintId, lint::Level>,
     make_codegen_backend: Option<
         Box<dyn FnOnce(&config::Options) -> Box<dyn CodegenBackend> + Send>,
@@ -84,13 +85,21 @@ pub fn create_session(
 
     let mut sess = session::build_session(
         sopts,
-        input_path,
+        input,
         descriptions,
         diagnostic_output,
         lint_caps,
         file_loader,
         target_override,
     );
+
+    if sess.opts.debugging_opts.link_only {
+        let crate_types = collect_crate_types(&sess, &[]);
+        sess.init_crate_types(crate_types);
+    } else if let Ok(crate_attrs) = parse_crate_attrs(&sess, &input) {
+        let crate_types = collect_crate_types(&sess, &crate_attrs);
+        sess.init_crate_types(crate_types);
+    }
 
     codegen_backend.init(&sess);
 
@@ -484,6 +493,24 @@ pub fn get_codegen_sysroot(backend_name: &str) -> fn() -> Box<dyn CodegenBackend
         None => {
             let err = format!("unsupported builtin codegen backend `{}`", backend_name);
             early_error(ErrorOutputType::default(), &err);
+        }
+    }
+}
+
+pub fn parse_crate_attrs(sess: &Session, input: &Input) -> Result<Vec<ast::Attribute>, ErrorReported> {
+    let result = match input {
+        Input::File(ifile) => rustc_parse::parse_crate_attrs_from_file(ifile, &sess.parse_sess),
+        Input::Str { name, input } => rustc_parse::parse_crate_attrs_from_source_str(
+            name.clone(),
+            input.clone(),
+            &sess.parse_sess,
+        ),
+    };
+    match result {
+        Ok(attrs) => Ok(attrs),
+        Err(mut parse_error) => {
+            parse_error.emit();
+            Err(ErrorReported)
         }
     }
 }

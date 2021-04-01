@@ -14,12 +14,11 @@ extern crate tracing;
 
 pub extern crate rustc_plugin_impl as plugin;
 
-use rustc_ast as ast;
 use rustc_codegen_ssa::{traits::CodegenBackend, CodegenResults};
 use rustc_data_structures::profiling::{get_resident_set_size, print_time_passes_entry};
 use rustc_data_structures::sync::SeqCst;
 use rustc_errors::registry::{InvalidErrorCode, Registry};
-use rustc_errors::{ErrorReported, PResult};
+use rustc_errors::ErrorReported;
 use rustc_feature::find_gated_cfg;
 use rustc_hir::def_id::LOCAL_CRATE;
 use rustc_interface::util::{self, collect_crate_types, get_builtin_codegen_backend};
@@ -211,7 +210,6 @@ fn run_compiler(
             opts: sopts,
             crate_cfg: cfg,
             input: Input::File(PathBuf::new()),
-            input_path: None,
             output_file: None,
             output_dir: None,
             file_loader: None,
@@ -234,7 +232,7 @@ fn run_compiler(
     }
 
     let (odir, ofile) = make_output(&matches);
-    let (input, input_file_path, input_err) = match make_input(&matches.free) {
+    let (input, input_err) = match make_input(&matches.free) {
         Some(v) => v,
         None => match matches.free.len() {
             0 => {
@@ -295,7 +293,6 @@ fn run_compiler(
         opts: sopts,
         crate_cfg: cfg,
         input,
-        input_path: input_file_path,
         output_file: ofile,
         output_dir: odir,
         file_loader,
@@ -490,7 +487,7 @@ fn make_output(matches: &getopts::Matches) -> (Option<PathBuf>, Option<PathBuf>)
 }
 
 // Extract input (string or file and optional path) from matches.
-fn make_input(free_matches: &[String]) -> Option<(Input, Option<PathBuf>, Option<io::Error>)> {
+fn make_input(free_matches: &[String]) -> Option<(Input, Option<io::Error>)> {
     if free_matches.len() == 1 {
         let ifile = &free_matches[0];
         if ifile == "-" {
@@ -511,11 +508,11 @@ fn make_input(free_matches: &[String]) -> Option<(Input, Option<PathBuf>, Option
                 let line = isize::from_str_radix(&line, 10)
                     .expect("UNSTABLE_RUSTDOC_TEST_LINE needs to be an number");
                 let file_name = FileName::doc_test_source_code(PathBuf::from(path), line);
-                return Some((Input::Str { name: file_name, input: src }, None, err));
+                return Some((Input::Str { name: file_name, input: src }, err));
             }
-            Some((Input::Str { name: FileName::anon_source_code(&src), input: src }, None, err))
+            Some((Input::Str { name: FileName::anon_source_code(&src), input: src }, err))
         } else {
-            Some((Input::File(PathBuf::from(ifile)), Some(PathBuf::from(ifile)), None))
+            Some((Input::File(PathBuf::from(ifile)), None))
         }
     } else {
         None
@@ -622,9 +619,7 @@ impl RustcDefaultCalls {
     fn process_rlink(sess: &Session, compiler: &interface::Compiler) -> Result<(), ErrorReported> {
         if let Input::File(file) = compiler.input() {
             // FIXME: #![crate_type] and #![crate_name] support not implemented yet
-            let attrs = vec![];
-            sess.init_crate_types(collect_crate_types(sess, &attrs));
-            let outputs = compiler.build_output_filenames(&sess, &attrs);
+            let outputs = compiler.build_output_filenames(&sess, &[]);
             let rlink_data = fs::read_to_string(file).unwrap_or_else(|err| {
                 sess.fatal(&format!("failed to read rlink file: {}", err));
             });
@@ -690,11 +685,10 @@ impl RustcDefaultCalls {
         let attrs = match input {
             None => None,
             Some(input) => {
-                let result = parse_crate_attrs(sess, input);
+                let result = util::parse_crate_attrs(sess, input);
                 match result {
                     Ok(attrs) => Some(attrs),
-                    Err(mut parse_error) => {
-                        parse_error.emit();
+                    Err(ErrorReported) => {
                         return Compilation::Stop;
                     }
                 }
@@ -1100,17 +1094,6 @@ pub fn handle_options(args: &[String]) -> Option<getopts::Matches> {
     }
 
     Some(matches)
-}
-
-fn parse_crate_attrs<'a>(sess: &'a Session, input: &Input) -> PResult<'a, Vec<ast::Attribute>> {
-    match input {
-        Input::File(ifile) => rustc_parse::parse_crate_attrs_from_file(ifile, &sess.parse_sess),
-        Input::Str { name, input } => rustc_parse::parse_crate_attrs_from_source_str(
-            name.clone(),
-            input.clone(),
-            &sess.parse_sess,
-        ),
-    }
 }
 
 /// Gets a list of extra command-line flags provided by the user, as strings.

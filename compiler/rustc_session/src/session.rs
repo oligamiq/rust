@@ -1,7 +1,7 @@
 use crate::cgu_reuse_tracker::CguReuseTracker;
 use crate::code_stats::CodeStats;
 pub use crate::code_stats::{DataTypeKind, FieldInfo, SizeKind, VariantInfo};
-use crate::config::{self, CrateType, OutputType, PrintRequest, SanitizerSet, SwitchWithOptPath};
+use crate::config::{self, CrateType, OutputType, PrintRequest, SanitizerSet, SwitchWithOptPath, Input};
 use crate::filesearch;
 use crate::lint::{self, LintId};
 use crate::parse::ParseSess;
@@ -127,7 +127,10 @@ pub struct Session {
     /// (sub)diagnostics that have been set once, but should not be set again,
     /// in order to avoid redundantly verbose output (Issue #24690, #44953).
     pub one_time_diagnostics: Lock<FxHashSet<(DiagnosticMessageId, Option<Span>, String)>>,
-    crate_types: OnceCell<Vec<CrateType>>,
+
+    // This is set immediately after the `Session` has been created.
+    crate_types: Option<Vec<CrateType>>,
+
     /// The `crate_disambiguator` is constructed out of all the `-C metadata`
     /// arguments passed to the compiler. Its value together with the crate-name
     /// forms a unique global identifier for the crate. It is used to allow
@@ -340,11 +343,12 @@ impl Session {
     }
 
     pub fn crate_types(&self) -> &[CrateType] {
-        self.crate_types.get().unwrap().as_slice()
+        self.crate_types.as_ref().unwrap()
     }
 
-    pub fn init_crate_types(&self, crate_types: Vec<CrateType>) {
-        self.crate_types.set(crate_types).expect("`crate_types` was initialized twice")
+    pub fn init_crate_types(&mut self, crate_types: Vec<CrateType>) {
+        assert!(self.crate_types.is_none(), "`crate_types` was initialized twice");
+        self.crate_types = Some(crate_types)
     }
 
     #[inline]
@@ -1251,7 +1255,7 @@ pub enum DiagnosticOutput {
 
 pub fn build_session(
     sopts: config::Options,
-    local_crate_source_file: Option<PathBuf>,
+    input: &Input,
     registry: rustc_errors::registry::Registry,
     diagnostics_output: DiagnosticOutput,
     driver_lint_caps: FxHashMap<lint::LintId, lint::Level>,
@@ -1341,8 +1345,11 @@ pub fn build_session(
 
     let file_path_mapping = sopts.file_path_mapping();
 
-    let local_crate_source_file =
-        local_crate_source_file.map(|path| file_path_mapping.map_prefix(path).0);
+    let local_crate_source_file = if let Input::File(path) = input {
+        Some(file_path_mapping.map_prefix(path.clone()).0)
+    } else {
+        None
+    };
 
     let optimization_fuel_crate = sopts.debugging_opts.fuel.as_ref().map(|i| i.0.clone());
     let optimization_fuel = Lock::new(OptimizationFuel {
@@ -1409,7 +1416,7 @@ pub fn build_session(
         local_crate_source_file,
         working_dir,
         one_time_diagnostics: Default::default(),
-        crate_types: OnceCell::new(),
+        crate_types: None,
         crate_disambiguator: OnceCell::new(),
         features: OnceCell::new(),
         lint_store: OnceCell::new(),
