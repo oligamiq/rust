@@ -479,7 +479,7 @@ pub fn set_sigpipe_handler() {
     }
 }
 
-#[cfg(windows)]
+#[cfg(not(unix))]
 pub fn set_sigpipe_handler() {}
 
 // Extract output directory and file from matches.

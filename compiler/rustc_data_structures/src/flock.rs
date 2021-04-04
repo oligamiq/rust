@@ -7,6 +7,7 @@
 #![allow(non_camel_case_types)]
 #![allow(nonstandard_style)]
 
+#[cfg(any(unix, windows))]
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::path::Path;

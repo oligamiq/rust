@@ -193,3 +193,21 @@ mod dl {
         if ptr.is_null() { Err(io::Error::last_os_error().to_string()) } else { Ok(ptr) }
     }
 }
+
+
+#[cfg(target_arch = "wasm32")]
+mod dl {
+    use std::ffi::OsStr;
+
+    pub(super) fn open(_: &OsStr) -> Result<*mut u8, String> {
+        unimplemented!()
+    }
+
+    pub(super) unsafe fn symbol(_: *mut u8, _: *const libc::c_char) -> Result<*mut u8, String> {
+        unimplemented!()
+    }
+
+    pub(super) unsafe fn close(_: *mut u8) {
+        unimplemented!()
+    }
+}

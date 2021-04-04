@@ -111,7 +111,7 @@ fn get_stack_size() -> Option<usize> {
 
 /// Like a `thread::Builder::spawn` followed by a `join()`, but avoids the need
 /// for `'static` bounds.
-#[cfg(not(parallel_compiler))]
+#[cfg(all(not(parallel_compiler), not(target_arch = "wasm32")))]
 pub fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -> R {
     struct Ptr(*mut ());
     unsafe impl Send for Ptr {}
@@ -132,6 +132,13 @@ pub fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: 
         Ok(()) => result.unwrap(),
         Err(p) => panic::resume_unwind(p),
     }
+}
+
+/// Like a `thread::Builder::spawn` followed by a `join()`, but avoids the need
+/// for `'static` bounds.
+#[cfg(all(not(parallel_compiler), target_arch = "wasm32"))]
+pub fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(_: thread::Builder, f: F) -> R {
+    f()
 }
 
 #[cfg(not(parallel_compiler))]
@@ -387,6 +394,11 @@ fn sysroot_candidates() -> Vec<PathBuf> {
             let os = OsString::from_wide(&space);
             Some(PathBuf::from(os))
         }
+    }
+
+    #[cfg(not(any(unix, windows)))]
+    fn current_dll_path() -> Option<PathBuf> {
+        None
     }
 }
 

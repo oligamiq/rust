@@ -4,10 +4,23 @@ version = "0.1.0"
 authors = ["bjorn3 <bjorn3@users.noreply.github.com>"]
 edition = "2018"
 
-[lib]
-crate-type = ["dylib"]
-
 [dependencies]
+snap = "1.0.1"
+rustc_middle = { path = "../rustc_middle" }
+rustc_ast = { path = "../rustc_ast" }
+rustc_codegen_ssa = { path = "../rustc_codegen_ssa" }
+rustc_data_structures = { path = "../rustc_data_structures" }
+rustc_errors = { path = "../rustc_errors" }
+rustc_fs_util = { path = "../rustc_fs_util" }
+rustc_hir = { path = "../rustc_hir" }
+rustc_incremental = { path = "../rustc_incremental" }
+rustc_index = { path = "../rustc_index" }
+rustc_session = { path = "../rustc_session" }
+rustc_span = { path = "../rustc_span" }
+rustc_target = { path = "../rustc_target" }
+rustc_interface = { path = "../rustc_interface" }
+rustc_driver = { path = "../rustc_driver" }
+
 # These have to be in sync with each other
 cranelift-codegen = { git = "https://github.com/bytecodealliance/wasmtime/", branch = "main", features = ["unwind", "x64"] }
 cranelift-frontend = { git = "https://github.com/bytecodealliance/wasmtime/", branch = "main" }
@@ -35,7 +48,7 @@ smallvec = "1.6.1"
 #gimli = { path = "../" }
 
 [features]
-default = ["jit", "inline_asm"]
+default = []
 jit = ["cranelift-jit", "libloading"]
 inline_asm = []
 

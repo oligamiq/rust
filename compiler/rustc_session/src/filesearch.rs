@@ -116,6 +116,10 @@ pub fn make_target_lib_path(sysroot: &Path, target_triple: &str) -> PathBuf {
 // This function checks if sysroot is found using env::args().next(), and if it
 // is not found, uses env::current_exe() to imply sysroot.
 pub fn get_or_default_sysroot() -> PathBuf {
+    if cfg!(target_os = "wasi") {
+        return PathBuf::new();
+    }
+
     // Follow symlinks.  If the resolved path is relative, make it absolute.
     fn canonicalize(path: PathBuf) -> PathBuf {
         let path = fs::canonicalize(&path).unwrap_or(path);
