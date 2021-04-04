@@ -44,7 +44,8 @@ smallvec = "1.6.1"
 #cranelift-jit = { path = "../wasmtime/cranelift/jit" }
 #cranelift-object = { path = "../wasmtime/cranelift/object" }
 
-#[patch.crates-io]
+[patch.crates-io]
+tempfile = { path = "./tempfile" }
 #gimli = { path = "../" }
 
 [features]

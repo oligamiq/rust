@@ -1,0 +1,13 @@
+diff --git a/src/file/mod.rs b/src/file/mod.rs
+index ce70cac..f8fefab 100644
+--- a/src/file/mod.rs
++++ b/src/file/mod.rs
+@@ -53,7 +53,7 @@ mod imp;
+ ///
+ /// [`std::env::temp_dir()`]: https://doc.rust-lang.org/std/env/fn.temp_dir.html
+ pub fn tempfile() -> io::Result<File> {
+-    tempfile_in(&env::temp_dir())
++    tempfile_in("/tmp")
+ }
+ 
+ /// Create a new temporary file in the specified directory.

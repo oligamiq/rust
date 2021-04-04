@@ -1,4 +1,5 @@
 target
+wasi-target
 **/*.rs.bk
 *.rlib
 *.o
