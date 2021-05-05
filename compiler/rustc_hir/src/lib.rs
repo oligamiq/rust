@@ -2,10 +2,12 @@
 //!
 //! [rustc dev guide]: https://rustc-dev-guide.rust-lang.org/hir.html
 
+#![feature(array_value_iter)]
 #![feature(crate_visibility_modifier)]
 #![feature(const_panic)]
 #![feature(extended_key_value_attributes)]
 #![feature(in_band_lifetimes)]
+#![feature(iterator_fold_self)]
 #![feature(once_cell)]
 #![feature(or_patterns)]
 #![recursion_limit = "256"]

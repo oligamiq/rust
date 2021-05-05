@@ -3797,7 +3797,7 @@ dependencies = [
 name = "rustc_data_structures"
 version = "0.0.0"
 dependencies = [
- "arrayvec 0.7.0",
+ "arrayvec 0.5.2",
  "bitflags",
  "cfg-if 0.1.10",
  "crossbeam-utils 0.8.3",
@@ -3967,7 +3967,7 @@ dependencies = [
 name = "rustc_index"
 version = "0.0.0"
 dependencies = [
- "arrayvec 0.7.0",
+ "arrayvec 0.5.2",
  "rustc_macros",
  "rustc_serialize",
 ]

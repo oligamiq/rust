@@ -19,6 +19,7 @@
 #![feature(crate_visibility_modifier)]
 #![feature(or_patterns)]
 #![feature(control_flow_enum)]
+#![feature(array_value_iter)]
 #![recursion_limit = "512"] // For rustdoc
 
 #[macro_use]

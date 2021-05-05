@@ -1104,7 +1104,9 @@ impl<'a> Resolver<'a> {
         {
             let def_id = self.parent(ctor_def_id).expect("no parent for a constructor");
             let fields = self.field_names.get(&def_id)?;
-            return fields.iter().map(|name| name.span).reduce(Span::to); // None for `struct Foo()`
+            let mut iter = fields.iter().map(|name| name.span);
+            let next = iter.next()?;
+            return Some(iter.fold(next, Span::to)); // None for `struct Foo()`
         }
         None
     }

@@ -92,6 +92,7 @@
 #![feature(nll)]
 #![feature(or_patterns)]
 #![feature(in_band_lifetimes)]
+#![feature(unsigned_abs)]
 #![recursion_limit = "256"]
 
 #[macro_use]

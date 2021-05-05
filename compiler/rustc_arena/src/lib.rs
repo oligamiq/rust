@@ -11,10 +11,13 @@
     html_root_url = "https://doc.rust-lang.org/nightly/nightly-rustc/",
     test(no_crate_inject, attr(deny(warnings)))
 )]
+#![feature(array_value_iter)]
+#![feature(array_value_iter_slice)]
 #![feature(dropck_eyepatch)]
 #![feature(new_uninit)]
 #![feature(maybe_uninit_slice)]
 #![feature(min_specialization)]
+#![feature(min_const_generics)]
 #![cfg_attr(test, feature(test))]
 
 use rustc_data_structures::sync;

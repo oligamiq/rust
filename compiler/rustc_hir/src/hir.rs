@@ -357,11 +357,9 @@ impl GenericArgs<'_> {
     }
 
     pub fn span(&self) -> Option<Span> {
-        self.args
-            .iter()
-            .filter(|arg| !arg.is_synthetic())
-            .map(|arg| arg.span())
-            .reduce(|span1, span2| span1.to(span2))
+        let mut iter = self.args.iter().filter(|arg| !arg.is_synthetic()).map(|arg| arg.span());
+        let first = iter.next()?;
+        Some(iter.fold(first, |span1, span2| span1.to(span2)))
     }
 
     /// Returns span encompassing arguments and their surrounding `<>` or `()`

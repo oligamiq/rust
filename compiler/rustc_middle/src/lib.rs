@@ -49,6 +49,8 @@
 #![feature(control_flow_enum)]
 #![feature(associated_type_defaults)]
 #![feature(cmp_min_max_by)]
+#![feature(panic_any)]
+#![feature(unsigned_abs)]
 #![recursion_limit = "512"]
 
 #[macro_use]

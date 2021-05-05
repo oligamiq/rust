@@ -70,6 +70,7 @@ This API is completely unstable and subject to change.
 #![feature(slice_partition_dedup)]
 #![feature(control_flow_enum)]
 #![feature(str_split_once)]
+#![feature(array_value_iter)]
 #![recursion_limit = "256"]
 
 #[macro_use]
