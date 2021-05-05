@@ -121,7 +121,6 @@ use rustc_middle::mir::coverage::*;
 use rustc_middle::mir::{self, BasicBlock, TerminatorKind};
 use rustc_middle::ty::TyCtxt;
 
-use std::iter;
 use std::lazy::SyncOnceCell;
 
 pub const NESTED_INDENT: &str = "    ";
@@ -285,9 +284,12 @@ impl DebugCounters {
                     counter_kind
                 ),
             };
-            counters
-                .try_insert(id, DebugCounter::new(counter_kind.clone(), some_block_label))
-                .expect("attempt to add the same counter_kind to DebugCounters more than once");
+            assert!(
+                counters
+                    .insert(id, DebugCounter::new(counter_kind.clone(), some_block_label))
+                    .is_none(),
+                "attempt to add the same counter_kind to DebugCounters more than once"
+            );
         }
     }
 
@@ -478,9 +480,10 @@ impl GraphvizData {
         counter_kind: &CoverageKind,
     ) {
         if let Some(edge_to_counter) = self.some_edge_to_counter.as_mut() {
-            edge_to_counter
-                .try_insert((from_bcb, to_bb), counter_kind.clone())
-                .expect("invalid attempt to insert more than one edge counter for the same edge");
+            assert!(
+                edge_to_counter.insert((from_bcb, to_bb), counter_kind.clone()).is_none(),
+                "invalid attempt to insert more than one edge counter for the same edge"
+            );
         }
     }
 
@@ -704,7 +707,9 @@ pub(super) fn dump_coverage_graphviz(
         let edge_counters = from_terminator
             .successors()
             .map(|&successor_bb| graphviz_data.get_edge_counter(from_bcb, successor_bb));
-        iter::zip(&edge_labels, edge_counters)
+        edge_labels
+            .iter()
+            .zip(edge_counters)
             .map(|(label, some_counter)| {
                 if let Some(counter) = some_counter {
                     format!("{}\n{}", label, debug_counters.format_counter(counter))

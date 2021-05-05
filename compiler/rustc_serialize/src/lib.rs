@@ -20,6 +20,7 @@ Core encoding and decoding interfaces.
 #![feature(maybe_uninit_uninit_array)]
 #![feature(maybe_uninit_slice)]
 #![feature(new_uninit)]
+#![feature(int_bits_const)]
 #![cfg_attr(test, feature(test))]
 #![allow(rustc::internal)]
 

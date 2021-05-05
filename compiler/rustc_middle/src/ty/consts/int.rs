@@ -308,7 +308,7 @@ impl TryFrom<ScalarInt> for char {
     #[inline]
     fn try_from(int: ScalarInt) -> Result<Self, Size> {
         int.to_bits(Size::from_bytes(std::mem::size_of::<char>()))
-            .map(|u| char::from_u32(u.try_into().unwrap()).unwrap())
+            .map(|u| std::char::from_u32(u.try_into().unwrap()).unwrap())
     }
 }
 

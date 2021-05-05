@@ -14,11 +14,9 @@
 #![feature(control_flow_enum)]
 #![feature(crate_visibility_modifier)]
 #![feature(format_args_capture)]
-#![feature(iter_zip)]
 #![feature(nll)]
-#![cfg_attr(bootstrap, feature(or_patterns))]
+#![feature(or_patterns)]
 #![recursion_limit = "256"]
-#![allow(rustdoc::private_intra_doc_links)]
 
 pub use rustc_hir::def::{Namespace, PerNS};
 

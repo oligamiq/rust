@@ -2217,7 +2217,9 @@ pub fn is_case_difference(sm: &SourceMap, suggested: &str, sp: Span) -> bool {
     };
     let ascii_confusables = &['c', 'f', 'i', 'k', 'o', 's', 'u', 'v', 'w', 'x', 'y', 'z'];
     // All the chars that differ in capitalization are confusable (above):
-    let confusable = iter::zip(found.chars(), suggested.chars())
+    let confusable = found
+        .chars()
+        .zip(suggested.chars())
         .filter(|(f, s)| f != s)
         .all(|(f, s)| (ascii_confusables.contains(&f) || ascii_confusables.contains(&s)));
     confusable && found.to_lowercase() == suggested.to_lowercase()

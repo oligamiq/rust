@@ -24,7 +24,6 @@ use tracing::{debug, info};
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io;
-use std::iter;
 use std::path::Path;
 use std::ptr;
 use std::slice;
@@ -917,7 +916,9 @@ impl ThinLTOKeysMap {
         modules: &[llvm::ThinLTOModule],
         names: &[CString],
     ) -> Self {
-        let keys = iter::zip(modules, names)
+        let keys = modules
+            .iter()
+            .zip(names.iter())
             .map(|(module, name)| {
                 let key = build_string(|rust_str| unsafe {
                     llvm::LLVMRustComputeLTOCacheKey(rust_str, module.identifier, data.0);

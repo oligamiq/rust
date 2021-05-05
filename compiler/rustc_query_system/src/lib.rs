@@ -3,7 +3,6 @@
 #![feature(core_intrinsics)]
 #![feature(drain_filter)]
 #![feature(hash_raw_entry)]
-#![feature(iter_zip)]
 #![feature(min_specialization)]
 #![feature(stmt_expr_attributes)]
 

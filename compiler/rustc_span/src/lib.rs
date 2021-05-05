@@ -19,8 +19,8 @@
 #![feature(const_panic)]
 #![feature(negative_impls)]
 #![feature(nll)]
+#![feature(str_split_once)]
 #![feature(min_specialization)]
-#![feature(thread_local_const_init)]
 
 #[macro_use]
 extern crate rustc_macros;

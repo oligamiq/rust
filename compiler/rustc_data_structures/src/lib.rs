@@ -28,6 +28,7 @@
 #![feature(new_uninit)]
 #![feature(once_cell)]
 #![feature(maybe_uninit_uninit_array)]
+#![feature(int_bits_const)]
 #![allow(rustc::default_hash_types)]
 #![deny(unaligned_references)]
 

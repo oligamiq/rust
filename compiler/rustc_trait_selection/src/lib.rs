@@ -15,10 +15,9 @@
 #![feature(box_patterns)]
 #![feature(drain_filter)]
 #![feature(in_band_lifetimes)]
-#![feature(iter_zip)]
 #![feature(never_type)]
 #![feature(crate_visibility_modifier)]
-#![cfg_attr(bootstrap, feature(or_patterns))]
+#![feature(or_patterns)]
 #![feature(control_flow_enum)]
 #![recursion_limit = "512"] // For rustdoc
 

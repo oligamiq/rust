@@ -5,7 +5,6 @@ use rustc_middle::mir::{BorrowKind, Mutability, Operand};
 use rustc_middle::mir::{InlineAsmOperand, Terminator, TerminatorKind};
 use rustc_middle::mir::{Statement, StatementKind};
 use rustc_middle::ty::TyCtxt;
-use std::iter;
 
 use crate::dataflow::indexes::BorrowIndex;
 
@@ -70,7 +69,7 @@ impl<'cx, 'tcx> Visitor<'tcx> for InvalidationGenerator<'cx, 'tcx> {
                 self.mutate_place(location, **place, Shallow(None), JustWrite);
             }
             StatementKind::LlvmInlineAsm(asm) => {
-                for (o, output) in iter::zip(&asm.asm.outputs, &*asm.outputs) {
+                for (o, output) in asm.asm.outputs.iter().zip(asm.outputs.iter()) {
                     if o.is_indirect {
                         // FIXME(eddyb) indirect inline asm outputs should
                         // be encoded through MIR place derefs instead.

@@ -31,9 +31,8 @@
 //! in the HIR, especially for multiple identifiers.
 
 #![feature(crate_visibility_modifier)]
-#![cfg_attr(bootstrap, feature(or_patterns))]
+#![feature(or_patterns)]
 #![feature(box_patterns)]
-#![feature(iter_zip)]
 #![recursion_limit = "256"]
 
 use rustc_ast::node_id::NodeMap;

@@ -20,7 +20,6 @@ use std::char;
 use std::collections::BTreeMap;
 use std::convert::TryFrom;
 use std::fmt::{self, Write as _};
-use std::iter;
 use std::ops::{ControlFlow, Deref, DerefMut};
 
 // `pretty` is a separate module only for organization.
@@ -55,10 +54,10 @@ macro_rules! define_scoped_cx {
 }
 
 thread_local! {
-    static FORCE_IMPL_FILENAME_LINE: Cell<bool> = const { Cell::new(false) };
-    static SHOULD_PREFIX_WITH_CRATE: Cell<bool> = const { Cell::new(false) };
-    static NO_TRIMMED_PATH: Cell<bool> = const { Cell::new(false) };
-    static NO_QUERIES: Cell<bool> = const { Cell::new(false) };
+    static FORCE_IMPL_FILENAME_LINE: Cell<bool> = Cell::new(false);
+    static SHOULD_PREFIX_WITH_CRATE: Cell<bool> = Cell::new(false);
+    static NO_TRIMMED_PATH: Cell<bool> = Cell::new(false);
+    static NO_QUERIES: Cell<bool> = Cell::new(false);
 }
 
 /// Avoids running any queries during any prints that occur
@@ -1225,7 +1224,7 @@ pub trait PrettyPrinter<'tcx>:
                             CtorKind::Fictive => {
                                 p!(" {{ ");
                                 let mut first = true;
-                                for (field_def, field) in iter::zip(&variant_def.fields, fields) {
+                                for (field_def, field) in variant_def.fields.iter().zip(fields) {
                                     if !first {
                                         p!(", ");
                                     }

@@ -43,7 +43,6 @@ use rustc_trait_selection::traits::{
 };
 
 use std::collections::hash_map::Entry;
-use std::iter;
 use std::slice;
 
 impl<'a, 'tcx> FnCtxt<'a, 'tcx> {
@@ -1170,7 +1169,7 @@ impl<'a, 'tcx> FnCtxt<'a, 'tcx> {
                     (
                         hir::ItemKind::OpaqueTy(hir::OpaqueTy { bounds: last_bounds, .. }),
                         hir::ItemKind::OpaqueTy(hir::OpaqueTy { bounds: exp_bounds, .. }),
-                    ) if iter::zip(*last_bounds, *exp_bounds).all(|(left, right)| {
+                    ) if last_bounds.iter().zip(exp_bounds.iter()).all(|(left, right)| {
                         match (left, right) {
                             (
                                 hir::GenericBound::Trait(tl, ml),

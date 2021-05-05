@@ -116,8 +116,6 @@ use rustc_span::{symbol::MacroRulesNormalizedIdent, MultiSpan, Span};
 
 use smallvec::SmallVec;
 
-use std::iter;
-
 /// Stack represented as linked list.
 ///
 /// Those are used for environments because they grow incrementally and are not mutable.
@@ -206,7 +204,7 @@ pub(super) fn check_meta_variables(
         sess.span_diagnostic.span_bug(span, "length mismatch between LHSes and RHSes")
     }
     let mut valid = true;
-    for (lhs, rhs) in iter::zip(lhses, rhses) {
+    for (lhs, rhs) in lhses.iter().zip(rhses.iter()) {
         let mut binders = Binders::default();
         check_binders(sess, node_id, lhs, &Stack::Empty, &mut binders, &Stack::Empty, &mut valid);
         check_occurrences(sess, node_id, rhs, &Stack::Empty, &binders, &Stack::Empty, &mut valid);

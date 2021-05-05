@@ -10,7 +10,6 @@ use rustc_span::symbol::{sym, Ident};
 use rustc_span::{Span, DUMMY_SP};
 
 use std::collections::BTreeSet;
-use std::iter;
 
 impl<'o, 'tcx> dyn AstConv<'tcx> + 'o {
     /// On missing type parameters, emit an E0393 error and provide a structured suggestion using
@@ -310,7 +309,7 @@ impl<'o, 'tcx> dyn AstConv<'tcx> + 'o {
                 // that the user forgot to give the associtated type's name. The canonical
                 // example would be trying to use `Iterator<isize>` instead of
                 // `Iterator<Item = isize>`.
-                for (potential, item) in iter::zip(&potential_assoc_types, assoc_items) {
+                for (potential, item) in potential_assoc_types.iter().zip(assoc_items.iter()) {
                     if let Ok(snippet) = tcx.sess.source_map().span_to_snippet(*potential) {
                         suggestions.push((*potential, format!("{} = {}", item.ident, snippet)));
                     }

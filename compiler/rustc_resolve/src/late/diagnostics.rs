@@ -22,8 +22,6 @@ use rustc_span::lev_distance::find_best_match_for_name;
 use rustc_span::symbol::{kw, sym, Ident, Symbol};
 use rustc_span::{BytePos, MultiSpan, Span, DUMMY_SP};
 
-use std::iter;
-
 use tracing::debug;
 
 type Res = def::Res<ast::NodeId>;
@@ -1017,7 +1015,9 @@ impl<'a: 'ast, 'ast> LateResolutionVisitor<'a, '_, 'ast> {
                 if let Some(spans) =
                     field_spans.filter(|spans| spans.len() > 0 && fields.len() == spans.len())
                 {
-                    let non_visible_spans: Vec<Span> = iter::zip(&fields, &spans)
+                    let non_visible_spans: Vec<Span> = fields
+                        .iter()
+                        .zip(spans.iter())
                         .filter(|(vis, _)| {
                             !self.r.is_accessible_from(**vis, self.parent_scope.module)
                         })

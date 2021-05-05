@@ -1,6 +1,7 @@
 #![feature(crate_visibility_modifier)]
 #![feature(once_cell)]
-#![cfg_attr(bootstrap, feature(or_patterns))]
+#![feature(or_patterns)]
+#![feature(str_split_once)]
 #![recursion_limit = "256"]
 
 #[macro_use]

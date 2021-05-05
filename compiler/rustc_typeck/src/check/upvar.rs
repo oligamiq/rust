@@ -50,8 +50,6 @@ use rustc_span::{MultiSpan, Span, Symbol};
 use rustc_index::vec::Idx;
 use rustc_target::abi::VariantIdx;
 
-use std::iter;
-
 /// Describe the relationship between the paths of two places
 /// eg:
 /// - `foo` is ancestor of `foo.bar.baz`
@@ -1686,7 +1684,7 @@ fn determine_place_ancestry_relation(
     let projections_b = &place_b.projections;
 
     let same_initial_projections =
-        iter::zip(projections_a, projections_b).all(|(proj_a, proj_b)| proj_a == proj_b);
+        projections_a.iter().zip(projections_b.iter()).all(|(proj_a, proj_b)| proj_a == proj_b);
 
     if same_initial_projections {
         // First min(n, m) projections are the same

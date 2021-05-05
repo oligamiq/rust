@@ -14,9 +14,9 @@ use rustc_middle::ty::{GenericParamDefKind, ToPredicate, TyCtxt};
 use rustc_span::Span;
 use rustc_trait_selection::traits::error_reporting::InferCtxtExt;
 use rustc_trait_selection::traits::{self, ObligationCause, ObligationCauseCode, Reveal};
-use std::iter;
 
 use super::{potentially_plural_count, FnCtxt, Inherited};
+use std::iter;
 
 /// Checks that a method from an impl conforms to the signature of
 /// the same method as declared in the trait.
@@ -803,7 +803,7 @@ fn compare_synthetic_generics<'tcx>(
         GenericParamDefKind::Lifetime | GenericParamDefKind::Const { .. } => None,
     });
     for ((impl_def_id, impl_synthetic), (trait_def_id, trait_synthetic)) in
-        iter::zip(impl_m_type_params, trait_m_type_params)
+        impl_m_type_params.zip(trait_m_type_params)
     {
         if impl_synthetic != trait_synthetic {
             let impl_hir_id = tcx.hir().local_def_id_to_hir_id(impl_def_id.expect_local());

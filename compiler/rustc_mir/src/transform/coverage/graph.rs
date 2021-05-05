@@ -393,7 +393,7 @@ impl BasicCoverageBlockData {
         }
         let operand = counter_kind.as_operand_id();
         if let Some(replaced) =
-            self.edge_from_bcbs.get_or_insert_default().insert(from_bcb, counter_kind)
+            self.edge_from_bcbs.get_or_insert_with(Default::default).insert(from_bcb, counter_kind)
         {
             Error::from_string(format!(
                 "attempt to set an edge counter more than once; from_bcb: \

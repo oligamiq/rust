@@ -6,7 +6,6 @@
 #![feature(crate_visibility_modifier)]
 #![feature(backtrace)]
 #![feature(extended_key_value_attributes)]
-#![feature(iter_zip)]
 #![feature(nll)]
 
 #[macro_use]

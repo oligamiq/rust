@@ -18,7 +18,6 @@ use rustc_target::spec::abi;
 use smallvec::{smallvec, SmallVec};
 use tracing::debug;
 
-use std::iter;
 use std::mem;
 
 pub(super) struct ItemLowerer<'a, 'lowering, 'hir> {
@@ -207,7 +206,7 @@ impl<'hir> LoweringContext<'_, 'hir> {
             UseTreeKind::Glob => {}
             UseTreeKind::Simple(_, id1, id2) => {
                 for (_, &id) in
-                    iter::zip(self.expect_full_res_from_use(base_id).skip(1), &[id1, id2])
+                    self.expect_full_res_from_use(base_id).skip(1).zip([id1, id2].iter())
                 {
                     vec.push(id);
                 }
@@ -538,7 +537,7 @@ impl<'hir> LoweringContext<'_, 'hir> {
                 // won't be dealing with macros in the rest of the compiler.
                 // Essentially a single `use` which imports two names is desugared into
                 // two imports.
-                for (res, &new_node_id) in iter::zip(resolutions, &[id1, id2]) {
+                for (res, &new_node_id) in resolutions.zip([id1, id2].iter()) {
                     let ident = *ident;
                     let mut path = path.clone();
                     for seg in &mut path.segments {

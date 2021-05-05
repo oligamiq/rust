@@ -795,7 +795,7 @@ impl CanonicalUserType<'tcx> {
                     return false;
                 }
 
-                iter::zip(user_substs.substs, BoundVar::new(0)..).all(|(kind, cvar)| {
+                user_substs.substs.iter().zip(BoundVar::new(0)..).all(|(kind, cvar)| {
                     match kind.unpack() {
                         GenericArgKind::Type(ty) => match ty.kind() {
                             ty::Bound(debruijn, b) => {
@@ -1705,7 +1705,7 @@ pub mod tls {
     #[cfg(not(parallel_compiler))]
     thread_local! {
         /// A thread local variable that stores a pointer to the current `ImplicitCtxt`.
-        static TLV: Cell<usize> = const { Cell::new(0) };
+        static TLV: Cell<usize> = Cell::new(0);
     }
 
     /// Sets TLV to `value` during the call to `f`.

@@ -17,8 +17,6 @@ use rustc_target::abi::VariantIdx;
 
 use rustc_index::vec::Idx;
 
-use std::iter;
-
 /// The "outermost" place that holds this value.
 #[derive(Copy, Clone, Debug, PartialEq)]
 crate enum PlaceBase {
@@ -142,7 +140,7 @@ fn is_ancestor_or_same_capture(
         return false;
     }
 
-    iter::zip(proj_possible_ancestor, proj_capture).all(|(a, b)| a == b)
+    proj_possible_ancestor.iter().zip(proj_capture).all(|(a, b)| a == b)
 }
 
 /// Computes the index of a capture within the desugared closure provided the closure's
