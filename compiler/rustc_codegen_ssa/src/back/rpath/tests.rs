@@ -35,7 +35,7 @@ fn test_minimize2() {
 fn test_rpath_relative() {
     if cfg!(target_os = "macos") {
         let config = &mut RPathConfig {
-            used_crates: &[],
+            libs: &[],
             has_rpath: true,
             is_like_osx: true,
             linker_is_gnu: false,
@@ -46,7 +46,7 @@ fn test_rpath_relative() {
         assert_eq!(res, "@loader_path/../lib");
     } else {
         let config = &mut RPathConfig {
-            used_crates: &[],
+            libs: &[],
             out_filename: PathBuf::from("bin/rustc"),
             get_install_prefix_lib_path: &mut || panic!(),
             has_rpath: true,
