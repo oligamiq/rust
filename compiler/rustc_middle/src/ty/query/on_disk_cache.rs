@@ -406,7 +406,7 @@ impl<'sess> OnDiskCache<'sess> {
 
             fn sorted_cnums_including_local_crate(tcx: TyCtxt<'_>) -> Vec<CrateNum> {
                 let mut cnums = vec![LOCAL_CRATE];
-                cnums.extend_from_slice(tcx.crates());
+                cnums.extend_from_slice(tcx.crates(()));
                 cnums.sort_unstable();
                 // Just to be sure...
                 cnums.dedup();
@@ -578,7 +578,7 @@ impl<'sess> OnDiskCache<'sess> {
     ) -> IndexVec<CrateNum, Option<CrateNum>> {
         tcx.dep_graph.with_ignore(|| {
             let current_cnums = tcx
-                .all_crate_nums(())
+                .crates(())
                 .iter()
                 .map(|&cnum| {
                     let stable_crate_id = tcx.def_path_hash(cnum.as_def_id()).stable_crate_id();

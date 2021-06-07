@@ -1667,7 +1667,7 @@ impl EncodeContext<'a, 'tcx> {
 
     fn encode_crate_deps(&mut self) -> Lazy<[CrateDep]> {
         empty_proc_macro!(self);
-        let crates = self.tcx.crates();
+        let crates = self.tcx.crates(());
 
         let mut deps = crates
             .iter()
