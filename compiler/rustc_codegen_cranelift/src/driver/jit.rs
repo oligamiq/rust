@@ -179,8 +179,8 @@ fn load_imported_symbols_for_jit(tcx: TyCtxt<'_>) -> Vec<(String, *const u8)> {
     let mut dylib_paths = Vec::new();
 
     let crate_info = CrateInfo::new(tcx);
-    let formats = tcx.dependency_formats(());
-    let data = &formats
+    let data = &crate_info
+        .dependency_formats
         .iter()
         .find(|(crate_type, _data)| *crate_type == rustc_session::config::CrateType::Executable)
         .unwrap()
@@ -190,7 +190,7 @@ fn load_imported_symbols_for_jit(tcx: TyCtxt<'_>) -> Vec<(String, *const u8)> {
         match data[cnum.as_usize() - 1] {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
             Linkage::Static => {
-                let name = tcx.crate_name(cnum);
+                let name = &crate_info.crate_name[&cnum];
                 let mut err =
                     tcx.sess.struct_err(&format!("Can't load static lib {}", name.as_str()));
                 err.note("rustc_codegen_cranelift can only load dylibs in JIT mode.");
