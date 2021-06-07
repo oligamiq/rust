@@ -207,13 +207,13 @@ pub type CrateStoreDyn = dyn CrateStore + sync::Sync;
 // around. For more info, see some comments in the add_used_library function
 // below.
 //
-// In order to get this left-to-right dependency ordering, we perform a
-// topological sort of all crates putting the leaves at the right-most
-// positions.
+// In order to get this left-to-right dependency ordering, we use the reverse
+// postorder of all crates putting the leaves at the right-most positions.
 pub fn used_crates(tcx: TyCtxt<'_>) -> Vec<CrateNum> {
-    let mut libs = tcx
-        .crates(())
+    tcx
+        .postorder_cnums(())
         .iter()
+        .rev()
         .cloned()
         .filter_map(|cnum| {
             if tcx.dep_kind(cnum).macros_only() {
@@ -221,9 +221,5 @@ pub fn used_crates(tcx: TyCtxt<'_>) -> Vec<CrateNum> {
             }
             Some(cnum)
         })
-        .collect::<Vec<_>>();
-    let mut ordering = tcx.postorder_cnums(()).to_owned();
-    ordering.reverse();
-    libs.sort_by_cached_key(|&a| ordering.iter().position(|x| *x == a));
-    libs
+        .collect::<Vec<_>>()
 }
