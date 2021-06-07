@@ -15,7 +15,7 @@ pub(crate) fn codegen(
 ) -> bool {
     let any_dynamic_crate = tcx.dependency_formats(()).iter().any(|(_, list)| {
         use rustc_middle::middle::dependency_format::Linkage;
-        list.iter().any(|&linkage| linkage == Linkage::Dynamic)
+        list.values().any(|&linkage| linkage == Linkage::Dynamic)
     });
     if any_dynamic_crate {
         false

@@ -238,7 +238,6 @@ pub fn each_linked_rlib(
     info: &CrateInfo,
     f: &mut dyn FnMut(CrateNum, &Path),
 ) -> Result<(), String> {
-    let crates = info.used_crates.iter();
     let mut fmts = None;
     for (ty, list) in info.dependency_formats.iter() {
         match ty {
@@ -256,8 +255,8 @@ pub fn each_linked_rlib(
         Some(f) => f,
         None => return Err("could not find formats for rlibs".to_string()),
     };
-    for &cnum in crates {
-        match fmts.get(cnum.as_usize() - 1) {
+    for &cnum in &info.used_crates {
+        match fmts.get(&cnum) {
             Some(&Linkage::NotLinked | &Linkage::IncludedFromDylib) => continue,
             Some(_) => {}
             None => return Err("could not find formats for rlibs".to_string()),
@@ -1625,7 +1624,7 @@ fn add_late_link_args(
 ) {
     let any_dynamic_crate = crate_type == CrateType::Dylib
         || codegen_results.crate_info.dependency_formats.iter().any(|(ty, list)| {
-            *ty == crate_type && list.iter().any(|&linkage| linkage == Linkage::Dynamic)
+            *ty == crate_type && list.values().any(|&linkage| linkage == Linkage::Dynamic)
         });
     if any_dynamic_crate {
         if let Some(args) = sess.target.late_link_args_dynamic.get(&flavor) {
@@ -2161,7 +2160,7 @@ fn add_upstream_rust_crates<'a, B: ArchiveBuilder<'a>>(
         // appear statically in an existing dylib, meaning we'll pick up all the
         // symbols from the dylib.
         let src = &codegen_results.crate_info.used_crate_source[&cnum];
-        match data[cnum.as_usize() - 1] {
+        match data[&cnum] {
             _ if codegen_results.crate_info.profiler_runtime == Some(cnum) => {
                 add_static_crate::<B>(cmd, sess, codegen_results, tmpdir, crate_type, cnum);
             }
@@ -2393,7 +2392,7 @@ fn add_upstream_native_libraries(
                     // is being linked statically to the current crate.  If it's linked dynamically
                     // or is an rlib already included via some other dylib crate, the symbols from
                     // native libs will have already been included in that dylib.
-                    if data[cnum.as_usize() - 1] == Linkage::Static {
+                    if data[&cnum] == Linkage::Static {
                         cmd.link_staticlib(name, verbatim)
                     }
                 }

@@ -1418,10 +1418,11 @@ impl<'a, 'tcx> CrateMetadataRef<'a> {
         tcx: TyCtxt<'tcx>,
     ) -> &'tcx [(CrateNum, LinkagePreference)] {
         tcx.arena.alloc_from_iter(
-            self.root.dylib_dependency_formats.decode(self).enumerate().flat_map(|(i, link)| {
-                let cnum = CrateNum::new(i + 1);
-                link.map(|link| (self.cnum_map[cnum], link))
-            }),
+            self.root
+                .dylib_dependency_formats
+                .decode(self)
+                .into_iter()
+                .map(|(cnum, link)| (self.cnum_map[cnum], link)),
         )
     }
 

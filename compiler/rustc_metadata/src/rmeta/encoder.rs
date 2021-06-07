@@ -1793,18 +1793,21 @@ impl EncodeContext<'a, 'tcx> {
         )
     }
 
-    fn encode_dylib_dependency_formats(&mut self) -> Lazy<[Option<LinkagePreference>]> {
+    fn encode_dylib_dependency_formats(&mut self) -> Lazy<[(CrateNum, LinkagePreference)]> {
         empty_proc_macro!(self);
         let formats = self.tcx.dependency_formats(());
         for (ty, arr) in formats.iter() {
             if *ty != CrateType::Dylib {
                 continue;
             }
-            return self.lazy(arr.iter().map(|slot| match *slot {
-                Linkage::NotLinked | Linkage::IncludedFromDylib => None,
+            return self.lazy(arr.iter().flat_map(|(&cnum, &linkage)| {
+                let link_pref = match linkage {
+                    Linkage::NotLinked | Linkage::IncludedFromDylib => return None,
 
-                Linkage::Dynamic => Some(LinkagePreference::RequireDynamic),
-                Linkage::Static => Some(LinkagePreference::RequireStatic),
+                    Linkage::Dynamic => LinkagePreference::RequireDynamic,
+                    Linkage::Static => LinkagePreference::RequireStatic,
+                };
+                Some((cnum, link_pref))
             }));
         }
         Lazy::empty()

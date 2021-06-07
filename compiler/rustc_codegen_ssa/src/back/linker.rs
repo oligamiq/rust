@@ -11,7 +11,7 @@ use std::mem;
 use std::path::{Path, PathBuf};
 
 use rustc_data_structures::fx::FxHashMap;
-use rustc_hir::def_id::{CrateNum, LOCAL_CRATE};
+use rustc_hir::def_id::LOCAL_CRATE;
 use rustc_middle::middle::dependency_format::Linkage;
 use rustc_middle::ty::TyCtxt;
 use rustc_serialize::{json, Encoder};
@@ -1305,10 +1305,9 @@ fn exported_symbols(tcx: TyCtxt<'_>, crate_type: CrateType) -> Vec<String> {
     let formats = tcx.dependency_formats(());
     let deps = formats.iter().find_map(|(t, list)| (*t == crate_type).then_some(list)).unwrap();
 
-    for (index, dep_format) in deps.iter().enumerate() {
-        let cnum = CrateNum::new(index + 1);
+    for (&cnum, &dep_format) in deps.iter() {
         // For each dependency that we are linking to statically ...
-        if *dep_format == Linkage::Static {
+        if dep_format == Linkage::Static {
             // ... we add its symbol list to our export list.
             for &(symbol, level) in tcx.exported_symbols(cnum).iter() {
                 if !level.is_below_threshold(export_threshold) {

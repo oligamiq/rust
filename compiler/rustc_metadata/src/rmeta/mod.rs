@@ -7,7 +7,7 @@ use rustc_data_structures::svh::Svh;
 use rustc_data_structures::sync::MetadataRef;
 use rustc_hir as hir;
 use rustc_hir::def::{CtorKind, DefKind};
-use rustc_hir::def_id::{DefId, DefIndex, DefPathHash, StableCrateId};
+use rustc_hir::def_id::{CrateNum, DefId, DefIndex, DefPathHash, StableCrateId};
 use rustc_hir::definitions::DefKey;
 use rustc_hir::lang_items;
 use rustc_index::{bit_set::FiniteBitSet, vec::IndexVec};
@@ -209,7 +209,7 @@ crate struct CrateRoot<'tcx> {
     has_default_lib_allocator: bool,
 
     crate_deps: Lazy<[CrateDep]>,
-    dylib_dependency_formats: Lazy<[Option<LinkagePreference>]>,
+    dylib_dependency_formats: Lazy<[(CrateNum, LinkagePreference)]>,
     lib_features: Lazy<[(Symbol, Option<Symbol>)]>,
     lang_items: Lazy<[(DefIndex, usize)]>,
     lang_items_missing: Lazy<[lang_items::LangItem]>,

@@ -78,7 +78,7 @@ fn calculate_type(tcx: TyCtxt<'_>, ty: CrateType) -> DependencyList {
     let sess = &tcx.sess;
 
     if !sess.opts.output_types.should_codegen() {
-        return Vec::new();
+        return DependencyList::default();
     }
 
     let preferred_linkage = match ty {
@@ -112,7 +112,7 @@ fn calculate_type(tcx: TyCtxt<'_>, ty: CrateType) -> DependencyList {
 
     if preferred_linkage == Linkage::NotLinked {
         // If the crate is not linked, there are no link-time dependencies.
-        return Vec::new();
+        return DependencyList::default();
     }
 
     if preferred_linkage == Linkage::Static {
@@ -143,7 +143,7 @@ fn calculate_type(tcx: TyCtxt<'_>, ty: CrateType) -> DependencyList {
                     tcx.crate_name(cnum)
                 ));
             }
-            return Vec::new();
+            return DependencyList::default();
         }
     }
 
@@ -172,12 +172,16 @@ fn calculate_type(tcx: TyCtxt<'_>, ty: CrateType) -> DependencyList {
     // Collect what we've got so far in the return vector.
     let last_crate = tcx.crates(()).len();
     let mut ret = (1..last_crate + 1)
-        .map(|cnum| match formats.get(&CrateNum::new(cnum)) {
-            Some(&RequireDynamic) => Linkage::Dynamic,
-            Some(&RequireStatic) => Linkage::IncludedFromDylib,
-            None => Linkage::NotLinked,
+        .map(|cnum| {
+            let cnum = CrateNum::new(cnum);
+            let linkage = match formats.get(&cnum) {
+                Some(&RequireDynamic) => Linkage::Dynamic,
+                Some(&RequireStatic) => Linkage::IncludedFromDylib,
+                None => Linkage::NotLinked,
+            };
+            (cnum, linkage)
         })
-        .collect::<Vec<_>>();
+        .collect::<DependencyList>();
 
     // Run through the dependency list again, and add any missing libraries as
     // static libraries.
@@ -193,7 +197,7 @@ fn calculate_type(tcx: TyCtxt<'_>, ty: CrateType) -> DependencyList {
             assert!(src.rlib.is_some() || src.rmeta.is_some());
             tracing::info!("adding staticlib: {}", tcx.crate_name(cnum));
             add_library(tcx, cnum, RequireStatic, &mut formats);
-            ret[cnum.as_usize() - 1] = Linkage::Static;
+            *ret.get_mut(&cnum).unwrap() = Linkage::Static;
         }
     }
 
@@ -213,10 +217,9 @@ fn calculate_type(tcx: TyCtxt<'_>, ty: CrateType) -> DependencyList {
     //
     // For situations like this, we perform one last pass over the dependencies,
     // making sure that everything is available in the requested format.
-    for (cnum, kind) in ret.iter().enumerate() {
-        let cnum = CrateNum::new(cnum + 1);
+    for (&cnum, &kind) in ret.iter() {
         let src = tcx.used_crate_source(cnum);
-        match *kind {
+        match kind {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
             Linkage::Static if src.rlib.is_some() => continue,
             Linkage::Dynamic if src.dylib.is_some() => continue,
@@ -291,16 +294,18 @@ fn attempt_static(tcx: TyCtxt<'_>) -> Option<DependencyList> {
 
     // All crates are available in an rlib format, so we're just going to link
     // everything in explicitly so long as it's actually required.
-    let last_crate = tcx.crates(()).len();
-    let mut ret = (1..last_crate + 1)
-        .map(|cnum| {
-            if tcx.dep_kind(CrateNum::new(cnum)) == CrateDepKind::Explicit {
+    let mut ret = tcx
+        .crates(())
+        .iter()
+        .map(|&cnum| {
+            let linkage = if tcx.dep_kind(cnum) == CrateDepKind::Explicit {
                 Linkage::Static
             } else {
                 Linkage::NotLinked
-            }
+            };
+            (cnum, linkage)
         })
-        .collect::<Vec<_>>();
+        .collect::<DependencyList>();
 
     // Our allocator/panic runtime may not have been linked above if it wasn't
     // explicitly linked, which is the case for any injected dependency. Handle
@@ -326,35 +331,32 @@ fn activate_injected_dep(
     list: &mut DependencyList,
     replaces_injected: &dyn Fn(CrateNum) -> bool,
 ) {
-    for (i, slot) in list.iter().enumerate() {
-        let cnum = CrateNum::new(i + 1);
+    for (&cnum, &slot) in list.iter() {
         if !replaces_injected(cnum) {
             continue;
         }
-        if *slot != Linkage::NotLinked {
+        if slot != Linkage::NotLinked {
             return;
         }
     }
     if let Some(injected) = injected {
-        let idx = injected.as_usize() - 1;
-        assert_eq!(list[idx], Linkage::NotLinked);
-        list[idx] = Linkage::Static;
+        let old_linkage = std::mem::replace(list.get_mut(&injected).unwrap(), Linkage::Static);
+        assert_eq!(old_linkage, Linkage::NotLinked);
     }
 }
 
 // After the linkage for a crate has been determined we need to verify that
 // there's only going to be one allocator in the output.
-fn verify_ok(tcx: TyCtxt<'_>, list: &[Linkage]) {
+fn verify_ok(tcx: TyCtxt<'_>, list: &DependencyList) {
     let sess = &tcx.sess;
     if list.is_empty() {
         return;
     }
     let mut panic_runtime = None;
-    for (i, linkage) in list.iter().enumerate() {
-        if let Linkage::NotLinked = *linkage {
+    for (&cnum, &linkage) in list.iter() {
+        if let Linkage::NotLinked = linkage {
             continue;
         }
-        let cnum = CrateNum::new(i + 1);
 
         if tcx.is_panic_runtime(cnum) {
             if let Some((prev, _)) = panic_runtime {
@@ -392,14 +394,13 @@ fn verify_ok(tcx: TyCtxt<'_>, list: &[Linkage]) {
         // strategy. If the dep isn't linked, we ignore it, and if our strategy
         // is abort then it's compatible with everything. Otherwise all crates'
         // panic strategy must match our own.
-        for (i, linkage) in list.iter().enumerate() {
-            if let Linkage::NotLinked = *linkage {
+        for (&cnum, &linkage) in list.iter() {
+            if let Linkage::NotLinked = linkage {
                 continue;
             }
             if desired_strategy == PanicStrategy::Abort {
                 continue;
             }
-            let cnum = CrateNum::new(i + 1);
             let found_strategy = tcx.panic_strategy(cnum);
             let is_compiler_builtins = tcx.is_compiler_builtins(cnum);
             if is_compiler_builtins || desired_strategy == found_strategy {

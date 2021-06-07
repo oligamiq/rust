@@ -187,7 +187,7 @@ fn load_imported_symbols_for_jit(tcx: TyCtxt<'_>) -> Vec<(String, *const u8)> {
         .1;
     for &cnum in &crate_info.used_crates {
         let src = &crate_info.used_crate_source[&cnum];
-        match data[cnum.as_usize() - 1] {
+        match data[&cnum] {
             Linkage::NotLinked | Linkage::IncludedFromDylib => {}
             Linkage::Static => {
                 let name = &crate_info.crate_name[&cnum];

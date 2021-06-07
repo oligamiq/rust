@@ -4,15 +4,12 @@
 //! For all the gory details, see the provider of the `dependency_formats`
 //! query.
 
+use rustc_data_structures::fx::FxHashMap;
+use rustc_hir::def_id::CrateNum;
 use rustc_session::config::CrateType;
 
 /// A list of dependencies for a certain crate type.
-///
-/// The length of this vector is the same as the number of external crates used.
-/// The value is None if the crate does not need to be linked (it was found
-/// statically in another dylib), or Some(kind) if it needs to be linked as
-/// `kind` (either static or dynamic).
-pub type DependencyList = Vec<Linkage>;
+pub type DependencyList = FxHashMap<CrateNum, Linkage>;
 
 /// A mapping of all required dependencies for a particular flavor of output.
 ///
