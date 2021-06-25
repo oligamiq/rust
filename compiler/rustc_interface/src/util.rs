@@ -17,7 +17,6 @@ use rustc_session::lint::{self, BuiltinLintDiagnostics, LintBuffer};
 use rustc_session::parse::CrateConfig;
 use rustc_session::CrateDisambiguator;
 use rustc_session::{early_error, filesearch, output, DiagnosticOutput, Session};
-use rustc_span::edition::Edition;
 use rustc_span::lev_distance::find_best_match_for_name;
 use rustc_span::source_map::FileLoader;
 use rustc_span::symbol::{sym, Symbol};
@@ -131,20 +130,14 @@ fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -
 }
 
 #[cfg(not(parallel_compiler))]
-pub fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
-    edition: Edition,
-    _threads: usize,
-    f: F,
-) -> R {
+pub fn run_in_thread_pool<F: FnOnce() -> R + Send, R: Send>(_threads: usize, f: F) -> R {
     let mut cfg = thread::Builder::new().name("rustc".to_string());
 
     if let Some(size) = get_stack_size() {
         cfg = cfg.stack_size(size);
     }
 
-    let main_handler = move || rustc_span::with_session_globals(edition, f);
-
-    scoped_thread(cfg, main_handler)
+    scoped_thread(cfg, f)
 }
 
 /// Creates a new thread and forwards information in thread locals to it.
@@ -170,11 +163,7 @@ unsafe fn handle_deadlock() {
 }
 
 #[cfg(parallel_compiler)]
-pub fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
-    edition: Edition,
-    threads: usize,
-    f: F,
-) -> R {
+pub fn run_in_thread_pool<F: FnOnce() -> R + Send, R: Send>(threads: usize, f: F) -> R {
     let mut config = rayon::ThreadPoolBuilder::new()
         .thread_name(|_| "rustc".to_string())
         .acquire_thread_handler(jobserver::acquire_thread)
@@ -188,17 +177,15 @@ pub fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
 
     let with_pool = move |pool: &rayon::ThreadPool| pool.install(f);
 
-    rustc_span::with_session_globals(edition, || {
-        rustc_span::get_session_globals(|session_globals| {
-            // The main handler runs for each Rayon worker thread and sets up
-            // the thread local rustc uses. `session_globals` is captured and set
-            // on the new threads.
-            let main_handler = move |thread: rayon::ThreadBuilder| {
-                rustc_span::set_session_globals(session_globals, || thread.run())
-            };
+    rustc_span::get_session_globals(|session_globals| {
+        // The main handler runs for each Rayon worker thread and sets up
+        // the thread local rustc uses. `session_globals` is captured and set
+        // on the new threads.
+        let main_handler = move |thread: rayon::ThreadBuilder| {
+            rustc_span::set_session_globals(session_globals, || thread.run())
+        };
 
-            config.build_scoped(main_handler, with_pool).unwrap()
-        })
+        config.build_scoped(main_handler, with_pool).unwrap()
     })
 }
 

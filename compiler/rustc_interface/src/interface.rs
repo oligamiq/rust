@@ -214,11 +214,11 @@ pub fn create_compiler_and_run<R>(config: Config, f: impl FnOnce(&Compiler) -> R
 
 pub fn run_compiler<R: Send>(config: Config, f: impl FnOnce(&Compiler) -> R + Send) -> R {
     tracing::trace!("run_compiler");
-    util::run_in_thread_pool_with_globals(
-        config.opts.edition,
-        config.opts.debugging_opts.threads,
-        || create_compiler_and_run(config, f),
-    )
+    rustc_span::with_session_globals(config.opts.edition, || {
+        util::run_in_thread_pool(config.opts.debugging_opts.threads, || {
+            create_compiler_and_run(config, f)
+        })
+    })
 }
 
 pub fn try_print_query_stack(handler: &Handler, num_frames: Option<usize>) {
