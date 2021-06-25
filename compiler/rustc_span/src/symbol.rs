@@ -13,7 +13,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::str;
 
-use crate::{Edition, Span, DUMMY_SP, SESSION_GLOBALS};
+use crate::{get_session_globals, get_session_globals_unchecked, Edition, Span, DUMMY_SP};
 
 #[cfg(test)]
 mod tests;
@@ -1544,15 +1544,19 @@ impl Symbol {
 
     /// Maps a string to its interned representation.
     pub fn intern(string: &str) -> Self {
-        with_interner(|interner| interner.intern(string))
+        get_session_globals(|session_globals| session_globals.symbol_interner.lock().intern(string))
     }
 
     /// Convert to a `SymbolStr`. This is a slowish operation because it
     /// requires locking the symbol interner.
     pub fn as_str(self) -> SymbolStr {
-        with_interner(|interner| unsafe {
-            SymbolStr { string: std::mem::transmute::<&str, &str>(interner.get(self)) }
-        })
+        // SAFETY: SymbolStr is not Send ensuring that it doesn't outlive its interner
+        unsafe {
+            get_session_globals_unchecked(|session_globals| {
+                let interner = session_globals.symbol_interner.lock();
+                SymbolStr { string: std::mem::transmute::<&str, &str>(interner.get(self)) }
+            })
+        }
     }
 
     pub fn as_u32(self) -> u32 {
@@ -1786,11 +1790,6 @@ impl Ident {
     pub fn is_raw_guess(self) -> bool {
         self.name.can_be_raw() && self.is_reserved()
     }
-}
-
-#[inline]
-fn with_interner<T, F: FnOnce(&mut Interner) -> T>(f: F) -> T {
-    SESSION_GLOBALS.with(|session_globals| f(&mut *session_globals.symbol_interner.lock()))
 }
 
 /// An alternative to [`Symbol`], useful when the chars within the symbol need to

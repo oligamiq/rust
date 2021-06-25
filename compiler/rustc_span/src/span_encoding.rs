@@ -4,8 +4,8 @@
 // The encoding format for inline spans were obtained by optimizing over crates in rustc/libstd.
 // See https://internals.rust-lang.org/t/rfc-compiler-refactoring-spans/1357/28
 
+use crate::get_session_globals;
 use crate::hygiene::SyntaxContext;
-use crate::SESSION_GLOBALS;
 use crate::{BytePos, SpanData};
 
 use rustc_data_structures::fx::FxIndexSet;
@@ -121,6 +121,6 @@ impl SpanInterner {
 
 // If an interner exists, return it. Otherwise, prepare a fresh one.
 #[inline]
-fn with_span_interner<T, F: FnOnce(&mut SpanInterner) -> T>(f: F) -> T {
-    SESSION_GLOBALS.with(|session_globals| f(&mut *session_globals.span_interner.lock()))
+fn with_span_interner<T: Send, F: FnOnce(&mut SpanInterner) -> T>(f: F) -> T {
+    get_session_globals(|session_globals| f(&mut *session_globals.span_interner.lock()))
 }

@@ -25,8 +25,9 @@
 // trigger runtime aborts. (Fortunately these are obvious and easy to fix.)
 
 use crate::edition::Edition;
+use crate::get_session_globals;
+use crate::get_session_globals_unchecked;
 use crate::symbol::{kw, sym, Symbol};
-use crate::SESSION_GLOBALS;
 use crate::{BytePos, CachingSourceMapView, ExpnIdCache, SourceFile, Span, DUMMY_SP};
 
 use crate::def_id::{CrateNum, DefId, DefPathHash, CRATE_DEF_INDEX, LOCAL_CRATE};
@@ -110,7 +111,8 @@ impl ExpnId {
 
     #[inline]
     pub fn expn_data(self) -> ExpnData {
-        HygieneData::with(|data| data.expn_data(self).clone())
+        // Safety: ExpnData is not Send and as such doesn't outlive the session globals.
+        unsafe { HygieneData::with_unchecked(|data| data.expn_data(self).clone()) }
     }
 
     #[inline]
@@ -199,8 +201,18 @@ impl HygieneData {
         }
     }
 
-    pub fn with<T, F: FnOnce(&mut HygieneData) -> T>(f: F) -> T {
-        SESSION_GLOBALS.with(|session_globals| f(&mut *session_globals.hygiene_data.borrow_mut()))
+    pub fn with<T: Send, F: FnOnce(&mut HygieneData) -> T>(f: F) -> T {
+        get_session_globals(|session_globals| f(&mut *session_globals.hygiene_data.borrow_mut()))
+    }
+
+    /// # Safety
+    ///
+    /// The returned value must either not outlive the session globals or not contain
+    /// any references to an interner stored in the session globals.
+    pub unsafe fn with_unchecked<T, F: FnOnce(&mut HygieneData) -> T>(f: F) -> T {
+        get_session_globals_unchecked(|session_globals| {
+            f(&mut *session_globals.hygiene_data.borrow_mut())
+        })
     }
 
     fn fresh_expn(&mut self, mut expn_data: Option<ExpnData>) -> ExpnId {
@@ -395,7 +407,8 @@ pub fn clear_syntax_context_map() {
 }
 
 pub fn walk_chain(span: Span, to: SyntaxContext) -> Span {
-    HygieneData::with(|data| data.walk_chain(span, to))
+    // Safety: ExpnData is not Send and as such doesn't outlive the session globals.
+    unsafe { HygieneData::with_unchecked(|data| data.walk_chain(span, to)) }
 }
 
 pub fn update_dollar_crate_names(mut get_name: impl FnMut(SyntaxContext) -> Symbol) {
@@ -633,7 +646,8 @@ impl SyntaxContext {
     /// `ctxt.outer_expn().expn_data()`.
     #[inline]
     pub fn outer_expn_data(self) -> ExpnData {
-        HygieneData::with(|data| data.expn_data(data.outer_expn(self)).clone())
+        // Safety: ExpnData is not Send and as such doesn't outlive the session globals.
+        unsafe { HygieneData::with_unchecked(|data| data.expn_data(data.outer_expn(self)).clone()) }
     }
 
     #[inline]
@@ -672,9 +686,12 @@ impl Span {
         transparency: Transparency,
     ) -> Span {
         let expn_id = ExpnId::fresh(Some(expn_data));
-        HygieneData::with(|data| {
-            self.with_ctxt(data.apply_mark(SyntaxContext::root(), expn_id, transparency))
-        })
+        // Safety: ExpnData is not Send and as such doesn't outlive the session globals.
+        unsafe {
+            HygieneData::with_unchecked(|data| {
+                self.with_ctxt(data.apply_mark(SyntaxContext::root(), expn_id, transparency))
+            })
+        }
     }
 
     /// Reuses the span but adds information like the kind of the desugaring and features that are
@@ -988,7 +1005,7 @@ pub struct HygieneEncodeContext {
 impl HygieneEncodeContext {
     pub fn encode<
         T,
-        R,
+        R: Send,
         F: FnMut(&mut T, u32, &SyntaxContextData) -> Result<(), R>,
         G: FnMut(&mut T, u32, &ExpnData) -> Result<(), R>,
     >(
@@ -1198,13 +1215,16 @@ fn for_all_ctxts_in<E, F: FnMut((u32, SyntaxContext, &SyntaxContextData)) -> Res
     Ok(())
 }
 
-fn for_all_expns_in<E, F: FnMut(u32, ExpnId, &ExpnData) -> Result<(), E>>(
+fn for_all_expns_in<E: Send, F: FnMut(u32, ExpnId, &ExpnData) -> Result<(), E>>(
     expns: impl Iterator<Item = ExpnId>,
     mut f: F,
 ) -> Result<(), E> {
-    let all_data: Vec<_> = HygieneData::with(|data| {
-        expns.map(|expn| (expn, data.expn_data[expn.0 as usize].clone())).collect()
-    });
+    // Safety: ExpnData is not Send and as such doesn't outlive the session globals.
+    let all_data: Vec<_> = unsafe {
+        HygieneData::with_unchecked(|data| {
+            expns.map(|expn| (expn, data.expn_data[expn.0 as usize].clone())).collect()
+        })
+    };
     for (expn, data) in all_data.into_iter() {
         f(expn.0, expn, &data.unwrap_or_else(|| panic!("Missing data for {:?}", expn)))?;
     }
@@ -1359,8 +1379,13 @@ fn update_disambiguator(expn_id: ExpnId) {
         }
     }
 
-    let source_map = SESSION_GLOBALS
-        .with(|session_globals| session_globals.source_map.borrow().as_ref().unwrap().clone());
+    // SAFTEY: source_map isn't returned from the current function and as such
+    // doesn't outlive the session globals.
+    let source_map = unsafe {
+        get_session_globals_unchecked(|session_globals| {
+            session_globals.source_map.borrow().as_ref().unwrap().clone()
+        })
+    };
 
     let mut ctx =
         DummyHashStableContext { caching_source_map: CachingSourceMapView::new(&source_map) };

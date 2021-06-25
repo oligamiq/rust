@@ -77,61 +77,105 @@ use tracing::debug;
 #[cfg(test)]
 mod tests;
 
-// Per-session global variables: this struct is stored in thread-local storage
-// in such a way that it is accessible without any kind of handle to all
-// threads within the compilation session, but is not accessible outside the
-// session.
-pub struct SessionGlobals {
-    symbol_interner: Lock<symbol::Interner>,
-    span_interner: Lock<span_encoding::SpanInterner>,
-    hygiene_data: Lock<hygiene::HygieneData>,
-    source_map: Lock<Option<Lrc<SourceMap>>>,
-}
+mod session_globals {
+    use super::*;
 
-impl SessionGlobals {
-    pub fn new(edition: Edition) -> SessionGlobals {
-        SessionGlobals {
-            symbol_interner: Lock::new(symbol::Interner::fresh()),
-            span_interner: Lock::new(span_encoding::SpanInterner::default()),
-            hygiene_data: Lock::new(hygiene::HygieneData::new(edition)),
-            source_map: Lock::new(None),
+    // Per-session global variables: this struct is stored in thread-local storage
+    // in such a way that it is accessible without any kind of handle to all
+    // threads within the compilation session, but is not accessible outside the
+    // session.
+    pub struct SessionGlobals {
+        pub(crate) symbol_interner: Lock<symbol::Interner>,
+        pub(crate) span_interner: Lock<span_encoding::SpanInterner>,
+        pub(crate) hygiene_data: Lock<hygiene::HygieneData>,
+        pub(crate) source_map: Lock<Option<Lrc<SourceMap>>>,
+    }
+
+    impl SessionGlobals {
+        fn new(edition: Edition) -> SessionGlobals {
+            SessionGlobals {
+                symbol_interner: Lock::new(symbol::Interner::fresh()),
+                span_interner: Lock::new(span_encoding::SpanInterner::default()),
+                hygiene_data: Lock::new(hygiene::HygieneData::new(edition)),
+                source_map: Lock::new(None),
+            }
         }
+    }
+
+    /// The `Send` bound is necessary to prevent interned values outlive their
+    /// interner. In case of `SymbolStr` this causes a dangling reference, while in
+    /// case of `Span` it can merely cause invalid results.
+    pub fn with_session_globals<R: Send>(edition: Edition, f: impl FnOnce() -> R) -> R {
+        let session_globals = SessionGlobals::new(edition);
+        assert!(!SESSION_GLOBALS.is_set());
+        SESSION_GLOBALS.set(&session_globals, f)
+    }
+
+    /// The `Send` bound is necessary to prevent interned values outlive their
+    /// interner. In case of `SymbolStr` this causes a dangling reference, while in
+    /// case of `Span` it can merely cause invalid results.
+    pub fn with_default_session_globals<R: Send>(f: impl FnOnce() -> R) -> R {
+        with_session_globals(edition::DEFAULT_EDITION, f)
+    }
+
+    pub fn get_session_globals<R: Send>(f: impl FnOnce(&SessionGlobals) -> R) -> R {
+        SESSION_GLOBALS.with(f)
+    }
+
+    /// # Safety
+    ///
+    /// The returned value must either not outlive the session globals or not contain
+    /// any references to an interner stored in the session globals.
+    pub unsafe fn get_session_globals_unchecked<R>(f: impl FnOnce(&SessionGlobals) -> R) -> R {
+        SESSION_GLOBALS.with(f)
+    }
+
+    /// The `Send` bound is necessary to prevent interned values outlive their
+    /// interner. In case of `SymbolStr` this causes a dangling reference, while in
+    /// case of `Span` it can merely cause invalid results.
+    pub fn set_session_globals<R: Send>(
+        session_globals: &SessionGlobals,
+        f: impl FnOnce() -> R,
+    ) -> R {
+        SESSION_GLOBALS.set(session_globals, f)
+    }
+
+    // If this ever becomes non thread-local, `decode_syntax_context`
+    // and `decode_expn_id` will need to be updated to handle concurrent
+    // deserialization.
+    // Do not make this public. That would allow `SymbolStr` to outlive its interner
+    // causing dangling references.
+    scoped_tls::scoped_thread_local!(static SESSION_GLOBALS: SessionGlobals);
+
+    /// Calls the provided closure, using the provided `SourceMap` to format
+    /// any spans that are debug-printed during the closure's execution.
+    ///
+    /// Normally, the global `TyCtxt` is used to retrieve the `SourceMap`
+    /// (see `rustc_interface::callbacks::span_debug1`). However, some parts
+    /// of the compiler (e.g. `rustc_parse`) may debug-print `Span`s before
+    /// a `TyCtxt` is available. In this case, we fall back to
+    /// the `SourceMap` provided to this function. If that is not available,
+    /// we fall back to printing the raw `Span` field values.
+    pub fn with_source_map<T, F: FnOnce() -> T>(source_map: Lrc<SourceMap>, f: F) -> T {
+        SESSION_GLOBALS.with(|session_globals| {
+            *session_globals.source_map.borrow_mut() = Some(source_map);
+        });
+        struct ClearSourceMap;
+        impl Drop for ClearSourceMap {
+            fn drop(&mut self) {
+                // Note: It is fine to take the source_map away again as nothing borrows it.
+                SESSION_GLOBALS.with(|session_globals| {
+                    session_globals.source_map.borrow_mut().take();
+                });
+            }
+        }
+
+        let _guard = ClearSourceMap;
+        f()
     }
 }
 
-/// The `Send` bound is necessary to prevent interned values outlive their
-/// interner. In case of `SymbolStr` this causes a dangling reference, while in
-/// case of `Span` it can merely cause invalid results.
-pub fn with_session_globals<R: Send>(edition: Edition, f: impl FnOnce() -> R) -> R {
-    let session_globals = SessionGlobals::new(edition);
-    assert!(!SESSION_GLOBALS.is_set());
-    SESSION_GLOBALS.set(&session_globals, f)
-}
-
-/// The `Send` bound is necessary to prevent interned values outlive their
-/// interner. In case of `SymbolStr` this causes a dangling reference, while in
-/// case of `Span` it can merely cause invalid results.
-pub fn with_default_session_globals<R: Send>(f: impl FnOnce() -> R) -> R {
-    with_session_globals(edition::DEFAULT_EDITION, f)
-}
-
-pub fn get_session_globals<R: Send>(f: impl FnOnce(&SessionGlobals) -> R) -> R {
-    SESSION_GLOBALS.with(f)
-}
-
-/// The `Send` bound is necessary to prevent interned values outlive their
-/// interner. In case of `SymbolStr` this causes a dangling reference, while in
-/// case of `Span` it can merely cause invalid results.
-pub fn set_session_globals<R: Send>(session_globals: &SessionGlobals, f: impl FnOnce() -> R) -> R {
-    SESSION_GLOBALS.set(session_globals, f)
-}
-
-// If this ever becomes non thread-local, `decode_syntax_context`
-// and `decode_expn_id` will need to be updated to handle concurrent
-// deserialization.
-// Do not make this public. That would allow `SymbolStr` to outlive its interner
-// causing dangling references.
-scoped_tls::scoped_thread_local!(static SESSION_GLOBALS: SessionGlobals);
+pub use session_globals::*;
 
 // FIXME: We should use this enum or something like it to get rid of the
 // use of magic `/rust/1.x/...` paths across the board.
@@ -867,32 +911,6 @@ impl<D: Decoder> Decodable<D> for Span {
     }
 }
 
-/// Calls the provided closure, using the provided `SourceMap` to format
-/// any spans that are debug-printed during the closure's execution.
-///
-/// Normally, the global `TyCtxt` is used to retrieve the `SourceMap`
-/// (see `rustc_interface::callbacks::span_debug1`). However, some parts
-/// of the compiler (e.g. `rustc_parse`) may debug-print `Span`s before
-/// a `TyCtxt` is available. In this case, we fall back to
-/// the `SourceMap` provided to this function. If that is not available,
-/// we fall back to printing the raw `Span` field values.
-pub fn with_source_map<T, F: FnOnce() -> T>(source_map: Lrc<SourceMap>, f: F) -> T {
-    SESSION_GLOBALS.with(|session_globals| {
-        *session_globals.source_map.borrow_mut() = Some(source_map);
-    });
-    struct ClearSourceMap;
-    impl Drop for ClearSourceMap {
-        fn drop(&mut self) {
-            SESSION_GLOBALS.with(|session_globals| {
-                session_globals.source_map.borrow_mut().take();
-            });
-        }
-    }
-
-    let _guard = ClearSourceMap;
-    f()
-}
-
 pub fn debug_with_source_map(
     span: Span,
     f: &mut fmt::Formatter<'_>,
@@ -902,7 +920,7 @@ pub fn debug_with_source_map(
 }
 
 pub fn default_span_debug(span: Span, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    SESSION_GLOBALS.with(|session_globals| {
+    get_session_globals(|session_globals| {
         if let Some(source_map) = &*session_globals.source_map.borrow() {
             debug_with_source_map(span, f, source_map)
         } else {
