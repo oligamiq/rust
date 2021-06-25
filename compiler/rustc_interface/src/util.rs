@@ -131,7 +131,7 @@ fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -
 }
 
 #[cfg(not(parallel_compiler))]
-pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
+pub fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
     edition: Edition,
     _threads: usize,
     f: F,
@@ -141,8 +141,6 @@ pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Se
     if let Some(size) = get_stack_size() {
         cfg = cfg.stack_size(size);
     }
-
-    crate::callbacks::setup_callbacks();
 
     let main_handler = move || rustc_span::with_session_globals(edition, f);
 
@@ -172,13 +170,11 @@ unsafe fn handle_deadlock() {
 }
 
 #[cfg(parallel_compiler)]
-pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
+pub fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
     edition: Edition,
     threads: usize,
     f: F,
 ) -> R {
-    crate::callbacks::setup_callbacks();
-
     let mut config = rayon::ThreadPoolBuilder::new()
         .thread_name(|_| "rustc".to_string())
         .acquire_thread_handler(jobserver::acquire_thread)
