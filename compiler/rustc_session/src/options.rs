@@ -1306,7 +1306,6 @@ options! {
         valid types are any of the types for `--pretty`, as well as:
         `expanded`, `expanded,identified`,
         `expanded,hygiene` (with internal representations),
-        `everybody_loops` (all function bodies replaced with `loop {}`),
         `ast-tree` (raw AST before expansion),
         `ast-tree,expanded` (raw AST after expansion),
         `hir` (the HIR), `hir,identified`,

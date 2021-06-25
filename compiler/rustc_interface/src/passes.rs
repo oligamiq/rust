@@ -2,7 +2,6 @@ use crate::interface::{Compiler, Result};
 use crate::proc_macro_decls;
 use crate::util;
 
-use rustc_ast::mut_visit::MutVisitor;
 use rustc_ast::{self as ast, visit};
 use rustc_codegen_ssa::back::link::emit_metadata;
 use rustc_codegen_ssa::traits::CodegenBackend;
@@ -29,7 +28,7 @@ use rustc_passes::{self, hir_stats, layout_test};
 use rustc_plugin_impl as plugin;
 use rustc_query_impl::Queries as TcxQueries;
 use rustc_resolve::{Resolver, ResolverArenas};
-use rustc_session::config::{CrateType, Input, OutputFilenames, OutputType, PpMode, PpSourceMode};
+use rustc_session::config::{CrateType, Input, OutputFilenames, OutputType};
 use rustc_session::lint;
 use rustc_session::output::{filename_for_input, filename_for_metadata};
 use rustc_session::search_paths::PathKind;
@@ -398,11 +397,6 @@ fn configure_and_expand_inner<'a>(
     sess.time("maybe_building_test_harness", || {
         rustc_builtin_macros::test_harness::inject(&sess, &mut resolver, &mut krate)
     });
-
-    if let Some(PpMode::Source(PpSourceMode::EveryBodyLoops)) = sess.opts.pretty {
-        tracing::debug!("replacing bodies with loop {{}}");
-        util::ReplaceBodyWithLoop::new(&mut resolver).visit_crate(&mut krate);
-    }
 
     let has_proc_macro_decls = sess.time("AST_validation", || {
         rustc_ast_passes::ast_validation::check_crate(sess, &krate, &mut resolver.lint_buffer())

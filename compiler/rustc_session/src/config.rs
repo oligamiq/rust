@@ -2171,7 +2171,6 @@ fn parse_pretty(
         let first = match (name, extended) {
             ("normal", _) => Source(PpSourceMode::Normal),
             ("identified", _) => Source(PpSourceMode::Identified),
-            ("everybody_loops", true) => Source(PpSourceMode::EveryBodyLoops),
             ("expanded", _) => Source(PpSourceMode::Expanded),
             ("expanded,identified", _) => Source(PpSourceMode::ExpandedIdentified),
             ("expanded,hygiene", _) => Source(PpSourceMode::ExpandedHygiene),
@@ -2191,7 +2190,7 @@ fn parse_pretty(
                         &format!(
                             "argument to `unpretty` must be one of `normal`, \
                                         `expanded`, `identified`, `expanded,identified`, \
-                                        `expanded,hygiene`, `everybody_loops`, \
+                                        `expanded,hygiene`, \
                                         `ast-tree`, `ast-tree,expanded`, `hir`, `hir,identified`, \
                                         `hir,typed`, `hir-tree`, `mir` or `mir-cfg`; got {}",
                             name
@@ -2333,8 +2332,6 @@ impl fmt::Display for CrateType {
 pub enum PpSourceMode {
     /// `--pretty=normal`
     Normal,
-    /// `-Zunpretty=everybody_loops`
-    EveryBodyLoops,
     /// `--pretty=expanded`
     Expanded,
     /// `--pretty=identified`
@@ -2366,7 +2363,7 @@ pub enum PpHirMode {
 #[derive(Copy, Clone, PartialEq, Debug)]
 pub enum PpMode {
     /// Options that print the source code, i.e.
-    /// `--pretty` and `-Zunpretty=everybody_loops`
+    /// `--pretty` and certain `-Zunpretty`
     Source(PpSourceMode),
     AstTree(PpAstTreeMode),
     /// Options that print the HIR, i.e. `-Zunpretty=hir`
@@ -2388,7 +2385,7 @@ impl PpMode {
         match *self {
             Source(Normal | Identified) | AstTree(PpAstTreeMode::Normal) => false,
 
-            Source(Expanded | EveryBodyLoops | ExpandedIdentified | ExpandedHygiene)
+            Source(Expanded | ExpandedIdentified | ExpandedHygiene)
             | AstTree(PpAstTreeMode::Expanded)
             | Hir(_)
             | HirTree
