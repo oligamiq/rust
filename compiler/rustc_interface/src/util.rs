@@ -110,7 +110,7 @@ fn get_stack_size() -> Option<usize> {
 /// Like a `thread::Builder::spawn` followed by a `join()`, but avoids the need
 /// for `'static` bounds.
 #[cfg(not(parallel_compiler))]
-pub fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -> R {
+fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -> R {
     struct Ptr(*mut ());
     unsafe impl Send for Ptr {}
     unsafe impl Sync for Ptr {}
@@ -387,7 +387,7 @@ fn sysroot_candidates() -> Vec<PathBuf> {
     }
 }
 
-pub fn get_codegen_sysroot(
+fn get_codegen_sysroot(
     maybe_sysroot: &Option<PathBuf>,
     backend_name: &str,
 ) -> fn() -> Box<dyn CodegenBackend> {
