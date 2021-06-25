@@ -30,7 +30,7 @@ impl<'ctx> rustc_hir::HashStableContext for StableHashingContext<'ctx> {
     fn hash_body_id(&mut self, id: hir::BodyId, hasher: &mut StableHasher) {
         let hcx = self;
         if hcx.hash_bodies() {
-            hcx.body_resolver.body(id).hash_stable(hcx, hasher);
+            hcx.bodies[&id].hash_stable(hcx, hasher);
         }
     }
 

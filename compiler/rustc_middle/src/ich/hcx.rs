@@ -16,6 +16,7 @@ use rustc_span::{BytePos, CachingSourceMapView, SourceFile, SpanData};
 
 use smallvec::SmallVec;
 use std::cmp::Ord;
+use std::collections::BTreeMap;
 use std::thread::LocalKey;
 
 fn compute_ignored_attr_names() -> FxHashSet<Symbol> {
@@ -32,7 +33,7 @@ pub struct StableHashingContext<'a> {
     sess: &'a Session,
     definitions: &'a Definitions,
     cstore: &'a dyn CrateStore,
-    pub(super) body_resolver: BodyResolver<'a>,
+    pub(super) bodies: &'a BTreeMap<hir::BodyId, hir::Body<'a>>,
     hash_spans: bool,
     hash_bodies: bool,
     pub(super) node_id_hashing_mode: NodeIdHashingMode,
@@ -49,28 +50,15 @@ pub enum NodeIdHashingMode {
     HashDefPath,
 }
 
-/// The `BodyResolver` allows mapping a `BodyId` to the corresponding `hir::Body`.
-/// We could also just store a plain reference to the `hir::Crate` but we want
-/// to avoid that the crate is used to get untracked access to all of the HIR.
-#[derive(Clone, Copy)]
-pub(super) struct BodyResolver<'tcx>(&'tcx hir::Crate<'tcx>);
-
-impl<'tcx> BodyResolver<'tcx> {
-    /// Returns a reference to the `hir::Body` with the given `BodyId`.
-    /// **Does not do any tracking**; use carefully.
-    pub(super) fn body(self, id: hir::BodyId) -> &'tcx hir::Body<'tcx> {
-        self.0.body(id)
-    }
-}
-
 impl<'a> StableHashingContext<'a> {
-    /// The `krate` here is only used for mapping `BodyId`s to `Body`s.
+    /// The `bodies` here is only used for hashing the `Body` corresponding
+    /// to a `BodyId`.
     /// Don't use it for anything else or you'll run the risk of
     /// leaking data out of the tracking system.
     #[inline]
     fn new_with_or_without_spans(
         sess: &'a Session,
-        krate: &'a hir::Crate<'a>,
+        bodies: &'a BTreeMap<hir::BodyId, hir::Body<'a>>,
         definitions: &'a Definitions,
         cstore: &'a dyn CrateStore,
         always_ignore_spans: bool,
@@ -80,7 +68,7 @@ impl<'a> StableHashingContext<'a> {
 
         StableHashingContext {
             sess,
-            body_resolver: BodyResolver(krate),
+            bodies,
             definitions,
             cstore,
             caching_source_map: None,
@@ -94,13 +82,13 @@ impl<'a> StableHashingContext<'a> {
     #[inline]
     pub fn new(
         sess: &'a Session,
-        krate: &'a hir::Crate<'a>,
+        bodies: &'a BTreeMap<hir::BodyId, hir::Body<'a>>,
         definitions: &'a Definitions,
         cstore: &'a dyn CrateStore,
     ) -> Self {
         Self::new_with_or_without_spans(
             sess,
-            krate,
+            bodies,
             definitions,
             cstore,
             /*always_ignore_spans=*/ false,
@@ -110,12 +98,12 @@ impl<'a> StableHashingContext<'a> {
     #[inline]
     pub fn ignore_spans(
         sess: &'a Session,
-        krate: &'a hir::Crate<'a>,
+        bodies: &'a BTreeMap<hir::BodyId, hir::Body<'a>>,
         definitions: &'a Definitions,
         cstore: &'a dyn CrateStore,
     ) -> Self {
         let always_ignore_spans = true;
-        Self::new_with_or_without_spans(sess, krate, definitions, cstore, always_ignore_spans)
+        Self::new_with_or_without_spans(sess, bodies, definitions, cstore, always_ignore_spans)
     }
 
     #[inline]

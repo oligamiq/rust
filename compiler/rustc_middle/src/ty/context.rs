@@ -1337,14 +1337,19 @@ impl<'tcx> TyCtxt<'tcx> {
     pub fn create_stable_hashing_context(self) -> StableHashingContext<'tcx> {
         let krate = self.gcx.untracked_crate;
 
-        StableHashingContext::new(self.sess, krate, &self.definitions, &*self.cstore)
+        StableHashingContext::new(self.sess, &krate.bodies, &self.definitions, &*self.cstore)
     }
 
     #[inline(always)]
     pub fn create_no_span_stable_hashing_context(self) -> StableHashingContext<'tcx> {
         let krate = self.gcx.untracked_crate;
 
-        StableHashingContext::ignore_spans(self.sess, krate, &self.definitions, &*self.cstore)
+        StableHashingContext::ignore_spans(
+            self.sess,
+            &krate.bodies,
+            &self.definitions,
+            &*self.cstore,
+        )
     }
 
     pub fn serialize_query_result_cache(self, encoder: &mut FileEncoder) -> FileEncodeResult {
