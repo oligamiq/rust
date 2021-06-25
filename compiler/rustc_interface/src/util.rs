@@ -23,14 +23,12 @@ use rustc_span::source_map::FileLoader;
 use rustc_span::symbol::{sym, Symbol};
 use std::env;
 use std::env::consts::{DLL_PREFIX, DLL_SUFFIX};
-use std::io;
 use std::lazy::SyncOnceCell;
 use std::mem;
 #[cfg(not(parallel_compiler))]
 use std::panic;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
 use std::thread;
 use tracing::info;
 
@@ -136,7 +134,6 @@ fn scoped_thread<F: FnOnce() -> R + Send, R: Send>(cfg: thread::Builder, f: F) -
 pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
     edition: Edition,
     _threads: usize,
-    stderr: &Option<Arc<Mutex<Vec<u8>>>>,
     f: F,
 ) -> R {
     let mut cfg = thread::Builder::new().name("rustc".to_string());
@@ -147,12 +144,7 @@ pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Se
 
     crate::callbacks::setup_callbacks();
 
-    let main_handler = move || {
-        rustc_span::with_session_globals(edition, || {
-            io::set_output_capture(stderr.clone());
-            f()
-        })
-    };
+    let main_handler = move || rustc_span::with_session_globals(edition, f);
 
     scoped_thread(cfg, main_handler)
 }
@@ -183,7 +175,6 @@ unsafe fn handle_deadlock() {
 pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
     edition: Edition,
     threads: usize,
-    stderr: &Option<Arc<Mutex<Vec<u8>>>>,
     f: F,
 ) -> R {
     crate::callbacks::setup_callbacks();
@@ -207,10 +198,7 @@ pub fn setup_callbacks_and_run_in_thread_pool_with_globals<F: FnOnce() -> R + Se
             // the thread local rustc uses. `session_globals` is captured and set
             // on the new threads.
             let main_handler = move |thread: rayon::ThreadBuilder| {
-                rustc_span::set_session_globals(session_globals, || {
-                    io::set_output_capture(stderr.clone());
-                    thread.run()
-                })
+                rustc_span::set_session_globals(session_globals, || thread.run())
             };
 
             config.build_scoped(main_handler, with_pool).unwrap()
