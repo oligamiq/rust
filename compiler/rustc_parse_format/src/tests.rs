@@ -144,8 +144,8 @@ fn format_align_fill() {
 }
 #[test]
 fn format_counts() {
-    use rustc_span::{edition, SessionGlobals, SESSION_GLOBALS};
-    SESSION_GLOBALS.set(&SessionGlobals::new(edition::DEFAULT_EDITION), || {
+    use rustc_span::{edition, with_default_session_globals, SessionGlobals};
+    with_default_session_globals(|| {
         same(
             "{:10x}",
             &[NextArgument(Argument {

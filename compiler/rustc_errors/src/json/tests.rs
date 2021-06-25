@@ -6,7 +6,7 @@ use rustc_span::source_map::{FilePathMapping, SourceMap};
 use crate::emitter::{ColorConfig, HumanReadableErrorType};
 use crate::Handler;
 use rustc_serialize::json::decode;
-use rustc_span::{BytePos, Span};
+use rustc_span::{with_default_session_globals, BytePos, Span};
 
 use std::str;
 
@@ -37,11 +37,6 @@ impl<T: Write> Write for Shared<T> {
     fn flush(&mut self) -> io::Result<()> {
         self.data.lock().unwrap().flush()
     }
-}
-
-fn with_default_session_globals(f: impl FnOnce()) {
-    let session_globals = rustc_span::SessionGlobals::new(rustc_span::edition::DEFAULT_EDITION);
-    rustc_span::SESSION_GLOBALS.set(&session_globals, f);
 }
 
 /// Test the span yields correct positions in JSON.

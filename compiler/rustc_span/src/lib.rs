@@ -99,19 +99,39 @@ impl SessionGlobals {
     }
 }
 
-pub fn with_session_globals<R>(edition: Edition, f: impl FnOnce() -> R) -> R {
+/// The `Send` bound is necessary to prevent interned values outlive their
+/// interner. In case of `SymbolStr` this causes a dangling reference, while in
+/// case of `Span` it can merely cause invalid results.
+pub fn with_session_globals<R: Send>(edition: Edition, f: impl FnOnce() -> R) -> R {
     let session_globals = SessionGlobals::new(edition);
+    assert!(!SESSION_GLOBALS.is_set());
     SESSION_GLOBALS.set(&session_globals, f)
 }
 
-pub fn with_default_session_globals<R>(f: impl FnOnce() -> R) -> R {
+/// The `Send` bound is necessary to prevent interned values outlive their
+/// interner. In case of `SymbolStr` this causes a dangling reference, while in
+/// case of `Span` it can merely cause invalid results.
+pub fn with_default_session_globals<R: Send>(f: impl FnOnce() -> R) -> R {
     with_session_globals(edition::DEFAULT_EDITION, f)
+}
+
+pub fn get_session_globals<R: Send>(f: impl FnOnce(&SessionGlobals) -> R) -> R {
+    SESSION_GLOBALS.with(f)
+}
+
+/// The `Send` bound is necessary to prevent interned values outlive their
+/// interner. In case of `SymbolStr` this causes a dangling reference, while in
+/// case of `Span` it can merely cause invalid results.
+pub fn set_session_globals<R: Send>(session_globals: &SessionGlobals, f: impl FnOnce() -> R) -> R {
+    SESSION_GLOBALS.set(session_globals, f)
 }
 
 // If this ever becomes non thread-local, `decode_syntax_context`
 // and `decode_expn_id` will need to be updated to handle concurrent
 // deserialization.
-scoped_tls::scoped_thread_local!(pub static SESSION_GLOBALS: SessionGlobals);
+// Do not make this public. That would allow `SymbolStr` to outlive its interner
+// causing dangling references.
+scoped_tls::scoped_thread_local!(static SESSION_GLOBALS: SessionGlobals);
 
 // FIXME: We should use this enum or something like it to get rid of the
 // use of magic `/rust/1.x/...` paths across the board.
