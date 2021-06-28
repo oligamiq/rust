@@ -5,7 +5,7 @@
 #![feature(once_cell)]
 #![recursion_limit = "256"]
 
-mod callbacks;
+pub mod callbacks;
 pub mod interface;
 mod passes;
 mod proc_macro_decls;

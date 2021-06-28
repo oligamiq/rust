@@ -17,7 +17,7 @@ pub extern crate rustc_plugin_impl as plugin;
 use rustc_ast as ast;
 use rustc_codegen_ssa::{traits::CodegenBackend, CodegenResults};
 use rustc_data_structures::profiling::{get_resident_set_size, print_time_passes_entry};
-use rustc_data_structures::sync::SeqCst;
+use rustc_data_structures::sync::{Lrc, SeqCst};
 use rustc_errors::registry::{InvalidErrorCode, Registry};
 use rustc_errors::{ErrorReported, PResult};
 use rustc_feature::find_gated_cfg;
@@ -244,37 +244,57 @@ fn run_compiler(
         Ok(None) => match matches.free.len() {
             0 => {
                 callbacks.config(&mut config);
-                interface::run_compiler(config, |compiler| {
-                    let sopts = &compiler.session().opts;
-                    if sopts.describe_lints {
-                        let mut lint_store = rustc_lint::new_lint_store(
-                            sopts.debugging_opts.no_interleave_lints,
-                            compiler.session().unstable_options(),
+
+                return rustc_span::with_session_globals(config.opts.edition, || {
+                    rustc_interface::callbacks::setup_callbacks();
+
+                    let registry = &config.registry;
+                    let (mut sess, codegen_backend) = util::create_session(
+                        config.opts,
+                        config.crate_cfg,
+                        config.diagnostic_output,
+                        config.file_loader,
+                        config.input_path.clone(),
+                        config.lint_caps,
+                        config.make_codegen_backend,
+                        registry.clone(),
+                    );
+
+                    if let Some(parse_sess_created) = config.parse_sess_created {
+                        parse_sess_created(
+                            &mut Lrc::get_mut(&mut sess)
+                                .expect("create_session() should never share the returned session")
+                                .parse_sess,
                         );
-                        let registered_lints =
-                            if let Some(register_lints) = compiler.register_lints() {
-                                register_lints(compiler.session(), &mut lint_store);
-                                true
-                            } else {
-                                false
-                            };
-                        describe_lints(compiler.session(), &lint_store, registered_lints);
-                        return;
+                    }
+
+                    if sess.opts.describe_lints {
+                        let mut lint_store = rustc_lint::new_lint_store(
+                            sess.opts.debugging_opts.no_interleave_lints,
+                            sess.unstable_options(),
+                        );
+                        let registered_lints = if let Some(register_lints) = config.register_lints {
+                            register_lints(&sess, &mut lint_store);
+                            true
+                        } else {
+                            false
+                        };
+                        describe_lints(&sess, &lint_store, registered_lints);
+                        return Ok(());
                     }
                     let should_stop = print_crate_info(
-                        &***compiler.codegen_backend(),
-                        compiler.session(),
+                        &**codegen_backend,
+                        &sess,
                         None,
-                        &compiler.output_dir(),
-                        &compiler.output_file(),
+                        &config.output_dir,
+                        &config.output_file,
                     );
 
                     if should_stop == Compilation::Stop {
-                        return;
+                        return Ok(());
                     }
-                    early_error(sopts.error_format, "no input filename given")
+                    early_error(sess.opts.error_format, "no input filename given");
                 });
-                return Ok(());
             }
             1 => panic!("make_input should have provided valid inputs"),
             _ => early_error(
