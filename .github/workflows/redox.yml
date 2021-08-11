@@ -20,6 +20,8 @@ jobs:
         run: |
           git clone https://github.com/bjorn3/rustc_codegen_cranelift/
           pushd rustc_codegen_cranelift
+          git config --global user.email "you@example.com"
+          git config --global user.name "Your Name"
           ./y.rs prepare
           ./y.rs build
           popd
