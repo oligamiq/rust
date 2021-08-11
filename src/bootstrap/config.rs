@@ -1024,7 +1024,7 @@ impl Config {
         };
 
         // CI should always run stage 2 builds, unless it specifically states otherwise
-        #[cfg(not(test))]
+        /*#[cfg(not(test))]
         if flags.stage.is_none() && crate::CiEnv::current() != crate::CiEnv::None {
             match config.cmd {
                 Subcommand::Test { .. }
@@ -1047,7 +1047,7 @@ impl Config {
                 | Subcommand::Setup { .. }
                 | Subcommand::Format { .. } => {}
             }
-        }
+        }*/
 
         config
     }
