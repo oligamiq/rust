@@ -204,11 +204,11 @@ target = ["x86_64-unknown-redox"] (as an example)
 
 # Instead of downloading the src/stage0.txt version of Cargo specified, use
 # this Cargo binary instead to build all Rust code
-cargo = "cg_clif/build/cargo"
+cargo = "rustc_codegen_cranelift/build/cargo"
 
 # Instead of downloading the src/stage0.txt version of the compiler
 # specified, use this rustc binary instead as the stage0 snapshot compiler.
-rustc = "cg_clif/build/bin/rustc"
+rustc = "rustc_codegen_cranelift/build/bin/rustc"
 
 # Instead of download the src/stage0.txt version of rustfmt specified,
 # use this rustfmt binary instead as the stage0 snapshot rustfmt.
@@ -599,7 +599,7 @@ codegen-backends = ["cranelift"]
 # default value is platform specific, and if not specified it may also depend on
 # what platform is crossing to what platform.
 # See `src/bootstrap/cc_detect.rs` for details.
-cc = "x86_64-unknown-redox-gcc"
+cc = ".redoxer/bin/x86_64-unknown-redox-gcc"
 
 # C++ compiler to be used to compile C++ code (e.g. LLVM and our LLVM shims).
 # This is only used for host targets.

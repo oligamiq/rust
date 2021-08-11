@@ -23,6 +23,7 @@ jobs:
           ./y.rs build
           popd
           ls -lR rustc_codegen_cranelift/build
+          cp rustc_codegen_cranelift/rust-toolchain ./
 
       - name: Build
-        run: true #./x.py build
+        run: ./x.py build

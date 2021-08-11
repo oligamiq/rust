@@ -38,6 +38,7 @@ members = [
 ]
 
 exclude = [
+  "rustc_codegen_cranelift",
   "build",
   "compiler/rustc_codegen_cranelift",
   "src/test/rustdoc-gui",
