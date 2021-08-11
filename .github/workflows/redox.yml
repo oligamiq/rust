@@ -16,5 +16,13 @@ jobs:
           docker run -w "/foo" -v "$(pwd)/.redoxer:/foo/.redoxer" -e "HOME=/foo" redoxos/redoxer redoxer toolchain
           ls -lR .redoxer
 
+      - name: Setup rustc_codegen_cranelift
+        run: |
+          git clone https://github.com/bjorn3/rustc_codegen_cranelift/
+          pushd rustc_codegen_cranelift
+          ./y.rs build
+          popd
+          ls -lR rustc_codegen_cranelift/build
+
       - name: Build
         run: true #./x.py build
