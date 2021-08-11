@@ -1,0 +1,20 @@
+name: Build rustc for Redox OS
+
+on:
+  - push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup Redox OS build toolchain
+        run: |
+          mkdir .redoxer
+          docker pull redoxos/redoxer
+          docker run -w "/foo" -v "$(pwd)/.redoxer:/foo/.redoxer" -e "HOME=/foo" redoxos/redoxer redoxer toolchain
+          ls -lR .redoxer
+
+      - name: Build
+        run: true #./x.py build
