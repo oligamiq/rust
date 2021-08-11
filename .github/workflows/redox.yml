@@ -20,6 +20,7 @@ jobs:
         run: |
           git clone https://github.com/bjorn3/rustc_codegen_cranelift/
           pushd rustc_codegen_cranelift
+          ./y.rs prepare
           ./y.rs build
           popd
           ls -lR rustc_codegen_cranelift/build
