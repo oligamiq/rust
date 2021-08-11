@@ -188,7 +188,7 @@ changelog-seen = 2
 # be bootstrapped from the build triple themselves.
 #
 # Defaults to just the build triple.
-host = ["x86_64-unknown-redox"] (as an example)
+host = ["x86_64-unknown-redox"]
 
 # Which triples to build libraries (core/alloc/std/test/proc_macro) for. Each of
 # these triples will be bootstrapped from the build triple themselves.
@@ -196,7 +196,7 @@ host = ["x86_64-unknown-redox"] (as an example)
 # Defaults to `host`. If you set this explicitly, you likely want to add all
 # host triples to this list as well in order for those host toolchains to be
 # able to compile programs for their native target.
-target = ["x86_64-unknown-redox"] (as an example)
+target = ["x86_64-unknown-redox"]
 
 # Use this directory to store build artifacts.
 # You can use "$ROOT" to indicate the root of the git repository.
