@@ -29,4 +29,41 @@ jobs:
           cp rustc_codegen_cranelift/rust-toolchain ./
 
       - name: Build
-        run: rustup run nightly-2021-08-07 ./x.py build
+        run: |
+          cat > config.toml <<EOF
+          changelog-seen = 2
+          
+          [llvm]
+          ninja = false
+
+          [build]
+          host = ["x86_64-unknown-redox"]
+          target = ["x86_64-unknown-redox"]
+          cargo = "$(rustup which cargo)"
+          rustc = "rustc_codegen_cranelift/build/bin/rustc"
+          local-rebuild = true
+          
+          [install]
+          prefix = "redox_rustc"
+          
+          [rust]
+          codegen-backends = ["cranelift"]
+          deny-warnings = false
+
+          [target.x86_64-unknown-linux-gnu]
+          cc = "$(pwd)/.redoxer/bin/x86_64-unknown-redox-gcc"
+
+          [dist]
+
+          EOF
+          rustup run nightly-2021-08-07 ./x.py install
+          ls -lR redox_rustc
+
+      - name: Package rustc
+        run: tar cvfJ redox_rustc.tar.xz redox_rustc
+
+      - name: Upload rustc
+        uses: actions/upload-artifact@v2
+        with:
+          name: redox_rustc
+          path: redox_rustc.tar.xz
