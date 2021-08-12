@@ -131,6 +131,7 @@
 #![feature(exhaustive_patterns)]
 #![feature(extern_types)]
 #![feature(fundamental)]
+#![feature(global_asm)]
 #![feature(intra_doc_pointers)]
 #![feature(intrinsics)]
 #![feature(lang_items)]
@@ -352,3 +353,5 @@ pub mod arch {
         /* compiler built-in */
     }
 }
+
+mod probestack;

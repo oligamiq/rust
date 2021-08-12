@@ -34,6 +34,7 @@ jobs:
           cargo = "$(rustup which cargo)"
           rustc = "$(rustup which rustc)"
           local-rebuild = true
+          docs = false
           
           [install]
           prefix = "redox_rustc"
