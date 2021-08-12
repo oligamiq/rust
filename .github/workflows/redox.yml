@@ -18,15 +18,14 @@ jobs:
 
       - name: Setup rustc_codegen_cranelift
         run: |
-          git clone https://github.com/bjorn3/rustc_codegen_cranelift/
-          pushd rustc_codegen_cranelift
+          pushd compiler/rustc_codegen_cranelift
           git config --global user.email "you@example.com"
           git config --global user.name "Your Name"
           ./y.rs prepare
           ./y.rs build
           popd
-          ls -lR rustc_codegen_cranelift/build
-          cp rustc_codegen_cranelift/rust-toolchain ./
+          ls -lR compiler/rustc_codegen_cranelift/build
+          cp compiler/rustc_codegen_cranelift/rust-toolchain ./
 
       - name: Build
         run: |
@@ -40,7 +39,7 @@ jobs:
           host = ["x86_64-unknown-redox"]
           target = ["x86_64-unknown-redox"]
           cargo = "$(rustup which cargo)"
-          rustc = "rustc_codegen_cranelift/build/bin/rustc"
+          rustc = "compiler/rustc_codegen_cranelift/build/bin/cg_clif"
           local-rebuild = true
           
           [install]
