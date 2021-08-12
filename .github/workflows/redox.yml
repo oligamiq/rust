@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          depth: 100
+          fetch-depth: 100
 
       - name: Setup Redox OS build toolchain
         run: |
@@ -18,19 +18,9 @@ jobs:
           docker run -w "/foo" -v "$(pwd)/.redoxer:/foo/.redoxer" -e "HOME=/foo" redoxos/redoxer redoxer toolchain
           ls -lR .redoxer
 
-      - name: Setup rustc_codegen_cranelift
-        run: |
-          pushd compiler/rustc_codegen_cranelift
-          git config --global user.email "you@example.com"
-          git config --global user.name "Your Name"
-          ./y.rs prepare
-          ./y.rs build
-          popd
-          ls -lR compiler/rustc_codegen_cranelift/build
-          cp compiler/rustc_codegen_cranelift/rust-toolchain ./
-
       - name: Build
         run: |
+          echo "nightly-2021-08-05" > rust-toolchain
           cat > config.toml <<EOF
           changelog-seen = 2
           
@@ -42,7 +32,7 @@ jobs:
           host = ["x86_64-unknown-redox"]
           target = ["x86_64-unknown-redox"]
           cargo = "$(rustup which cargo)"
-          rustc = "compiler/rustc_codegen_cranelift/build/bin/cg_clif"
+          rustc = "$(rustup which rustc)"
           local-rebuild = true
           
           [install]
@@ -59,6 +49,7 @@ jobs:
           [dist]
 
           EOF
+          cat config.toml
           rustup run nightly-2021-08-05 ./x.py install
           ls -lR redox_rustc
 
