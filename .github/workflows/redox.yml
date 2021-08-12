@@ -55,7 +55,7 @@ jobs:
           [dist]
 
           EOF
-          rustup run nightly-2021-08-07 ./x.py install
+          rustup run nightly-2021-08-05 ./x.py install
           ls -lR redox_rustc
 
       - name: Package rustc
