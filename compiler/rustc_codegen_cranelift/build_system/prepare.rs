@@ -11,7 +11,8 @@ use crate::utils::{copy_dir_recursively, spawn_and_wait};
 pub(crate) fn prepare() {
     prepare_sysroot();
 
-    eprintln!("[INSTALL] hyperfine");
+    /*
+     * eprintln!("[INSTALL] hyperfine");
     Command::new("cargo").arg("install").arg("hyperfine").spawn().unwrap().wait().unwrap();
 
     clone_repo(
@@ -50,6 +51,7 @@ pub(crate) fn prepare() {
         "simple-raytracer/raytracer_cg_llvm",
     )
     .unwrap();
+    */
 }
 
 fn prepare_sysroot() {
