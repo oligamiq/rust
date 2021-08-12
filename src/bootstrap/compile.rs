@@ -626,7 +626,7 @@ impl Step for Rustc {
 pub fn rustc_cargo(builder: &Builder<'_>, cargo: &mut Cargo, target: TargetSelection) {
     cargo
         .arg("--features")
-        .arg(builder.rustc_features())
+        .arg(builder.rustc_features(target))
         .arg("--manifest-path")
         .arg(builder.src.join("compiler/rustc/Cargo.toml"));
     rustc_cargo_env(builder, cargo, target);
@@ -673,6 +673,7 @@ pub fn rustc_cargo_env(builder: &Builder<'_>, cargo: &mut Cargo, target: TargetS
     if builder.config.llvm_enabled()
         && (builder.kind != Kind::Check
             || crate::native::prebuilt_llvm_config(builder, target).is_ok())
+        && !target.triple.contains("redox")
     {
         if builder.is_rust_llvm(target) {
             cargo.env("LLVM_RUSTLLVM", "1");
@@ -1122,6 +1123,7 @@ impl Step for Assemble {
         // Similarly, copy `llvm-dwp` into libdir for Split DWARF. Only copy it when the LLVM
         // backend is used to avoid unnecessarily building LLVM and because LLVM is not checked
         // out by default when the LLVM backend is not enabled.
+        /*
         if builder.config.rust_codegen_backends.contains(&INTERNER.intern_str("llvm")) {
             let src_exe = exe("llvm-dwp", target_compiler.host);
             let dst_exe = exe("rust-llvm-dwp", target_compiler.host);
@@ -1132,6 +1134,7 @@ impl Step for Assemble {
                 builder.copy(&llvm_bin_dir.join(&src_exe), &libdir_bin.join(&dst_exe));
             }
         }
+        */
 
         // Ensure that `libLLVM.so` ends up in the newly build compiler directory,
         // so that it can be found when the newly built `rustc` is run.

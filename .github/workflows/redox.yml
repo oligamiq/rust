@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          depth: 100
 
       - name: Setup Redox OS build toolchain
         run: |
@@ -33,7 +35,8 @@ jobs:
           changelog-seen = 2
           
           [llvm]
-          ninja = false
+          download-ci-llvm = true
+          #ninja = false
 
           [build]
           host = ["x86_64-unknown-redox"]
@@ -46,7 +49,7 @@ jobs:
           prefix = "redox_rustc"
           
           [rust]
-          codegen-backends = ["cranelift"]
+          codegen-backends = ["llvm", "cranelift"]
           deny-warnings = false
 
           [target.x86_64-unknown-redox]

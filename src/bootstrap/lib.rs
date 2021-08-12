@@ -676,12 +676,12 @@ impl Build {
     }
 
     /// Gets the space-separated set of activated features for the compiler.
-    fn rustc_features(&self) -> String {
+    fn rustc_features(&self, target: TargetSelection) -> String {
         let mut features = String::new();
         if self.config.jemalloc {
             features.push_str("jemalloc");
         }
-        if self.config.llvm_enabled() {
+        if self.config.llvm_enabled() && !target.triple.contains("redox") {
             features.push_str(" llvm");
         }
 

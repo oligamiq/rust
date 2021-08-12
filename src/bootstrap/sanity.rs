@@ -157,6 +157,7 @@ pub fn check(build: &mut Build) {
         }
     }
 
+    /*
     if build.config.rust_codegen_backends.contains(&INTERNER.intern_str("llvm")) {
         // Externally configured LLVM requires FileCheck to exist
         let filecheck = build.llvm_filecheck(build.build);
@@ -164,6 +165,7 @@ pub fn check(build: &mut Build) {
             panic!("FileCheck executable {:?} does not exist", filecheck);
         }
     }
+    */
 
     for target in &build.targets {
         // Can't compile for iOS unless we're on macOS

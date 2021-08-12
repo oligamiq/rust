@@ -820,6 +820,9 @@ impl<'a> Builder<'a> {
     /// check build or dry-run, where there's no need to build all of LLVM.
     fn llvm_config(&self, target: TargetSelection) -> Option<PathBuf> {
         if self.config.llvm_enabled() && self.kind != Kind::Check && !self.config.dry_run {
+            if target.triple.contains("redox") {
+                return None;
+            }
             let llvm_config = self.ensure(native::Llvm { target });
             if llvm_config.is_file() {
                 return Some(llvm_config);
