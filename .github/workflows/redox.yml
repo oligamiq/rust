@@ -50,7 +50,7 @@ jobs:
           deny-warnings = false
 
           [target.x86_64-unknown-linux-gnu]
-          cc = "$(pwd)/.redoxer/bin/x86_64-unknown-redox-gcc"
+          cc = "$(pwd)/.redoxer/toolchain/bin/x86_64-unknown-redox-gcc"
 
           [dist]
 
