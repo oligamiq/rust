@@ -49,8 +49,9 @@ jobs:
           codegen-backends = ["cranelift"]
           deny-warnings = false
 
-          [target.x86_64-unknown-linux-gnu]
+          [target.x86_64-unknown-redox]
           cc = "$(pwd)/.redoxer/toolchain/bin/x86_64-unknown-redox-gcc"
+          linker = "$(pwd)/.redoxer/toolchain/bin/x86_64-unknown-redox-gcc"
 
           [dist]
 
