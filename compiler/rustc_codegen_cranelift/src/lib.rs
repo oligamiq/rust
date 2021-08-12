@@ -1,4 +1,5 @@
 #![feature(rustc_private, decl_macro, never_type, hash_drain_filter, vec_into_raw_parts, once_cell)]
+#![feature(global_asm)]
 #![warn(rust_2018_idioms)]
 #![warn(unused_lifetimes)]
 #![warn(unreachable_pub)]
@@ -70,6 +71,8 @@ mod trap;
 mod unsize;
 mod value_and_place;
 mod vtable;
+
+mod probestack;
 
 mod prelude {
     pub(crate) use std::convert::{TryFrom, TryInto};

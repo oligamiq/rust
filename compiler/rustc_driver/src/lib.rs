@@ -5,6 +5,7 @@
 //! This API is completely unstable and subject to change.
 
 #![doc(html_root_url = "https://doc.rust-lang.org/nightly/nightly-rustc/")]
+#![feature(global_asm)]
 #![feature(nll)]
 #![feature(once_cell)]
 #![recursion_limit = "256"]
@@ -54,6 +55,7 @@ use std::time::Instant;
 
 pub mod args;
 pub mod pretty;
+mod probestack;
 
 /// Exit status code used for successful compilation and help output.
 pub const EXIT_SUCCESS: i32 = 0;
