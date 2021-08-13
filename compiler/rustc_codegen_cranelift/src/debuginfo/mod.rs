@@ -63,7 +63,7 @@ impl<'tcx> DebugContext<'tcx> {
 
         let producer = format!(
             "cg_clif (rustc {}, cranelift {})",
-            rustc_interface::util::version_str().unwrap_or("unknown version"),
+            "unknown version",
             cranelift_codegen::VERSION,
         );
         let comp_dir = tcx.sess.working_dir.to_string_lossy(false).into_owned();

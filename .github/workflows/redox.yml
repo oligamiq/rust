@@ -40,7 +40,7 @@ jobs:
           prefix = "redox_rustc"
           
           [rust]
-          codegen-backends = ["llvm", "cranelift"]
+          codegen-backends = ["llvm"]
           deny-warnings = false
 
           [target.x86_64-unknown-redox]

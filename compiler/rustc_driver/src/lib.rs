@@ -55,6 +55,7 @@ use std::time::Instant;
 
 pub mod args;
 pub mod pretty;
+#[cfg(feature = "llvm")]
 mod probestack;
 
 /// Exit status code used for successful compilation and help output.

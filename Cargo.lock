@@ -9,7 +9,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c0929d69e78dd9bf5408269919fcbcaeb2e35e5d43e5815517cdc6a8e11a423"
 dependencies = [
  "compiler_builtins",
- "gimli",
+ "gimli 0.23.0",
  "rustc-std-workspace-alloc",
  "rustc-std-workspace-core",
 ]
@@ -90,6 +90,11 @@ name = "anyhow"
 version = "1.0.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bf8dcb5b4bbaa28653b647d8c77bd4ed40183b48882e130c1f1ffb73de069fd7"
+
+[[package]]
+name = "ar"
+version = "0.8.0"
+source = "git+https://github.com/bjorn3/rust-ar.git?branch=do_not_remove_cg_clif_ranlib#de9ab0e56bf3a208381d342aa5b60f9ff2891648"
 
 [[package]]
 name = "array_tool"
@@ -731,6 +736,94 @@ name = "cpuid-bool"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8aebca1129a03dc6dc2b127edd729435bbc4a37e1d5f4d7513165089ceb02634"
+
+[[package]]
+name = "cranelift-bforest"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "cranelift-entity",
+]
+
+[[package]]
+name = "cranelift-codegen"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "cranelift-bforest",
+ "cranelift-codegen-meta",
+ "cranelift-codegen-shared",
+ "cranelift-entity",
+ "gimli 0.25.0",
+ "log",
+ "regalloc",
+ "smallvec",
+ "target-lexicon",
+]
+
+[[package]]
+name = "cranelift-codegen-meta"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "cranelift-codegen-shared",
+ "cranelift-entity",
+]
+
+[[package]]
+name = "cranelift-codegen-shared"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+
+[[package]]
+name = "cranelift-entity"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+
+[[package]]
+name = "cranelift-frontend"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "cranelift-codegen",
+ "log",
+ "smallvec",
+ "target-lexicon",
+]
+
+[[package]]
+name = "cranelift-module"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "anyhow",
+ "cranelift-codegen",
+ "cranelift-entity",
+ "log",
+]
+
+[[package]]
+name = "cranelift-native"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "cranelift-codegen",
+ "libc",
+ "target-lexicon",
+]
+
+[[package]]
+name = "cranelift-object"
+version = "0.76.0"
+source = "git+https://github.com/bytecodealliance/wasmtime.git#e9f33fc6185508204afce59c3bf7184cb1abdcad"
+dependencies = [
+ "anyhow",
+ "cranelift-codegen",
+ "cranelift-module",
+ "log",
+ "object 0.26.0",
+ "target-lexicon",
+]
 
 [[package]]
 name = "crates-io"
@@ -1425,6 +1518,15 @@ dependencies = [
  "compiler_builtins",
  "rustc-std-workspace-alloc",
  "rustc-std-workspace-core",
+]
+
+[[package]]
+name = "gimli"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0a01e0497841a3b2db4f8afa483cce65f7e96a3498bd6c541734792aeac8fe7"
+dependencies = [
+ "indexmap",
 ]
 
 [[package]]
@@ -2314,6 +2416,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "object"
+version = "0.26.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c55827317fb4c08822499848a14237d2874d6f139828893017237e7ab93eb386"
+dependencies = [
+ "crc32fast",
+ "indexmap",
+ "memchr",
+]
+
+[[package]]
 name = "once_cell"
 version = "1.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2973,6 +3086,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "regalloc"
+version = "0.0.31"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "571f7f397d61c4755285cd37853fe8e03271c243424a907415909379659381c5"
+dependencies = [
+ "log",
+ "rustc-hash",
+ "smallvec",
+]
+
+[[package]]
 name = "regex"
 version = "1.4.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3610,6 +3734,38 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustc_codegen_cranelift"
+version = "0.1.0"
+dependencies = [
+ "ar",
+ "cranelift-codegen",
+ "cranelift-frontend",
+ "cranelift-module",
+ "cranelift-native",
+ "cranelift-object",
+ "gimli 0.25.0",
+ "indexmap",
+ "object 0.26.0",
+ "rustc_ast",
+ "rustc_codegen_ssa",
+ "rustc_data_structures",
+ "rustc_errors",
+ "rustc_fs_util",
+ "rustc_hir",
+ "rustc_incremental",
+ "rustc_index",
+ "rustc_metadata",
+ "rustc_middle",
+ "rustc_mir",
+ "rustc_session",
+ "rustc_span",
+ "rustc_target",
+ "smallvec",
+ "snap",
+ "target-lexicon",
+]
+
+[[package]]
 name = "rustc_codegen_llvm"
 version = "0.0.0"
 dependencies = [
@@ -3879,6 +4035,7 @@ dependencies = [
  "rustc_ast_passes",
  "rustc_attr",
  "rustc_builtin_macros",
+ "rustc_codegen_cranelift",
  "rustc_codegen_llvm",
  "rustc_codegen_ssa",
  "rustc_data_structures",
@@ -4974,6 +5131,12 @@ dependencies = [
  "libc",
  "xattr",
 ]
+
+[[package]]
+name = "target-lexicon"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b0652da4c4121005e9ed22b79f6c5f2d9e2752906b53a33e9490489ba421a6fb"
 
 [[package]]
 name = "tempfile"

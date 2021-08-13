@@ -267,6 +267,7 @@ pub fn get_codegen_backend(
             filename if filename.contains('.') => load_backend_from_dylib(filename.as_ref()),
             #[cfg(feature = "llvm")]
             "llvm" => rustc_codegen_llvm::LlvmCodegenBackend::new,
+            "cranelift" => || Box::new(rustc_codegen_cranelift::CraneliftCodegenBackend { config: None }) as Box<_>,
             backend_name => get_codegen_sysroot(maybe_sysroot, backend_name),
         }
     });

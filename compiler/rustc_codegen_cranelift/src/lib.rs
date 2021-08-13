@@ -15,7 +15,6 @@ extern crate rustc_fs_util;
 extern crate rustc_hir;
 extern crate rustc_incremental;
 extern crate rustc_index;
-extern crate rustc_interface;
 extern crate rustc_metadata;
 extern crate rustc_mir;
 extern crate rustc_session;
@@ -23,8 +22,8 @@ extern crate rustc_span;
 extern crate rustc_target;
 
 // This prevents duplicating functions and statics that are already part of the host rustc process.
-#[allow(unused_extern_crates)]
-extern crate rustc_driver;
+//#[allow(unused_extern_crates)]
+//extern crate rustc_driver;
 
 use std::any::Any;
 
@@ -71,8 +70,6 @@ mod trap;
 mod unsize;
 mod value_and_place;
 mod vtable;
-
-mod probestack;
 
 mod prelude {
     pub(crate) use std::convert::{TryFrom, TryInto};
