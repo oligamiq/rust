@@ -380,19 +380,6 @@ impl Step for Rustc {
                 }
             }
 
-            // Copy over the codegen backends
-            let backends_src = builder.sysroot_codegen_backends(compiler);
-            let backends_rel = backends_src
-                .strip_prefix(&src)
-                .unwrap()
-                .strip_prefix(builder.sysroot_libdir_relative(compiler))
-                .unwrap();
-            // Don't use custom libdir here because ^lib/ will be resolved again with installer
-            let backends_dst = image.join("lib").join(&backends_rel);
-
-            t!(fs::create_dir_all(&backends_dst));
-            builder.cp_r(&backends_src, &backends_dst);
-
             // Copy libLLVM.so to the lib dir as well, if needed. While not
             // technically needed by rustc itself it's needed by lots of other
             // components like the llvm tools and LLD. LLD is included below and
@@ -1222,6 +1209,77 @@ impl Step for Miri {
 }
 
 #[derive(Debug, PartialOrd, Ord, Copy, Clone, Hash, PartialEq, Eq)]
+pub struct CodegenBackend {
+    pub compiler: Compiler,
+    pub backend: Interned<String>,
+}
+
+impl Step for CodegenBackend {
+    type Output = Option<GeneratedTarball>;
+    const ONLY_HOSTS: bool = true;
+
+    fn should_run(run: ShouldRun<'_>) -> ShouldRun<'_> {
+        run.path("compiler/rustc_codegen_cranelift")
+    }
+
+    fn make_run(run: RunConfig<'_>) {
+        for &backend in &run.builder.config.rust_codegen_backends {
+            if backend == "llvm" {
+                continue; // Already built as part of rustc
+            }
+
+            run.builder.ensure(CodegenBackend {
+                compiler: run.builder.compiler(run.builder.top_stage, run.target),
+                backend,
+            });
+        }
+    }
+
+    fn run(self, builder: &Builder<'_>) -> Option<GeneratedTarball> {
+        // This prevents miri from being built for "dist" or "install"
+        // on the stable/beta channels. It is a nightly-only tool and should
+        // not be included.
+        if !builder.build.unstable_features() {
+            return None;
+        }
+
+        let compiler = self.compiler;
+        let backend = self.backend;
+        assert!(builder.config.extended);
+
+        let mut tarball =
+            Tarball::new(builder, &format!("rustc-codegen-{}", backend), &compiler.host.triple);
+        if backend == "cranelift" {
+            tarball.set_overlay(OverlayKind::RustcCodegenCranelift);
+        } else {
+            panic!("Unknown backend rustc_codegen_{}", backend);
+        }
+        tarball.is_preview(true);
+        tarball.add_legal_and_readme_to(format!("share/doc/rustc_codegen_{}", backend));
+
+        let src = builder.sysroot(compiler);
+        let backends_src = builder.sysroot_codegen_backends(compiler);
+        let backends_rel = backends_src
+            .strip_prefix(&src)
+            .unwrap()
+            .strip_prefix(builder.sysroot_libdir_relative(compiler))
+            .unwrap();
+        // Don't use custom libdir here because ^lib/ will be resolved again with installer
+        let backends_dst = PathBuf::from("lib").join(&backends_rel);
+
+        let backend_name = format!("rustc_codegen_{}", backend);
+        for backend in fs::read_dir(&backends_src).unwrap() {
+            let file_name = backend.unwrap().file_name();
+            if file_name.to_str().unwrap().contains(&backend_name) {
+                tarball.add_file(backends_src.join(file_name), &backends_dst, 0o644);
+            }
+        }
+
+        Some(tarball.generate())
+    }
+}
+
+#[derive(Debug, PartialOrd, Ord, Copy, Clone, Hash, PartialEq, Eq)]
 pub struct Rustfmt {
     pub compiler: Compiler,
     pub target: TargetSelection,
@@ -1397,6 +1455,10 @@ impl Step for Extended {
         add_component!("clippy" => Clippy { compiler, target });
         add_component!("miri" => Miri { compiler, target });
         add_component!("analysis" => Analysis { compiler, target });
+        add_component!("rustc_codegen_cranelift" => CodegenBackend {
+            compiler: builder.compiler(stage, target),
+            backend: INTERNER.intern_str("cranelift"),
+        });
 
         let etc = builder.src.join("src/etc/installer");
 
