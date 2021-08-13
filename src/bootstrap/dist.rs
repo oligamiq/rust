@@ -402,8 +402,8 @@ impl Step for Rustc {
             }
 
             // Copy over llvm-dwp if it's there
-            let exe = exe("rust-llvm-dwp", compiler.host);
-            builder.copy(&src_dir.join(&exe), &dst_dir.join(&exe));
+            //let exe = exe("rust-llvm-dwp", compiler.host);
+            //builder.copy(&src_dir.join(&exe), &dst_dir.join(&exe));
 
             // Man pages
             t!(fs::create_dir_all(image.join("share/man/man1")));
