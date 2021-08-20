@@ -82,7 +82,8 @@ pub use index::range;
 #[unstable(feature = "inherent_ascii_escape", issue = "77174")]
 pub use ascii::EscapeAscii;
 
-#[lang = "slice"]
+#[cfg_attr(bootstrap, lang = "slice")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 #[cfg(not(test))]
 impl<T> [T] {
     /// Returns the number of elements in the slice.

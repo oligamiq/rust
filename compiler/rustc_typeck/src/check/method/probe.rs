@@ -653,6 +653,7 @@ impl<'a, 'tcx> ProbeContext<'a, 'tcx> {
                 self.assemble_inherent_candidates_from_param(p);
             }
             ty::Bool => {
+                // FIXME implement
                 let lang_def_id = lang_items.bool_impl();
                 self.assemble_inherent_impl_for_primitive(lang_def_id);
             }

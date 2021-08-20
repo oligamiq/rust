@@ -61,272 +61,77 @@ impl ItemLikeVisitor<'v> for InherentCollect<'tcx> {
                 self.check_def_id(item, data.principal_def_id().unwrap());
             }
             ty::Bool => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.bool_impl(),
-                    None,
-                    "bool",
-                    "bool",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "bool", item.span, assoc_items);
             }
             ty::Char => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.char_impl(),
-                    None,
-                    "char",
-                    "char",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "char", item.span, assoc_items);
             }
             ty::Str => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.str_impl(),
-                    lang_items.str_alloc_impl(),
-                    "str",
-                    "str",
-                    item.span,
-                    assoc_items,
-                );
-            }
-            ty::Slice(slice_item) if slice_item == self.tcx.types.u8 => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.slice_u8_impl(),
-                    lang_items.slice_u8_alloc_impl(),
-                    "slice_u8",
-                    "[u8]",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "str", item.span, assoc_items);
             }
             ty::Slice(_) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.slice_impl(),
-                    lang_items.slice_alloc_impl(),
-                    "slice",
-                    "[T]",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "[T]", item.span, assoc_items);
             }
             ty::Array(_, _) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.array_impl(),
-                    None,
-                    "array",
-                    "[T; N]",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "[T; N]", item.span, assoc_items);
             }
             ty::RawPtr(ty::TypeAndMut { ty: inner, mutbl: hir::Mutability::Not })
                 if matches!(inner.kind(), ty::Slice(_)) =>
             {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.const_slice_ptr_impl(),
-                    None,
-                    "const_slice_ptr",
-                    "*const [T]",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "*const [T]", item.span, assoc_items);
             }
             ty::RawPtr(ty::TypeAndMut { ty: inner, mutbl: hir::Mutability::Mut })
                 if matches!(inner.kind(), ty::Slice(_)) =>
             {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.mut_slice_ptr_impl(),
-                    None,
-                    "mut_slice_ptr",
-                    "*mut [T]",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "*mut [T]", item.span, assoc_items);
             }
             ty::RawPtr(ty::TypeAndMut { ty: _, mutbl: hir::Mutability::Not }) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.const_ptr_impl(),
-                    None,
-                    "const_ptr",
-                    "*const T",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "*const T", item.span, assoc_items);
             }
             ty::RawPtr(ty::TypeAndMut { ty: _, mutbl: hir::Mutability::Mut }) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.mut_ptr_impl(),
-                    None,
-                    "mut_ptr",
-                    "*mut T",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "*mut T", item.span, assoc_items);
             }
             ty::Int(ty::IntTy::I8) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.i8_impl(),
-                    None,
-                    "i8",
-                    "i8",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "i8", item.span, assoc_items);
             }
             ty::Int(ty::IntTy::I16) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.i16_impl(),
-                    None,
-                    "i16",
-                    "i16",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "i16", item.span, assoc_items);
             }
             ty::Int(ty::IntTy::I32) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.i32_impl(),
-                    None,
-                    "i32",
-                    "i32",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "i32", item.span, assoc_items);
             }
             ty::Int(ty::IntTy::I64) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.i64_impl(),
-                    None,
-                    "i64",
-                    "i64",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "i64", item.span, assoc_items);
             }
             ty::Int(ty::IntTy::I128) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.i128_impl(),
-                    None,
-                    "i128",
-                    "i128",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "i128", item.span, assoc_items);
             }
             ty::Int(ty::IntTy::Isize) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.isize_impl(),
-                    None,
-                    "isize",
-                    "isize",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "isize", item.span, assoc_items);
             }
             ty::Uint(ty::UintTy::U8) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.u8_impl(),
-                    None,
-                    "u8",
-                    "u8",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "u8", item.span, assoc_items);
             }
             ty::Uint(ty::UintTy::U16) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.u16_impl(),
-                    None,
-                    "u16",
-                    "u16",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "u16", item.span, assoc_items);
             }
             ty::Uint(ty::UintTy::U32) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.u32_impl(),
-                    None,
-                    "u32",
-                    "u32",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "u32", item.span, assoc_items);
             }
             ty::Uint(ty::UintTy::U64) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.u64_impl(),
-                    None,
-                    "u64",
-                    "u64",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "u64", item.span, assoc_items);
             }
             ty::Uint(ty::UintTy::U128) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.u128_impl(),
-                    None,
-                    "u128",
-                    "u128",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "u128", item.span, assoc_items);
             }
             ty::Uint(ty::UintTy::Usize) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.usize_impl(),
-                    None,
-                    "usize",
-                    "usize",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "usize", item.span, assoc_items);
             }
             ty::Float(ty::FloatTy::F32) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.f32_impl(),
-                    lang_items.f32_runtime_impl(),
-                    "f32",
-                    "f32",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "f32", item.span, assoc_items);
             }
             ty::Float(ty::FloatTy::F64) => {
-                self.check_primitive_impl(
-                    item.def_id,
-                    lang_items.f64_impl(),
-                    lang_items.f64_runtime_impl(),
-                    "f64",
-                    "f64",
-                    item.span,
-                    assoc_items,
-                );
+                self.check_primitive_impl(item.def_id, "f64", item.span, assoc_items);
             }
             ty::Error(_) => {}
             _ => {
@@ -385,59 +190,52 @@ impl InherentCollect<'tcx> {
     fn check_primitive_impl(
         &self,
         impl_def_id: LocalDefId,
-        lang_def_id: Option<DefId>,
-        lang_def_id2: Option<DefId>,
-        lang: &str,
         ty: &str,
         span: Span,
         assoc_items: &[hir::ImplItemRef<'_>],
     ) {
-        match (lang_def_id, lang_def_id2) {
-            (Some(lang_def_id), _) if lang_def_id == impl_def_id.to_def_id() => {
-                // OK
-            }
-            (_, Some(lang_def_id)) if lang_def_id == impl_def_id.to_def_id() => {
-                // OK
-            }
-            _ => {
-                let to_implement = if assoc_items.len() == 0 {
-                    String::new()
-                } else {
-                    let plural = assoc_items.len() > 1;
-                    let assoc_items_kind = {
-                        let item_types = assoc_items.iter().map(|x| x.kind);
-                        if item_types.clone().all(|x| x == hir::AssocItemKind::Const) {
-                            "constant"
-                        } else if item_types
-                            .clone()
-                            .all(|x| matches! {x, hir::AssocItemKind::Fn{ .. } })
-                        {
-                            "method"
-                        } else {
-                            "associated item"
-                        }
-                    };
-
-                    format!(
-                        " to implement {} {}{}",
-                        if plural { "these" } else { "this" },
-                        assoc_items_kind,
-                        if plural { "s" } else { "" }
-                    )
-                };
-
-                struct_span_err!(
-                    self.tcx.sess,
-                    span,
-                    E0390,
-                    "only a single inherent implementation marked with `#[lang = \
-                                  \"{}\"]` is allowed for the `{}` primitive",
-                    lang,
-                    ty
-                )
-                .help(&format!("consider using a trait{}", to_implement))
-                .emit();
-            }
+        if self.tcx.sess.first_attr_value_str_by_name(
+            self.tcx.get_attrs(impl_def_id),
+            sym::rustc_coherence_pretend_in,
+        ) == Some(sym::rust_lang)
+        {
+            //let vec = self.impls_map.inherent_impls.entry(def_id).or_default();
+            //vec.push(PRIMITIVE_CRATE); // FIXME
+            return;
         }
+
+        let to_implement = if assoc_items.len() == 0 {
+            String::new()
+        } else {
+            let plural = assoc_items.len() > 1;
+            let assoc_items_kind = {
+                let item_types = assoc_items.iter().map(|x| x.kind);
+                if item_types.clone().all(|x| x == hir::AssocItemKind::Const) {
+                    "constant"
+                } else if item_types.clone().all(|x| matches! {x, hir::AssocItemKind::Fn{ .. } }) {
+                    "method"
+                } else {
+                    "associated item"
+                }
+            };
+
+            format!(
+                " to implement {} {}{}",
+                if plural { "these" } else { "this" },
+                assoc_items_kind,
+                if plural { "s" } else { "" }
+            )
+        };
+
+        struct_span_err!(
+            self.tcx.sess,
+            span,
+            E0390,
+            "only an inherent implementation marked with `#[rustc_coherence_like_in = \
+                          \"rust_lang\"]` is allowed for the `{}` primitive",
+            ty
+        )
+        .help(&format!("consider using a trait{}", to_implement))
+        .emit();
     }
 }

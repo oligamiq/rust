@@ -117,7 +117,8 @@ fn slice_error_fail(s: &str, begin: usize, end: usize) -> ! {
     );
 }
 
-#[lang = "str"]
+#[cfg_attr(bootstrap, lang = "str")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 #[cfg(not(test))]
 impl str {
     /// Returns the length of `self`.

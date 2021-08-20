@@ -401,6 +401,7 @@ pub const BUILTIN_ATTRIBUTES: &[BuiltinAttribute] = &[
         may_dangle, Normal, template!(Word), dropck_eyepatch,
         "`may_dangle` has unstable semantics and may be removed in the future",
     ),
+    rustc_attr!(rustc_coherence_pretend_in, AssumeUsed, template!(Word), IMPL_DETAIL),
 
     // ==========================================================================
     // Internal attributes: Runtime related:

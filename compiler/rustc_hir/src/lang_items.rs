@@ -166,36 +166,6 @@ where
 
 language_item_table! {
 //  Variant name,            Name,                     Method name,                Target;
-    Bool,                    sym::bool,                bool_impl,                  Target::Impl;
-    Char,                    sym::char,                char_impl,                  Target::Impl;
-    Str,                     sym::str,                 str_impl,                   Target::Impl;
-    Array,                   sym::array,               array_impl,                 Target::Impl;
-    Slice,                   sym::slice,               slice_impl,                 Target::Impl;
-    SliceU8,                 sym::slice_u8,            slice_u8_impl,              Target::Impl;
-    StrAlloc,                sym::str_alloc,           str_alloc_impl,             Target::Impl;
-    SliceAlloc,              sym::slice_alloc,         slice_alloc_impl,           Target::Impl;
-    SliceU8Alloc,            sym::slice_u8_alloc,      slice_u8_alloc_impl,        Target::Impl;
-    ConstPtr,                sym::const_ptr,           const_ptr_impl,             Target::Impl;
-    MutPtr,                  sym::mut_ptr,             mut_ptr_impl,               Target::Impl;
-    ConstSlicePtr,           sym::const_slice_ptr,     const_slice_ptr_impl,       Target::Impl;
-    MutSlicePtr,             sym::mut_slice_ptr,       mut_slice_ptr_impl,         Target::Impl;
-    I8,                      sym::i8,                  i8_impl,                    Target::Impl;
-    I16,                     sym::i16,                 i16_impl,                   Target::Impl;
-    I32,                     sym::i32,                 i32_impl,                   Target::Impl;
-    I64,                     sym::i64,                 i64_impl,                   Target::Impl;
-    I128,                    sym::i128,                i128_impl,                  Target::Impl;
-    Isize,                   sym::isize,               isize_impl,                 Target::Impl;
-    U8,                      sym::u8,                  u8_impl,                    Target::Impl;
-    U16,                     sym::u16,                 u16_impl,                   Target::Impl;
-    U32,                     sym::u32,                 u32_impl,                   Target::Impl;
-    U64,                     sym::u64,                 u64_impl,                   Target::Impl;
-    U128,                    sym::u128,                u128_impl,                  Target::Impl;
-    Usize,                   sym::usize,               usize_impl,                 Target::Impl;
-    F32,                     sym::f32,                 f32_impl,                   Target::Impl;
-    F64,                     sym::f64,                 f64_impl,                   Target::Impl;
-    F32Runtime,              sym::f32_runtime,         f32_runtime_impl,           Target::Impl;
-    F64Runtime,              sym::f64_runtime,         f64_runtime_impl,           Target::Impl;
-
     Sized,                   sym::sized,               sized_trait,                Target::Trait;
     Unsize,                  sym::unsize,              unsize_trait,               Target::Trait;
     /// Trait injected by `#[derive(PartialEq)]`, (i.e. "Partial EQ").

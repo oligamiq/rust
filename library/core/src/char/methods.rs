@@ -7,7 +7,8 @@ use crate::unicode::{self, conversions};
 
 use super::*;
 
-#[lang = "char"]
+#[cfg_attr(bootstrap, lang = "char")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 impl char {
     /// The highest valid code point a `char` can have.
     ///

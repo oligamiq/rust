@@ -370,7 +370,8 @@ pub mod consts {
     pub const LN_10: f32 = 2.30258509299404568401799145468436421_f32;
 }
 
-#[lang = "f32"]
+#[cfg_attr(bootstrap, lang = "f32")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 #[cfg(not(test))]
 impl f32 {
     /// The radix or base of the internal representation of `f32`.

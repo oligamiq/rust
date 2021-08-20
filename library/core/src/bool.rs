@@ -1,6 +1,7 @@
 //! impl bool {}
 
-#[lang = "bool"]
+#[cfg_attr(bootstrap, lang = "bool")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 impl bool {
     /// Returns `Some(t)` if the `bool` is `true`, or `None` otherwise.
     ///

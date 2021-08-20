@@ -28,7 +28,8 @@ pub use core::f32::{
 };
 
 #[cfg(not(test))]
-#[lang = "f32_runtime"]
+#[cfg_attr(bootstrap, lang = "f32_runtime")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 impl f32 {
     /// Returns the largest integer less than or equal to a number.
     ///

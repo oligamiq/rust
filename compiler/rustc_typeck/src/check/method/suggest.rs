@@ -279,6 +279,7 @@ impl<'a, 'tcx> FnCtxt<'a, 'tcx> {
                             .and_then(|id| self.associated_item(id, item_name, Namespace::ValueNS))
                             .is_some()
                     };
+                    // FIXME
                     let lang_items = tcx.lang_items();
                     let found_candidate = candidates.next().is_some()
                         || fund_assoc(lang_items.i8_impl())

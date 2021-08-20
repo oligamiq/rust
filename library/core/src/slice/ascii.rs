@@ -6,7 +6,8 @@ use crate::iter;
 use crate::mem;
 use crate::ops;
 
-#[lang = "slice_u8"]
+#[cfg_attr(bootstrap, lang = "slice_u8")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 #[cfg(not(test))]
 impl [u8] {
     /// Checks if all bytes in this slice are within the ASCII range.

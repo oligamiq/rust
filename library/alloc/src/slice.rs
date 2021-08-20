@@ -233,7 +233,8 @@ mod hack {
     }
 }
 
-#[lang = "slice_alloc"]
+#[cfg_attr(bootstrap, lang = "slice_alloc")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 #[cfg(not(test))]
 impl<T> [T] {
     /// Sorts the slice.
@@ -649,7 +650,8 @@ impl<T> [T] {
     }
 }
 
-#[lang = "slice_u8_alloc"]
+#[cfg_attr(bootstrap, lang = "slice_u8_alloc")]
+#[cfg_attr(not(bootstrap), rustc_coherence_pretend_in = "rust_lang")]
 #[cfg(not(test))]
 impl [u8] {
     /// Returns a vector containing a copy of this slice where each byte
