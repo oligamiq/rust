@@ -14,6 +14,7 @@ rustc_data_structures = { path = "../rustc_data_structures" }
 rustc_index = { path = "../rustc_index" }
 rustc_span = { path = "../rustc_span" }
 rustc_serialize = { path = "../rustc_serialize" }
+rustc_asm = { path = "../rustc_asm" }
 rustc_ast = { path = "../rustc_ast" }
 tracing = "0.1"
 smallvec = { version = "1.6.1", features = ["union", "may_dangle"] }

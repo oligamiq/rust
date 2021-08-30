@@ -17,7 +17,7 @@
 use back::write::{create_informational_target_machine, create_target_machine};
 
 pub use llvm_util::target_features;
-use rustc_ast::expand::allocator::AllocatorKind;
+use rustc_attr::allocator::AllocatorKind;
 use rustc_codegen_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
 use rustc_codegen_ssa::back::write::{
     CodegenContext, FatLTOInput, ModuleConfig, TargetMachineFactoryConfig, TargetMachineFactoryFn,

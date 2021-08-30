@@ -3,7 +3,7 @@ use super::CodegenObject;
 use crate::back::write::TargetMachineFactoryFn;
 use crate::{CodegenResults, ModuleCodegen};
 
-use rustc_ast::expand::allocator::AllocatorKind;
+use rustc_attr::allocator::AllocatorKind;
 use rustc_data_structures::fx::FxHashMap;
 use rustc_errors::ErrorReported;
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};

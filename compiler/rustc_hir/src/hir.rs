@@ -8,7 +8,7 @@ use rustc_ast::{self as ast, CrateSugar, LlvmAsmDialect};
 use rustc_ast::{Attribute, FloatTy, IntTy, Label, LitKind, StrStyle, TraitObjectSyntax, UintTy};
 pub use rustc_ast::{BorrowKind, ImplPolarity, IsAuto};
 pub use rustc_ast::{CaptureBy, Movability, Mutability};
-use rustc_ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_asm::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_data_structures::fx::FxHashMap;
 use rustc_data_structures::sync::{par_for_each_in, Send, Sync};
 use rustc_index::vec::IndexVec;

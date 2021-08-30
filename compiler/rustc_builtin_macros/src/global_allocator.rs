@@ -1,6 +1,6 @@
 use crate::util::check_builtin_macro_attribute;
 
-use rustc_ast::expand::allocator::{
+use rustc_attr::allocator::{
     AllocatorKind, AllocatorMethod, AllocatorTy, ALLOCATOR_METHODS,
 };
 use rustc_ast::ptr::P;

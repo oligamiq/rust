@@ -1,7 +1,7 @@
 use super::BackendTypes;
 use crate::mir::operand::OperandRef;
 use crate::mir::place::PlaceRef;
-use rustc_ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_asm::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_hir::def_id::DefId;
 use rustc_hir::LlvmInlineAsmInner;
 use rustc_middle::ty::Instance;

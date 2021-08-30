@@ -1,6 +1,6 @@
 use crate::mir::interpret::Scalar;
 use crate::ty::{self, Ty, TyCtxt};
-use rustc_ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_asm::{InlineAsmOptions, InlineAsmTemplatePiece};
 use smallvec::{smallvec, SmallVec};
 
 use super::{

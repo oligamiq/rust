@@ -100,7 +100,7 @@ macro_rules! arena_types {
             // Note that this deliberately duplicates items in the `rustc_hir::arena`,
             // since we need to allocate this type on both the `rustc_hir` arena
             // (during lowering) and the `librustc_middle` arena (for decoding MIR)
-            [decode] asm_template: rustc_ast::InlineAsmTemplatePiece,
+            [decode] asm_template: rustc_asm::InlineAsmTemplatePiece,
 
             // This is used to decode the &'tcx [Span] for InlineAsm's line_spans.
             [decode] span: rustc_span::Span,

@@ -9,4 +9,5 @@ doctest = false
 [dependencies]
 tracing = "0.1"
 rustc_span = { path = "../rustc_span" }
+rustc_asm = { path = "../rustc_asm" }
 rustc_ast = { path = "../rustc_ast" }

@@ -8,7 +8,7 @@
 //!
 //! [rustc dev guide]: https://rustc-dev-guide.rust-lang.org/thir.html
 
-use rustc_ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_asm::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_hir as hir;
 use rustc_hir::def::CtorKind;
 use rustc_hir::def_id::DefId;

@@ -23,6 +23,7 @@ rustc_query_system = { path = "../rustc_query_system" }
 rustc_errors = { path = "../rustc_errors" }
 rustc_index = { path = "../rustc_index" }
 rustc_serialize = { path = "../rustc_serialize" }
+rustc_asm = { path = "../rustc_asm" }
 rustc_ast = { path = "../rustc_ast" }
 rustc_span = { path = "../rustc_span" }
 chalk-ir = "0.55.0"

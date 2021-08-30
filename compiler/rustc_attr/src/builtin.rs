@@ -1,6 +1,8 @@
 //! Parsing and validation of builtin attributes
 
-use rustc_ast::{self as ast, Attribute, Lit, LitKind, MetaItem, MetaItemKind, NestedMetaItem};
+use rustc_ast::{
+    Attribute, IntTy, Lit, LitIntType, LitKind, MetaItem, MetaItemKind, NestedMetaItem, UintTy,
+};
 use rustc_ast_pretty::pprust;
 use rustc_errors::{struct_span_err, Applicability};
 use rustc_feature::{find_gated_cfg, is_builtin_attr_name, Features, GatedCfg};
@@ -436,7 +438,7 @@ pub fn find_crate_name(sess: &Session, attrs: &[Attribute]) -> Option<Symbol> {
 }
 
 /// Tests if a cfg-pattern matches the cfg set
-pub fn cfg_matches(cfg: &ast::MetaItem, sess: &ParseSess, features: Option<&Features>) -> bool {
+pub fn cfg_matches(cfg: &MetaItem, sess: &ParseSess, features: Option<&Features>) -> bool {
     eval_condition(cfg, sess, features, &mut |cfg| {
         try_gate_cfg(cfg, sess, features);
         let error = |span, msg| {
@@ -469,7 +471,7 @@ pub fn cfg_matches(cfg: &ast::MetaItem, sess: &ParseSess, features: Option<&Feat
     })
 }
 
-fn try_gate_cfg(cfg: &ast::MetaItem, sess: &ParseSess, features: Option<&Features>) {
+fn try_gate_cfg(cfg: &MetaItem, sess: &ParseSess, features: Option<&Features>) {
     let gate = find_gated_cfg(|sym| cfg.has_name(sym));
     if let (Some(feats), Some(gated_cfg)) = (features, gate) {
         gate_cfg(&gated_cfg, cfg.span, sess, feats);
@@ -507,13 +509,13 @@ fn parse_version(s: &str, allow_appendix: bool) -> Option<Version> {
 /// Evaluate a cfg-like condition (with `any` and `all`), using `eval` to
 /// evaluate individual items.
 pub fn eval_condition(
-    cfg: &ast::MetaItem,
+    cfg: &MetaItem,
     sess: &ParseSess,
     features: Option<&Features>,
-    eval: &mut impl FnMut(&ast::MetaItem) -> bool,
+    eval: &mut impl FnMut(&MetaItem) -> bool,
 ) -> bool {
     match cfg.kind {
-        ast::MetaItemKind::List(ref mis) if cfg.name_or_empty() == sym::version => {
+        MetaItemKind::List(ref mis) if cfg.name_or_empty() == sym::version => {
             try_gate_cfg(cfg, sess, features);
             let (min_version, span) = match &mis[..] {
                 [NestedMetaItem::Literal(Lit { kind: LitKind::Str(sym, ..), span, .. })] => {
@@ -554,7 +556,7 @@ pub fn eval_condition(
                 rustc_version >= min_version
             }
         }
-        ast::MetaItemKind::List(ref mis) => {
+        MetaItemKind::List(ref mis) => {
             for mi in mis.iter() {
                 if !mi.is_meta_item() {
                     handle_errors(
@@ -602,7 +604,7 @@ pub fn eval_condition(
                 }
             }
         }
-        ast::MetaItemKind::Word | ast::MetaItemKind::NameValue(..) => eval(cfg),
+        MetaItemKind::Word | MetaItemKind::NameValue(..) => eval(cfg),
     }
 }
 
@@ -781,8 +783,8 @@ pub enum ReprAttr {
 #[derive(Eq, PartialEq, Debug, Copy, Clone)]
 #[derive(Encodable, Decodable, HashStable_Generic)]
 pub enum IntType {
-    SignedInt(ast::IntTy),
-    UnsignedInt(ast::UintTy),
+    SignedInt(IntTy),
+    UnsignedInt(UintTy),
 }
 
 impl IntType {
@@ -894,7 +896,7 @@ pub fn find_repr_attrs(sess: &Session, attr: &Attribute) -> Vec<ReprAttr> {
                                 name,
                             );
                             match value.kind {
-                                ast::LitKind::Int(int, ast::LitIntType::Unsuffixed) => {
+                                LitKind::Int(int, LitIntType::Unsuffixed) => {
                                     err.span_suggestion(
                                         item.span(),
                                         "use parentheses instead",
@@ -902,7 +904,7 @@ pub fn find_repr_attrs(sess: &Session, attr: &Attribute) -> Vec<ReprAttr> {
                                         Applicability::MachineApplicable,
                                     );
                                 }
-                                ast::LitKind::Str(s, _) => {
+                                LitKind::Str(s, _) => {
                                     err.span_suggestion(
                                         item.span(),
                                         "use parentheses instead",
@@ -987,18 +989,18 @@ fn int_type_of_word(s: Symbol) -> Option<IntType> {
     use IntType::*;
 
     match s {
-        sym::i8 => Some(SignedInt(ast::IntTy::I8)),
-        sym::u8 => Some(UnsignedInt(ast::UintTy::U8)),
-        sym::i16 => Some(SignedInt(ast::IntTy::I16)),
-        sym::u16 => Some(UnsignedInt(ast::UintTy::U16)),
-        sym::i32 => Some(SignedInt(ast::IntTy::I32)),
-        sym::u32 => Some(UnsignedInt(ast::UintTy::U32)),
-        sym::i64 => Some(SignedInt(ast::IntTy::I64)),
-        sym::u64 => Some(UnsignedInt(ast::UintTy::U64)),
-        sym::i128 => Some(SignedInt(ast::IntTy::I128)),
-        sym::u128 => Some(UnsignedInt(ast::UintTy::U128)),
-        sym::isize => Some(SignedInt(ast::IntTy::Isize)),
-        sym::usize => Some(UnsignedInt(ast::UintTy::Usize)),
+        sym::i8 => Some(SignedInt(IntTy::I8)),
+        sym::u8 => Some(UnsignedInt(UintTy::U8)),
+        sym::i16 => Some(SignedInt(IntTy::I16)),
+        sym::u16 => Some(UnsignedInt(UintTy::U16)),
+        sym::i32 => Some(SignedInt(IntTy::I32)),
+        sym::u32 => Some(UnsignedInt(UintTy::U32)),
+        sym::i64 => Some(SignedInt(IntTy::I64)),
+        sym::u64 => Some(UnsignedInt(UintTy::U64)),
+        sym::i128 => Some(SignedInt(IntTy::I128)),
+        sym::u128 => Some(UnsignedInt(UintTy::U128)),
+        sym::isize => Some(SignedInt(IntTy::Isize)),
+        sym::usize => Some(UnsignedInt(UintTy::Usize)),
         _ => None,
     }
 }
@@ -1083,11 +1085,15 @@ fn allow_unstable<'a>(
     })
 }
 
-pub fn parse_alignment(node: &ast::LitKind) -> Result<u32, &'static str> {
-    if let ast::LitKind::Int(literal, ast::LitIntType::Unsuffixed) = node {
+pub fn parse_alignment(node: &LitKind) -> Result<u32, &'static str> {
+    if let LitKind::Int(literal, LitIntType::Unsuffixed) = node {
         if literal.is_power_of_two() {
             // rustc_middle::ty::layout::Align restricts align to <= 2^29
-            if *literal <= 1 << 29 { Ok(*literal as u32) } else { Err("larger than 2^29") }
+            if *literal <= 1 << 29 {
+                Ok(*literal as u32)
+            } else {
+                Err("larger than 2^29")
+            }
         } else {
             Err("not a power of two")
         }

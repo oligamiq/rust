@@ -7,6 +7,7 @@
 #[macro_use]
 extern crate rustc_macros;
 
+pub mod allocator;
 mod builtin;
 
 pub use builtin::*;

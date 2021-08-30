@@ -1,6 +1,7 @@
 //! Checks validity of naked functions.
 
-use rustc_ast::{Attribute, InlineAsmOptions};
+use rustc_ast::Attribute;
+use rustc_asm::InlineAsmOptions;
 use rustc_hir as hir;
 use rustc_hir::def_id::LocalDefId;
 use rustc_hir::intravisit::{ErasedMap, FnKind, NestedVisitorMap, Visitor};

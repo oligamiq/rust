@@ -3,7 +3,7 @@
 
 use std::path::PathBuf;
 
-use rustc_ast::{InlineAsmOptions, InlineAsmTemplatePiece};
+use rustc_asm::{InlineAsmOptions, InlineAsmTemplatePiece};
 use rustc_codegen_ssa::{CodegenResults, CompiledModule, CrateInfo, ModuleKind};
 use rustc_data_structures::stable_hasher::{HashStable, StableHasher};
 use rustc_middle::dep_graph::{WorkProduct, WorkProductId};
