@@ -1,5 +1,6 @@
 //! Writing of the rustc metadata for dylibs
 
+use rustc_metadata::creader::CStore;
 use rustc_middle::ty::TyCtxt;
 
 use crate::backend::WriteMetadata;
@@ -9,7 +10,7 @@ pub(crate) fn write_metadata<O: WriteMetadata>(tcx: TyCtxt<'_>, object: &mut O) 
     use snap::write::FrameEncoder;
     use std::io::Write;
 
-    let metadata = tcx.encode_metadata();
+    let metadata = CStore::from_tcx(tcx).encode_metadata(tcx);
     let mut compressed = rustc_metadata::METADATA_HEADER.to_vec();
     FrameEncoder::new(&mut compressed).write_all(&metadata.raw_data).unwrap();
 

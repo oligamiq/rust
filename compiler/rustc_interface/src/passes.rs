@@ -15,9 +15,9 @@ use rustc_hir::def_id::{StableCrateId, LOCAL_CRATE};
 use rustc_hir::Crate;
 use rustc_lint::LintStore;
 use rustc_metadata::creader::CStore;
+use rustc_metadata::encoded_metadata::EncodedMetadata;
 use rustc_middle::arena::Arena;
 use rustc_middle::dep_graph::DepGraph;
-use rustc_middle::middle;
 use rustc_middle::middle::cstore::{MetadataLoader, MetadataLoaderDyn};
 use rustc_middle::ty::query::Providers;
 use rustc_middle::ty::{self, GlobalCtxt, ResolverOutputs, TyCtxt};
@@ -974,7 +974,7 @@ fn analysis(tcx: TyCtxt<'_>, (): ()) -> Result<()> {
 fn encode_and_write_metadata(
     tcx: TyCtxt<'_>,
     outputs: &OutputFilenames,
-) -> (middle::cstore::EncodedMetadata, bool) {
+) -> (EncodedMetadata, bool) {
     #[derive(PartialEq, Eq, PartialOrd, Ord)]
     enum MetadataKind {
         None,
@@ -997,8 +997,10 @@ fn encode_and_write_metadata(
         .unwrap_or(MetadataKind::None);
 
     let metadata = match metadata_kind {
-        MetadataKind::None => middle::cstore::EncodedMetadata::new(),
-        MetadataKind::Uncompressed | MetadataKind::Compressed => tcx.encode_metadata(),
+        MetadataKind::None => EncodedMetadata::new(),
+        MetadataKind::Uncompressed | MetadataKind::Compressed => {
+            CStore::from_tcx(tcx).encode_metadata(tcx)
+        }
     };
 
     let _prof_timer = tcx.sess.prof.generic_activity("write_crate_metadata");
