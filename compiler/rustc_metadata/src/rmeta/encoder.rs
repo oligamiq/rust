@@ -2115,8 +2115,18 @@ pub(super) fn encode_metadata(tcx: TyCtxt<'_>) -> EncodedMetadata {
 }
 
 fn encode_metadata_impl(tcx: TyCtxt<'_>) -> EncodedMetadata {
+    // FIXME add way to distinguish uncompressed and compressed metadata based on the header
+    // FIXME update decoder
     let mut encoder = opaque::Encoder::new(vec![]);
     encoder.emit_raw_bytes(METADATA_HEADER).unwrap();
+
+    // For compatibility with older rustc versions when printing the version producing this metadata
+    encoder.emit_raw_bytes(&[0, 0, 0, 0]).unwrap();
+
+    // Encode the rustc version string in a predictable location.
+    rustc_version().encode(&mut encoder).unwrap();
+
+    let header_size = encoder.position();
 
     // Will be filled with the root position after encoding everything.
     encoder.emit_raw_bytes(&[0, 0, 0, 0]).unwrap();
@@ -2143,9 +2153,6 @@ fn encode_metadata_impl(tcx: TyCtxt<'_>) -> EncodedMetadata {
         hygiene_ctxt: &hygiene_ctxt,
     };
 
-    // Encode the rustc version string in a predictable location.
-    rustc_version().encode(&mut ecx).unwrap();
-
     // Encode all the entries and extra information in the crate,
     // culminating in the `CrateRoot` which points to all of it.
     let root = ecx.encode_crate_root();
@@ -2160,5 +2167,5 @@ fn encode_metadata_impl(tcx: TyCtxt<'_>) -> EncodedMetadata {
     result[header + 2] = (pos >> 8) as u8;
     result[header + 3] = (pos >> 0) as u8;
 
-    EncodedMetadata { raw_data: result }
+    EncodedMetadata { header_size, raw_data: result }
 }
