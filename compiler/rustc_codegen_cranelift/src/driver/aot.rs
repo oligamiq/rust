@@ -267,7 +267,7 @@ pub(crate) fn run_aot(
                 tcx.output_filenames(()).temp_path(OutputType::Metadata, Some(&metadata_cgu_name));
 
             let obj = crate::backend::with_object(tcx.sess, &metadata_cgu_name, |object| {
-                crate::metadata::write_metadata(tcx, object);
+                crate::metadata::write_metadata(tcx, object, metadata);
             });
 
             if let Err(err) = std::fs::write(&tmp_file, obj) {
