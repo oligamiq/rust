@@ -43,9 +43,6 @@ pub fn write_compressed_metadata<'tcx>(
     metadata: &EncodedMetadata,
     llvm_module: &mut ModuleLlvm,
 ) {
-    use snap::write::FrameEncoder;
-    use std::io::Write;
-
     // Historical note:
     //
     // When using link.exe it was seen that the section name `.note.rustc`
@@ -63,10 +60,8 @@ pub fn write_compressed_metadata<'tcx>(
     let section_name = if tcx.sess.target.is_like_osx { "__DATA,.rustc" } else { ".rustc" };
 
     let (metadata_llcx, metadata_llmod) = (&*llvm_module.llcx, llvm_module.llmod());
-    let mut compressed = rustc_metadata::METADATA_HEADER.to_vec();
-    FrameEncoder::new(&mut compressed).write_all(&metadata.raw_data).unwrap();
 
-    let llmeta = common::bytes_in_context(metadata_llcx, &compressed);
+    let llmeta = common::bytes_in_context(metadata_llcx, &metadata.raw_data);
     let llconst = common::struct_in_context(metadata_llcx, &[llmeta], false);
     let name = exported_symbols::metadata_symbol_name(tcx);
     let buf = CString::new(name).unwrap();

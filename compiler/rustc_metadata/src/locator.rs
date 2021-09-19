@@ -213,7 +213,7 @@
 //! metadata::locator or metadata::creader for all the juicy details!
 
 use crate::creader::Library;
-use crate::rmeta::{rustc_version, MetadataBlob, METADATA_HEADER};
+use crate::rmeta::{rustc_version, MetadataBlob};
 
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_data_structures::memmap::Mmap;
@@ -231,11 +231,10 @@ use rustc_span::symbol::{sym, Symbol};
 use rustc_span::Span;
 use rustc_target::spec::{Target, TargetTriple};
 
-use snap::read::FrameDecoder;
-use std::io::{Read, Result as IoResult, Write};
+use std::io::{Result as IoResult, Write};
 use std::path::{Path, PathBuf};
-use std::{cmp, fmt, fs};
-use tracing::{debug, info, warn};
+use std::{fmt, fs};
+use tracing::{info, warn};
 
 #[derive(Clone)]
 crate struct CrateLocator<'a> {
@@ -724,30 +723,7 @@ fn get_metadata_section(
     }
     let raw_bytes: MetadataRef = match flavor {
         CrateFlavor::Rlib => loader.get_rlib_metadata(target, filename)?,
-        CrateFlavor::Dylib => {
-            let buf = loader.get_dylib_metadata(target, filename)?;
-            // The header is uncompressed
-            let header_len = METADATA_HEADER.len();
-            debug!("checking {} bytes of metadata-version stamp", header_len);
-            let header = &buf[..cmp::min(header_len, buf.len())];
-            if header != METADATA_HEADER {
-                return Err(format!(
-                    "incompatible metadata version found: '{}'",
-                    filename.display()
-                ));
-            }
-
-            // Header is okay -> inflate the actual metadata
-            let compressed_bytes = &buf[header_len..];
-            debug!("inflating {} bytes of compressed metadata", compressed_bytes.len());
-            let mut inflated = Vec::new();
-            match FrameDecoder::new(compressed_bytes).read_to_end(&mut inflated) {
-                Ok(_) => rustc_erase_owner!(OwningRef::new(inflated).map_owner_box()),
-                Err(_) => {
-                    return Err(format!("failed to decompress metadata: {}", filename.display()));
-                }
-            }
-        }
+        CrateFlavor::Dylib => loader.get_dylib_metadata(target, filename)?,
         CrateFlavor::Rmeta => {
             // mmap the file, because only a small fraction of it is read.
             let file = std::fs::File::open(filename)

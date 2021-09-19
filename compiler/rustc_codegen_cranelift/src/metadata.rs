@@ -8,12 +8,6 @@ use rustc_middle::ty::TyCtxt;
 
 // Adapted from https://github.com/rust-lang/rust/blob/da573206f87b5510de4b0ee1a9c044127e409bd3/src/librustc_codegen_llvm/base.rs#L47-L112
 pub(crate) fn new_metadata_object(tcx: TyCtxt<'_>, cgu_name: &str, metadata: &EncodedMetadata) -> Vec<u8> {
-    use snap::write::FrameEncoder;
-    use std::io::Write;
-
-    let mut compressed = rustc_metadata::METADATA_HEADER.to_vec();
-    FrameEncoder::new(&mut compressed).write_all(&metadata.raw_data).unwrap();
-
     let triple = crate::target_triple(tcx.sess);
 
     let binary_format = match triple.binary_format {
@@ -54,13 +48,13 @@ pub(crate) fn new_metadata_object(tcx: TyCtxt<'_>, cgu_name: &str, metadata: &En
 
     let segment = object.segment_name(StandardSegment::Data).to_vec();
     let section_id = object.add_section(segment, b".rustc".to_vec(), SectionKind::Data);
-    let offset = object.append_section_data(section_id, &compressed, 1);
+    let offset = object.append_section_data(section_id, &metadata.raw_data, 1);
     // For MachO and probably PE this is necessary to prevent the linker from throwing away the
     // .rustc section. For ELF this isn't necessary, but it also doesn't harm.
     object.add_symbol(Symbol {
         name: rustc_middle::middle::exported_symbols::metadata_symbol_name(tcx).into_bytes(),
         value: offset,
-        size: compressed.len() as u64,
+        size: metadata.raw_data.len() as u64,
         kind: SymbolKind::Data,
         scope: SymbolScope::Dynamic,
         weak: false,
