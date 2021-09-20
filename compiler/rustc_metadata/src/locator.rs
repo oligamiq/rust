@@ -213,7 +213,7 @@
 //! metadata::locator or metadata::creader for all the juicy details!
 
 use crate::creader::Library;
-use crate::rmeta::{rustc_version, MetadataBlob};
+use crate::rmeta::{rustc_version, MetadataBlob, MetadataKind};
 
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
 use rustc_data_structures::memmap::Mmap;
@@ -521,6 +521,11 @@ impl<'a> CrateLocator<'a> {
                 match get_metadata_section(self.target, flavor, &lib, self.metadata_loader) {
                     Ok(blob) => {
                         if let Some(h) = self.crate_matches(&blob, &lib) {
+                            if blob.get_metadata_kind() == MetadataKind::Reference {
+                                if slot.is_none() {
+                                    todo!("return error");
+                                }
+                            }
                             (h, blob)
                         } else {
                             info!("metadata mismatch");
@@ -569,6 +574,19 @@ impl<'a> CrateLocator<'a> {
                 .via_version
                 .push(CrateMismatch { path: libpath.to_path_buf(), got: found_version });
             return None;
+        }
+
+        if metadata.get_metadata_kind() == MetadataKind::Reference {
+            let hash = metadata.get_hash();
+            if let Some(expected_hash) = self.hash {
+                if hash != expected_hash {
+                    info!("Rejecting via hash: expected {} got {}", expected_hash, hash);
+                    self.crate_rejections
+                        .via_hash
+                        .push(CrateMismatch { path: libpath.to_path_buf(), got: hash.to_string() });
+                    return None;
+                }
+            }
         }
 
         let root = metadata.get_root();

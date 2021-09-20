@@ -37,6 +37,7 @@ use rustc_span::symbol::{sym, Ident, Symbol};
 use rustc_span::{self, BytePos, ExpnId, Pos, Span, SyntaxContext, DUMMY_SP};
 
 use proc_macro::bridge::client::ProcMacro;
+use std::convert::TryInto;
 use std::io;
 use std::mem;
 use std::num::NonZeroUsize;
@@ -634,25 +635,48 @@ impl MetadataBlob {
     }
 
     crate fn is_compatible(&self) -> bool {
-        self.blob().starts_with(METADATA_HEADER)
+        self.blob().starts_with(METADATA_HEADER) || self.blob().starts_with(PREV_METADATA_HEADER)
     }
 
     crate fn get_rustc_version(&self) -> String {
-        Lazy::<String>::from_position(NonZeroUsize::new(METADATA_HEADER.len() + 4).unwrap())
+        if self.blob().starts_with(PREV_METADATA_HEADER) {
+            Lazy::<String>::from_position(
+                NonZeroUsize::new(PREV_METADATA_HEADER.len() + 4).unwrap(),
+            )
             .decode(self)
+        } else {
+            Lazy::<String>::from_position(NonZeroUsize::new(METADATA_HEADER.len() + 8).unwrap())
+                .decode(self)
+        }
+    }
+
+    crate fn get_metadata_kind(&self) -> MetadataKind {
+        let slice = &self.blob()[..];
+        let offset = METADATA_HEADER.len();
+        MetadataKind::from_u32(u32::from_le_bytes(slice[offset..offset + 4].try_into().unwrap()))
+    }
+
+    crate fn get_hash(&self) -> Svh {
+        let slice = &self.blob()[..];
+        let offset = METADATA_HEADER.len() + 4;
+        Svh::new(u64::from_le_bytes(slice[offset..offset + 8].try_into().unwrap()))
     }
 
     crate fn get_root(&self) -> CrateRoot<'tcx> {
+        let metadata_kind = self.get_metadata_kind();
+        assert_eq!(metadata_kind, MetadataKind::Full);
         let slice = &self.blob()[..];
-        let offset = METADATA_HEADER.len();
-        let pos = (((slice[offset + 0] as u32) << 24)
-            | ((slice[offset + 1] as u32) << 16)
-            | ((slice[offset + 2] as u32) << 8)
-            | ((slice[offset + 3] as u32) << 0)) as usize;
+        let offset = METADATA_HEADER.len() + 4 + 8;
+        let pos = (u32::from_le_bytes(slice[offset..offset + 4].try_into().unwrap())) as usize;
         Lazy::<CrateRoot<'tcx>>::from_position(NonZeroUsize::new(pos).unwrap()).decode(self)
     }
 
     crate fn list_crate_metadata(&self, out: &mut dyn io::Write) -> io::Result<()> {
+        if self.get_metadata_kind() == MetadataKind::Reference {
+            writeln!(out, "Split metadata hash {}", self.get_hash())?;
+            return Ok(());
+        }
+
         let root = self.get_root();
         writeln!(out, "Crate info:")?;
         writeln!(out, "name {}{}", root.name, root.extra_filename)?;

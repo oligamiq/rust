@@ -47,14 +47,50 @@ crate fn rustc_version() -> String {
 /// Metadata encoding version.
 /// N.B., increment this if you change the format of metadata such that
 /// the rustc version can't be found to compare with `rustc_version()`.
-const METADATA_VERSION: u8 = 5;
+const METADATA_VERSION: u8 = 6;
 
 /// Metadata header which includes `METADATA_VERSION`.
+///
+/// This header is followed by the metadata kind encoded as 32-bit big-endian
+/// unsigned integer, the SVH encoded as 64-bit big-endian unsigned integer
+/// and the position of the `CrateRoot`, encoded as a 32-bit big-endian
+/// unsigned integer, and further followed by the rustc version string.
+pub const METADATA_HEADER: &[u8] = &[b'r', b'u', b's', b't', 0, 0, 0, METADATA_VERSION];
+
+/// The previous metadata header.
+///
+/// This is only used for reporting the rustc version of the incompatible crate.
 ///
 /// This header is followed by the position of the `CrateRoot`,
 /// which is encoded as a 32-bit big-endian unsigned integer,
 /// and further followed by the rustc version string.
-pub const METADATA_HEADER: &[u8] = &[b'r', b'u', b's', b't', 0, 0, 0, METADATA_VERSION];
+pub const PREV_METADATA_HEADER: &[u8] = &[b'r', b'u', b's', b't', 0, 0, 0, 5];
+
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+crate enum MetadataKind {
+    /// The full metadata as encoded in rmeta files or if `-Zsplit-metadata` is not used rlib,
+    /// dylib and proc-macro crate files.
+    Full,
+    /// A reference to a separate rmeta file when using `-Zsplit-metadata`. Only the SVH is encoded.
+    Reference,
+}
+
+impl MetadataKind {
+    fn as_u32(self) -> u32 {
+        match self {
+            MetadataKind::Full => 0,
+            MetadataKind::Reference => 1,
+        }
+    }
+
+    fn from_u32(idx: u32) -> Self {
+        match idx {
+            0 => MetadataKind::Full,
+            1 => MetadataKind::Reference,
+            _ => panic!("Invalid metadata kind {}", idx),
+        }
+    }
+}
 
 /// Additional metadata for a `Lazy<T>` where `T` may not be `Sized`,
 /// e.g. for `Lazy<[T]>`, this is the length (count of `T` values).

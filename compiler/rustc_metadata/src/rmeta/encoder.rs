@@ -2126,6 +2126,10 @@ fn encode_metadata_impl(tcx: TyCtxt<'_>) -> EncodedMetadata {
     let mut encoder = opaque::Encoder::new(vec![]);
     encoder.emit_raw_bytes(METADATA_HEADER).unwrap();
 
+    encoder.emit_raw_bytes(&MetadataKind::Full.as_u32().to_le_bytes()).unwrap();
+
+    encoder.emit_raw_bytes(&tcx.crate_hash(LOCAL_CRATE).as_u64().to_le_bytes()).unwrap();
+
     // Will be filled with the root position after encoding everything.
     encoder.emit_raw_bytes(&[0, 0, 0, 0]).unwrap();
 
@@ -2163,10 +2167,7 @@ fn encode_metadata_impl(tcx: TyCtxt<'_>) -> EncodedMetadata {
     // Encode the root position.
     let header = METADATA_HEADER.len();
     let pos = root.position.get();
-    result[header + 0] = (pos >> 24) as u8;
-    result[header + 1] = (pos >> 16) as u8;
-    result[header + 2] = (pos >> 8) as u8;
-    result[header + 3] = (pos >> 0) as u8;
+    result[header..header + 4].copy_from_slice(&pos.to_le_bytes());
 
     EncodedMetadata { raw_data: result }
 }
