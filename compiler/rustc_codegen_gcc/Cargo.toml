@@ -44,3 +44,9 @@ debug = false
 [profile.release.build-override]
 opt-level = 0
 debug = false
+
+[profile.release]
+lto = false
+
+[profile.release.package.gccjit]
+debug-assertions = true
