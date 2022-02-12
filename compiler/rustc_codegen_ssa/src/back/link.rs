@@ -22,7 +22,7 @@ use rustc_target::spec::{PanicStrategy, RelocModel, RelroLevel, SanitizerSet, Ta
 
 use super::archive::{find_library, ArchiveBuilder};
 use super::command::Command;
-use super::linker::{self, Linker};
+use super::linker::Linker;
 use super::metadata::create_rmeta_file;
 use super::rpath::{self, RPathConfig};
 use crate::{
@@ -1142,7 +1142,19 @@ pub fn linker_and_flavor(sess: &Session) -> (PathBuf, LinkerFlavor) {
                         }
                     }
                     LinkerFlavor::Ld => "ld",
-                    LinkerFlavor::Msvc => "link.exe",
+                    LinkerFlavor::Msvc => {
+                        let msvc_tool = cc::windows_registry::find_tool(
+                            &sess.opts.target_triple.triple(),
+                            "link.exe",
+                        );
+                        return Some((
+                            msvc_tool
+                                .as_ref()
+                                .map_or(Path::new("link.exe"), |t| t.path())
+                                .to_owned(),
+                            LinkerFlavor::Msvc,
+                        ));
+                    }
                     LinkerFlavor::Lld(_) => "lld",
                     LinkerFlavor::PtxLinker => "rust-ptx-linker",
                     LinkerFlavor::BpfLinker => "bpf-linker",

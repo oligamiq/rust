@@ -45,9 +45,6 @@ pub fn get_linker<'a>(
         Some(linker) if cfg!(windows) && linker.ends_with(".bat") => Command::bat_script(linker),
         _ => match flavor {
             LinkerFlavor::Lld(f) => Command::lld(linker, f),
-            LinkerFlavor::Msvc if sess.opts.cg.linker.is_none() && sess.target.linker.is_none() => {
-                Command::new(msvc_tool.as_ref().map_or(linker, |t| t.path()))
-            }
             _ => Command::new(linker),
         },
     };
