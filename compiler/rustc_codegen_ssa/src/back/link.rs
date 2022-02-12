@@ -647,8 +647,6 @@ fn link_natively<'a, B: ArchiveBuilder<'a>>(
         codegen_results,
     );
 
-    linker::disable_localization(&mut cmd);
-
     for &(ref k, ref v) in &sess.target.link_env {
         cmd.env(k, v);
     }

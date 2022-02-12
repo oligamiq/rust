@@ -21,19 +21,6 @@ use rustc_target::spec::{LinkOutputKind, LinkerFlavor, LldFlavor};
 
 use cc::windows_registry;
 
-/// Disables non-English messages from localized linkers.
-/// Such messages may cause issues with text encoding on Windows (#35785)
-/// and prevent inspection of linker output in case of errors, which we occasionally do.
-/// This should be acceptable because other messages from rustc are in English anyway,
-/// and may also be desirable to improve searchability of the linker diagnostics.
-pub fn disable_localization(linker: &mut Command) {
-    // No harm in setting both env vars simultaneously.
-    // Unix-style linkers.
-    linker.env("LC_ALL", "C");
-    // MSVC's `link.exe`.
-    linker.env("VSLANG", "1033");
-}
-
 // The third parameter is for env vars, used on windows to set up the
 // path for MSVC to find its DLLs, and gcc to find its bundled
 // toolchain
@@ -64,6 +51,17 @@ pub fn get_linker<'a>(
             _ => Command::new(linker),
         },
     };
+
+    // Disables non-English messages from localized linkers.
+    // Such messages may cause issues with text encoding on Windows (#35785)
+    // and prevent inspection of linker output in case of errors, which we occasionally do.
+    // This should be acceptable because other messages from rustc are in English anyway,
+    // and may also be desirable to improve searchability of the linker diagnostics.
+    // No harm in setting both env vars simultaneously.
+    // Unix-style linkers.
+    cmd.env("LC_ALL", "C");
+    // MSVC's `link.exe`.
+    cmd.env("VSLANG", "1033");
 
     // UWP apps have API restrictions enforced during Store submissions.
     // To comply with the Windows App Certification Kit,
