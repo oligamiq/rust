@@ -315,23 +315,6 @@ impl Target {
         target
     }
 }
-/// Structure of the `config.toml` file that configuration is read from.
-///
-/// This structure uses `Decodable` to automatically decode a TOML configuration
-/// file into this format, and then this is traversed and written into the above
-/// `Config` structure.
-#[derive(Deserialize, Default)]
-#[serde(deny_unknown_fields, rename_all = "kebab-case")]
-struct TomlConfig {
-    changelog_seen: Option<usize>,
-    build: Option<Build>,
-    install: Option<Install>,
-    llvm: Option<Llvm>,
-    rust: Option<Rust>,
-    target: Option<HashMap<String, TomlTarget>>,
-    dist: Option<Dist>,
-    profile: Option<String>,
-}
 
 trait Merge {
     fn merge(&mut self, other: Self);
@@ -366,10 +349,9 @@ macro_rules! define_config {
     ($(#[$attr:meta])* struct $name:ident {
         $($field:ident: Option<$field_ty:ty> = $field_key:literal,)*
     }) => {
-        $(#[$attr])*
-        struct $name {
-            $($field: Option<$field_ty>,)*
-        }
+        define_config_no_merge!($(#[$attr])* struct $name {
+            $($field: Option<$field_ty> = $field_key,)*
+        });
 
         impl Merge for $name {
             fn merge(&mut self, other: Self) {
@@ -379,6 +361,17 @@ macro_rules! define_config {
                     }
                 )*
             }
+        }
+    }
+}
+
+macro_rules! define_config_no_merge {
+    ($(#[$attr:meta])* struct $name:ident {
+        $($field:ident: Option<$field_ty:ty> = $field_key:literal,)*
+    }) => {
+        $(#[$attr])*
+        struct $name {
+            $($field: Option<$field_ty>,)*
         }
 
         // The following is a trimmed version of what serde_derive generates. All parts not relevant
@@ -445,6 +438,25 @@ macro_rules! define_config {
                 )
             }
         }
+    }
+}
+
+define_config_no_merge! {
+    /// Structure of the `config.toml` file that configuration is read from.
+    ///
+    /// This structure uses `Decodable` to automatically decode a TOML configuration
+    /// file into this format, and then this is traversed and written into the above
+    /// `Config` structure.
+    #[derive(Default)]
+    struct TomlConfig {
+        changelog_seen: Option<usize> = "changelog-seen",
+        build: Option<Build> = "build",
+        install: Option<Install> = "install",
+        llvm: Option<Llvm> = "llvm",
+        rust: Option<Rust> = "rust",
+        target: Option<HashMap<String, TomlTarget>> = "target",
+        dist: Option<Dist> = "dist",
+        profile: Option<String> = "profile",
     }
 }
 
