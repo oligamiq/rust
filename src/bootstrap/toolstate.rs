@@ -1,6 +1,6 @@
 use crate::builder::{Builder, RunConfig, ShouldRun, Step};
 use crate::util::t;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
 use std::env;
 use std::fmt;
@@ -24,8 +24,7 @@ const OS: Option<&str> = None;
 
 type ToolstateData = HashMap<Box<str>, ToolState>;
 
-#[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
-#[serde(rename_all = "kebab-case")]
+#[derive(Copy, Clone, Debug, PartialEq, PartialOrd)]
 /// Whether a tool can be compiled, tested or neither
 pub enum ToolState {
     /// The tool compiles successfully, but the test suite fails
@@ -36,17 +35,39 @@ pub enum ToolState {
     BuildFail = 0,
 }
 
+impl ToolState {
+    fn as_str(&self) -> &'static str {
+        match self {
+            ToolState::TestFail => "test-fail",
+            ToolState::TestPass => "test-pass",
+            ToolState::BuildFail => "build-fail",
+        }
+    }
+}
+
+impl Serialize for ToolState {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_str(self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for ToolState {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        match &*String::deserialize(deserializer)? {
+            "test-fail" => Ok(ToolState::TestFail),
+            "test-pass" => Ok(ToolState::TestPass),
+            "build-fail" => Ok(ToolState::BuildFail),
+            value => Err(serde::de::Error::unknown_variant(
+                value,
+                &["test-fail", "test-pass", "build-fail"],
+            )),
+        }
+    }
+}
+
 impl fmt::Display for ToolState {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                ToolState::TestFail => "test-fail",
-                ToolState::TestPass => "test-pass",
-                ToolState::BuildFail => "build-fail",
-            }
-        )
+        f.write_str(self.as_str())
     }
 }
 
