@@ -37,9 +37,47 @@ fn rustfmt(src: &Path, rustfmt: &Path, paths: &[PathBuf], check: bool) -> impl F
     }
 }
 
-#[derive(serde::Deserialize)]
 struct RustfmtConfig {
     ignore: Vec<String>,
+}
+
+impl<'de> serde::Deserialize<'de> for RustfmtConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct Visitor;
+        impl<'de> serde::de::Visitor<'de> for Visitor {
+            type Value = RustfmtConfig;
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("struct RustfmtConfig")
+            }
+            #[inline]
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                let mut ignore: Option<Vec<String>> = None;
+                while let Some(key) = map.next_key::<String>()? {
+                    match &*key {
+                        "ignore" => {
+                            if ignore.is_some() {
+                                return Err(serde::de::Error::duplicate_field("ignore"));
+                            }
+                            ignore = Some(map.next_value::<Vec<String>>()?);
+                        }
+                        _ => {
+                            map.next_value::<serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+                let ignore = ignore.ok_or_else(|| serde::de::Error::missing_field("ignore"))?;
+                Ok(RustfmtConfig { ignore })
+            }
+        }
+        const FIELDS: &'static [&'static str] = &["ignore"];
+        deserializer.deserialize_struct("RustfmtConfig", FIELDS, Visitor)
+    }
 }
 
 pub fn format(build: &Build, check: bool, paths: &[PathBuf]) {

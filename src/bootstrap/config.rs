@@ -562,8 +562,6 @@ define_config! {
     }
 }
 
-#[derive(Deserialize)]
-#[serde(untagged)]
 enum StringOrBool {
     String(String),
     Bool(bool),
@@ -572,6 +570,44 @@ enum StringOrBool {
 impl Default for StringOrBool {
     fn default() -> StringOrBool {
         StringOrBool::Bool(false)
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for StringOrBool {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        struct StringOrBoolVisitor;
+        impl<'de> serde::de::Visitor<'de> for StringOrBoolVisitor {
+            type Value = StringOrBool;
+
+            fn expecting(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+                fmt.write_str("string or bool")
+            }
+
+            fn visit_bool<E>(self, value: bool) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(StringOrBool::Bool(value))
+            }
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(StringOrBool::String(value.to_owned()))
+            }
+
+            fn visit_string<E>(self, value: String) -> Result<Self::Value, E>
+            where
+                E: serde::de::Error,
+            {
+                Ok(StringOrBool::String(value))
+            }
+        }
+
+        deserializer.deserialize_any(StringOrBoolVisitor)
     }
 }
 

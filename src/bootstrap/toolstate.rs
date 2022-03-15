@@ -480,7 +480,7 @@ fn publish_test_results(current_toolstate: &ToolstateData) {
     t!(fs::write(&history_path, file));
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug)]
 struct RepoState {
     tool: String,
     windows: ToolState,
@@ -496,5 +496,60 @@ impl RepoState {
         } else {
             unimplemented!()
         }
+    }
+}
+
+impl<'de> Deserialize<'de> for RepoState {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        struct RepoStateVisitor;
+        impl<'de> serde::de::Visitor<'de> for RepoStateVisitor {
+            type Value = RepoState;
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("struct RepoState")
+            }
+            #[inline]
+            fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
+            where
+                A: serde::de::MapAccess<'de>,
+            {
+                let mut tool: Option<String> = None;
+                let mut windows: Option<ToolState> = None;
+                let mut linux: Option<ToolState> = None;
+                while let Some(key) = map.next_key::<String>()? {
+                    match &*key {
+                        "tool" => {
+                            if tool.is_some() {
+                                return Err(serde::de::Error::duplicate_field("tool"));
+                            }
+                            tool = Some(map.next_value::<String>()?);
+                        }
+                        "windows" => {
+                            if windows.is_some() {
+                                return Err(serde::de::Error::duplicate_field("windows"));
+                            }
+                            windows = Some(map.next_value::<ToolState>()?);
+                        }
+                        "linux" => {
+                            if linux.is_some() {
+                                return Err(serde::de::Error::duplicate_field("linux"));
+                            }
+                            linux = Some(map.next_value::<ToolState>()?);
+                        }
+                        _ => {
+                            map.next_value::<serde::de::IgnoredAny>()?;
+                        }
+                    }
+                }
+                let tool = tool.ok_or_else(|| serde::de::Error::missing_field("tool"))?;
+                let windows = windows.ok_or_else(|| serde::de::Error::missing_field("windows"))?;
+                let linux = linux.ok_or_else(|| serde::de::Error::missing_field("linux"))?;
+                Ok(RepoState { tool, windows, linux })
+            }
+        }
+        const FIELDS: &'static [&'static str] = &["tool", "windows", "linux"];
+        deserializer.deserialize_struct("RepoState", FIELDS, RepoStateVisitor)
     }
 }
