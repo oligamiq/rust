@@ -78,6 +78,11 @@ pub fn compile_codegen_unit<'tcx>(tcx: TyCtxt<'tcx>, cgu_name: Symbol, supports_
         let context = Context::default();
         // TODO(antoyo): only set on x86 platforms.
         context.add_command_line_option("-masm=intel");
+        // TODO: only add the following cli argument if the feature is supported.
+        context.add_command_line_option("-mavx2");
+        // FIXME: the following causes an illegal instruction on vmovdqu64 in std_example on my CPU.
+        // Only add if the CPU supports it.
+        //context.add_command_line_option("-mavx512f");
         for arg in &tcx.sess.opts.cg.llvm_args {
             context.add_command_line_option(arg);
         }
@@ -119,6 +124,12 @@ pub fn compile_codegen_unit<'tcx>(tcx: TyCtxt<'tcx>, cgu_name: Symbol, supports_
             // ... and now that we have everything pre-defined, fill out those definitions.
             for &(mono_item, _) in &mono_items {
                 mono_item.define::<Builder<'_, '_, '_>>(&cx);
+            }
+
+            if env::var("CG_GCCJIT_DUMP_GIMPLE").as_deref() == Ok("1") {
+                eprintln!("dumping {}", cgu_name);
+                cx.context.dump_to_file(format!("/tmp/{}.gimple", cgu_name), false);
+                eprintln!("done dumping {}", cgu_name);
             }
 
             // If this codegen unit contains the main function, also create the
