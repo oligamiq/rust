@@ -841,6 +841,12 @@ impl Step for CodegenBackend {
             .arg(builder.src.join(format!("compiler/rustc_codegen_{}/Cargo.toml", backend)));
         rustc_cargo_env(builder, &mut cargo, target);
 
+        let profile_var = |name: &str| {
+            let profile = if builder.config.rust_optimize { "RELEASE" } else { "DEV" };
+            format!("CARGO_PROFILE_{}_{}", profile, name)
+        };
+        cargo.env(profile_var("DEBUG"), "2".to_string());
+
         let tmp_stamp = out_dir.join(".tmp.stamp");
 
         builder.info(&format!(
