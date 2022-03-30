@@ -46,7 +46,7 @@ opt-level = 0
 debug = false
 
 [profile.release]
-lto = false
+lto = "no"
 
 [profile.release.package.gccjit]
 debug-assertions = true
