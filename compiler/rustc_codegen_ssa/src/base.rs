@@ -700,7 +700,7 @@ pub fn codegen_crate<B: ExtraBackendMethods>(
                     &ongoing_codegen.coordinator_send,
                     CachedModuleCodegen {
                         name: cgu.name().to_string(),
-                        source: cgu.work_product(tcx),
+                        source: cgu.previous_work_product(tcx),
                     },
                 );
                 true
@@ -711,7 +711,7 @@ pub fn codegen_crate<B: ExtraBackendMethods>(
                     &ongoing_codegen.coordinator_send,
                     CachedModuleCodegen {
                         name: cgu.name().to_string(),
-                        source: cgu.work_product(tcx),
+                        source: cgu.previous_work_product(tcx),
                     },
                 );
                 true
