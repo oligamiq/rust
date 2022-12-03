@@ -3513,6 +3513,7 @@ dependencies = [
  "rustc_hir",
  "rustc_incremental",
  "rustc_index",
+ "rustc_lir",
  "rustc_macros",
  "rustc_metadata",
  "rustc_middle",
@@ -3930,6 +3931,30 @@ dependencies = [
  "rustc_span",
  "rustc_target",
  "serde",
+]
+
+[[package]]
+name = "rustc_lir"
+version = "0.0.0"
+dependencies = [
+ "bitflags",
+ "itertools",
+ "rustc_arena",
+ "rustc_attr",
+ "rustc_data_structures",
+ "rustc_errors",
+ "rustc_hir",
+ "rustc_index",
+ "rustc_macros",
+ "rustc_metadata",
+ "rustc_middle",
+ "rustc_query_system",
+ "rustc_serialize",
+ "rustc_session",
+ "rustc_span",
+ "rustc_target",
+ "smallvec",
+ "tracing",
 ]
 
 [[package]]
