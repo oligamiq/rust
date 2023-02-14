@@ -1587,7 +1587,12 @@ impl<'a> Builder<'a> {
             .env("RUSTDOC", self.bootstrap_out.join("rustdoc"))
             .env(
                 "RUSTDOC_REAL",
-                if cmd == "doc" || cmd == "rustdoc" || (cmd == "test" && want_rustdoc) {
+                if cmd == "doc"
+                    || cmd == "rustdoc"
+                    || (cmd == "test" && want_rustdoc)
+                    // FIXME
+                    || (cmd == "run" && want_rustdoc)
+                {
                     self.rustdoc(compiler)
                 } else {
                     PathBuf::from("/path/to/nowhere/rustdoc/not/required")
