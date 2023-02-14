@@ -82,6 +82,9 @@ impl BackendConfig {
 
         let mut config = BackendConfig::default();
         for opt in opts {
+            if opt.starts_with("-import-instr-limit") {
+                continue;
+            }
             if let Some((name, value)) = opt.split_once('=') {
                 match name {
                     "mode" => config.codegen_mode = value.parse()?,

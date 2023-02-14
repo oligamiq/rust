@@ -2780,3 +2780,123 @@ impl Step for TestHelpers {
             .compile("rust_test_helpers");
     }
 }
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct CodegenCranelift {
+    compiler: Compiler,
+    target: TargetSelection,
+}
+
+impl Step for CodegenCranelift {
+    type Output = ();
+    const DEFAULT: bool = true;
+    const ONLY_HOSTS: bool = true;
+
+    fn should_run(run: ShouldRun<'_>) -> ShouldRun<'_> {
+        run.paths(&["compiler/rustc_codegen_cranelift"])
+    }
+
+    fn make_run(run: RunConfig<'_>) {
+        let builder = run.builder;
+        //let host = run.build_triple();
+        println!("{}", run.builder.top_stage);
+        let compiler = run.builder.compiler(run.builder.top_stage, run.builder.config.build);
+
+        if builder.kind != Kind::Test {
+            return;
+        }
+
+        if builder.doc_tests == DocTests::Only {
+            return;
+        }
+
+        let triple = run.target.triple;
+        let target_supported = if triple.contains("linux") {
+            triple.contains("x86_64") || triple.contains("aarch64") || triple.contains("s390x")
+        } else if triple.contains("darwin") || triple.contains("windows") {
+            triple.contains("x86_64")
+        } else {
+            false
+        };
+        if !target_supported {
+            builder.info("target not supported by rustc_codegen_cranelift. skipping");
+            return;
+        }
+
+        if builder.remote_tested(run.target) {
+            builder.info("remote testing is not supported by rustc_codegen_cranelift. skipping");
+        }
+
+        builder.ensure(CodegenCranelift { compiler, target: run.target });
+    }
+
+    fn run(self, builder: &Builder<'_>) {
+        let compiler = self.compiler;
+        let target = self.target;
+
+        builder.ensure(compile::Std::new(compiler, target));
+        // FIXME don't rebuild rustc again
+        builder.ensure(compile::Rustc::new(compiler, target));
+
+        // If we're not doing a full bootstrap but we're testing a stage2
+        // version of libstd, then what we're actually testing is the libstd
+        // produced in stage1. Reflect that here by updating the compiler that
+        // we're working with automatically.
+        //let compiler = builder.compiler_for(compiler.stage, compiler.host, target);
+
+        let build_cargo = || {
+            let mut cargo = builder.cargo(
+                compiler,
+                Mode::Codegen, // Must be codegen to ensure dlopen on the codegen backend works
+                SourceType::InTree,
+                target,
+                "run",
+            );
+            cargo.rustflag("--cap-lints=warn"); // FIXME
+            cargo.current_dir(&builder.src.join("compiler/rustc_codegen_cranelift"));
+            cargo
+                .arg("--manifest-path")
+                .arg(builder.src.join("compiler/rustc_codegen_cranelift/build_system/Cargo.toml"));
+            compile::rustc_cargo_env(builder, &mut cargo, target);
+
+            // The tests are going to run with the *target* libraries, so we need to
+            // ensure that those libraries show up in the LD_LIBRARY_PATH equivalent.
+            //
+            // Note that to run the compiler we need to run with the *host* libraries,
+            // but our wrapper scripts arrange for that to be the case anyway.
+            //let mut dylib_path = dylib_path();
+            //dylib_path.insert(0, PathBuf::from(&*builder.sysroot_libdir(compiler, target)));
+            //cargo.env(dylib_path_var(), env::join_paths(&dylib_path).unwrap());
+
+            cargo
+        };
+
+        builder.info(&format!(
+            "{} cranelift stage{} ({} -> {})",
+            TestKind::Test,
+            compiler.stage,
+            &compiler.host,
+            target
+        ));
+        let _time = util::timeit(&builder);
+
+        // FIXME handle vendoring for source tarballs
+        let download_dir = builder.out.join("cg_clif_download");
+
+        let mut prepare_cargo = build_cargo();
+        prepare_cargo.arg("--").arg("prepare").arg("--download-dir").arg(&download_dir);
+        try_run(builder, &mut prepare_cargo.into());
+
+        let mut cargo = build_cargo();
+        cargo
+            .arg("--")
+            .arg("test")
+            .arg("--download-dir")
+            .arg(&download_dir)
+            .arg("--out-dir")
+            .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
+        cargo.args(&builder.config.cmd.test_args());
+
+        try_run(builder, &mut cargo.into());
+    }
+}
