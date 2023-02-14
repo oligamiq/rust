@@ -2798,9 +2798,8 @@ impl Step for CodegenCranelift {
 
     fn make_run(run: RunConfig<'_>) {
         let builder = run.builder;
-        //let host = run.build_triple();
-        println!("{}", run.builder.top_stage);
-        let compiler = run.builder.compiler(run.builder.top_stage, run.builder.config.build);
+        let host = run.build_triple();
+        let compiler = run.builder.compiler_for(run.builder.top_stage, host, host);
 
         if builder.kind != Kind::Test {
             return;
@@ -2835,14 +2834,12 @@ impl Step for CodegenCranelift {
         let target = self.target;
 
         builder.ensure(compile::Std::new(compiler, target));
-        // FIXME don't rebuild rustc again
-        builder.ensure(compile::Rustc::new(compiler, target));
 
         // If we're not doing a full bootstrap but we're testing a stage2
         // version of libstd, then what we're actually testing is the libstd
         // produced in stage1. Reflect that here by updating the compiler that
         // we're working with automatically.
-        //let compiler = builder.compiler_for(compiler.stage, compiler.host, target);
+        let compiler = builder.compiler_for(compiler.stage, compiler.host, target);
 
         let build_cargo = || {
             let mut cargo = builder.cargo(
@@ -2894,7 +2891,8 @@ impl Step for CodegenCranelift {
             .arg("--download-dir")
             .arg(&download_dir)
             .arg("--out-dir")
-            .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
+            .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"))
+            .arg("--use-existing-backend");
         cargo.args(&builder.config.cmd.test_args());
 
         try_run(builder, &mut cargo.into());
