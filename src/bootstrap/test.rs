@@ -2879,7 +2879,6 @@ impl Step for CodegenCranelift {
         let _time = util::timeit(&builder);
 
         // FIXME handle vendoring for source tarballs
-        // FIXME don't download every time
         let download_dir = builder.out.join("cg_clif_download");
 
         let mut prepare_cargo = build_cargo();
