@@ -2881,13 +2881,20 @@ impl Step for CodegenCranelift {
         // FIXME handle vendoring for source tarballs
         let download_dir = builder.out.join("cg_clif_download");
 
-        let mut prepare_cargo = build_cargo();
-        prepare_cargo.arg("--").arg("prepare").arg("--download-dir").arg(&download_dir);
-        try_run(builder, &mut prepare_cargo.into());
-
         // FIXME fix cleaning incr comp caches when rustc itself changes
         let _ =
             std::fs::remove_dir_all(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
+
+        let mut prepare_cargo = build_cargo();
+        prepare_cargo
+            .arg("--")
+            .arg("prepare")
+            .arg("--download-dir")
+            .arg(&download_dir)
+            // FIXME avoid needing to specify this
+            .arg("--out-dir")
+            .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
+        try_run(builder, &mut prepare_cargo.into());
 
         let mut cargo = build_cargo();
         cargo
