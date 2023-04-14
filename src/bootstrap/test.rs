@@ -2849,8 +2849,6 @@ impl Step for CodegenCranelift {
                 target,
                 "run",
             );
-            cargo.rustflag("--cap-lints=warn"); // FIXME
-            cargo.rustdocflag("--cap-lints=warn"); // FIXME
             cargo.current_dir(&builder.src.join("compiler/rustc_codegen_cranelift"));
             cargo
                 .arg("--manifest-path")
