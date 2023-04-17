@@ -2824,6 +2824,12 @@ impl Step for CodegenCranelift {
 
         if builder.remote_tested(run.target) {
             builder.info("remote testing is not supported by rustc_codegen_cranelift. skipping");
+            return;
+        }
+
+        if !builder.config.rust_codegen_backends.contains(&INTERNER.intern_str("cranelift")) {
+            builder.info("cranelift not in rust.codegen-backends. skipping");
+            return;
         }
 
         builder.ensure(CodegenCranelift { compiler, target: run.target });
