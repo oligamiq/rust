@@ -2859,7 +2859,7 @@ impl Step for CodegenCranelift {
             cargo
                 .arg("--manifest-path")
                 .arg(builder.src.join("compiler/rustc_codegen_cranelift/build_system/Cargo.toml"));
-            compile::rustc_cargo_env(builder, &mut cargo, target);
+            compile::rustc_cargo_env(builder, &mut cargo, target, compiler.stage);
 
             // The tests are going to run with the *target* libraries, so we need to
             // ensure that those libraries show up in the LD_LIBRARY_PATH equivalent.
@@ -2875,7 +2875,7 @@ impl Step for CodegenCranelift {
 
         builder.info(&format!(
             "{} cranelift stage{} ({} -> {})",
-            TestKind::Test,
+            Kind::Test.test_description(),
             compiler.stage,
             &compiler.host,
             target
@@ -2909,7 +2909,7 @@ impl Step for CodegenCranelift {
             .arg("--out-dir")
             .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"))
             .arg("--use-existing-backend");
-        cargo.args(&builder.config.cmd.test_args());
+        cargo.args(builder.config.test_args());
 
         try_run(builder, &mut cargo.into());
     }
