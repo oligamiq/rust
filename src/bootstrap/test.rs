@@ -2850,7 +2850,7 @@ impl Step for CodegenCranelift {
         let build_cargo = || {
             let mut cargo = builder.cargo(
                 compiler,
-                Mode::Codegen, // Must be codegen to ensure dlopen on the codegen backend works
+                Mode::Codegen, // Must be codegen to ensure dlopen on compiled dylibs works
                 SourceType::InTree,
                 target,
                 "run",
@@ -2860,15 +2860,6 @@ impl Step for CodegenCranelift {
                 .arg("--manifest-path")
                 .arg(builder.src.join("compiler/rustc_codegen_cranelift/build_system/Cargo.toml"));
             compile::rustc_cargo_env(builder, &mut cargo, target, compiler.stage);
-
-            // The tests are going to run with the *target* libraries, so we need to
-            // ensure that those libraries show up in the LD_LIBRARY_PATH equivalent.
-            //
-            // Note that to run the compiler we need to run with the *host* libraries,
-            // but our wrapper scripts arrange for that to be the case anyway.
-            //let mut dylib_path = dylib_path();
-            //dylib_path.insert(0, PathBuf::from(&*builder.sysroot_libdir(compiler, target)));
-            //cargo.env(dylib_path_var(), env::join_paths(&dylib_path).unwrap());
 
             cargo
         };
@@ -2908,7 +2899,8 @@ impl Step for CodegenCranelift {
             .arg(&download_dir)
             .arg("--out-dir")
             .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"))
-            .arg("--use-existing-backend");
+            .arg("--use-backend")
+            .arg("cranelift");
         cargo.args(builder.config.test_args());
 
         try_run(builder, &mut cargo.into());
