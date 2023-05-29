@@ -2879,11 +2879,6 @@ impl Step for CodegenCranelift {
         // FIXME handle vendoring for source tarballs
         let download_dir = builder.out.join("cg_clif_download");
 
-        // FIXME is this necessary or does -Zbinary-dep-depinfo passed by rustbuild make this
-        // unnecessary?
-        let _ =
-            std::fs::remove_dir_all(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
-
         let mut prepare_cargo = build_cargo();
         prepare_cargo
             .arg("--")
