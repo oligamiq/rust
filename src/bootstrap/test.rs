@@ -2861,6 +2861,9 @@ impl Step for CodegenCranelift {
                 .arg(builder.src.join("compiler/rustc_codegen_cranelift/build_system/Cargo.toml"));
             compile::rustc_cargo_env(builder, &mut cargo, target, compiler.stage);
 
+            // Avoid incremental cache issues when changing rustc
+            cargo.env("CARGO_BUILD_INCREMENTAL", "false");
+
             cargo
         };
 
@@ -2876,7 +2879,8 @@ impl Step for CodegenCranelift {
         // FIXME handle vendoring for source tarballs
         let download_dir = builder.out.join("cg_clif_download");
 
-        // FIXME fix cleaning incr comp caches when rustc itself changes
+        // FIXME is this necessary or does -Zbinary-dep-depinfo passed by rustbuild make this
+        // unnecessary?
         let _ =
             std::fs::remove_dir_all(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
 
