@@ -2897,7 +2897,13 @@ impl Step for CodegenCranelift {
             .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"))
             .arg("--no-unstable-features")
             .arg("--use-backend")
-            .arg("cranelift");
+            .arg("cranelift")
+            // Avoid having to vendor the standard library dependencies
+            .arg("--sysroot")
+            .arg("llvm")
+            // This test depends on non vendored crates
+            .arg("--skip-test")
+            .arg("test.libcore");
         cargo.args(builder.config.test_args());
 
         try_run(builder, &mut cargo.into());
