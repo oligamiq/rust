@@ -2884,10 +2884,7 @@ impl Step for CodegenCranelift {
             .arg("--")
             .arg("prepare")
             .arg("--download-dir")
-            .arg(&download_dir)
-            // FIXME avoid needing to specify this
-            .arg("--out-dir")
-            .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"));
+            .arg(&download_dir);
         try_run(builder, &mut prepare_cargo.into());
 
         let mut cargo = build_cargo();
@@ -2898,6 +2895,7 @@ impl Step for CodegenCranelift {
             .arg(&download_dir)
             .arg("--out-dir")
             .arg(builder.stage_out(compiler, Mode::ToolRustc).join("cg_clif"))
+            .arg("--no-unstable-features")
             .arg("--use-backend")
             .arg("cranelift");
         cargo.args(builder.config.test_args());
