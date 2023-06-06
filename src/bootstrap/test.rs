@@ -2869,7 +2869,7 @@ impl Step for CodegenCranelift {
 
         builder.info(&format!(
             "{} cranelift stage{} ({} -> {})",
-            Kind::Test.test_description(),
+            Kind::Test.description(),
             compiler.stage,
             &compiler.host,
             target
