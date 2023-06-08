@@ -166,6 +166,11 @@ fn current_dll_path() -> Result<PathBuf, String> {
     Ok(OsString::from_wide(&filename).into())
 }
 
+#[cfg(not(any(unix, windows)))]
+fn current_dll_path() -> Result<PathBuf, String> {
+    Err(format!("current_dll_path not supported"))
+}
+
 pub fn sysroot_candidates() -> SmallVec<[PathBuf; 2]> {
     let target = crate::config::host_triple();
     let mut sysroot_candidates: SmallVec<[PathBuf; 2]> =

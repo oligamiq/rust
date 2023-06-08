@@ -2,6 +2,7 @@
 #![deny(rustc::untranslatable_diagnostic)]
 #![deny(rustc::diagnostic_outside_of_impl)]
 
+#[cfg(any(unix, windows))]
 use std::ffi::CString;
 use std::fs;
 use std::io;

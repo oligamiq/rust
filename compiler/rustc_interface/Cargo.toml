@@ -6,7 +6,6 @@ edition = "2021"
 [lib]
 
 [dependencies]
-libloading = "0.7.1"
 tracing = "0.1"
 rustc-rayon-core = { version = "0.5.0", optional = true }
 rustc-rayon = { version = "0.5.0", optional = true }
@@ -50,6 +49,9 @@ rustc_resolve = { path = "../rustc_resolve" }
 rustc_target = { path = "../rustc_target" }
 rustc_trait_selection = { path = "../rustc_trait_selection" }
 rustc_ty_utils = { path = "../rustc_ty_utils" }
+
+[target.'cfg(any(unix, windows))'.dependencies]
+libloading = "0.7.1"
 
 [features]
 llvm = ['rustc_codegen_llvm']

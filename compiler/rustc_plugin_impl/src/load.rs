@@ -2,6 +2,7 @@
 
 use crate::errors::{LoadPluginError, MalformedPluginAttribute};
 use crate::Registry;
+#[cfg(any(unix, windows))]
 use libloading::Library;
 use rustc_ast::Attribute;
 use rustc_metadata::locator;
@@ -50,16 +51,22 @@ fn load_plugin(
     metadata_loader: &dyn MetadataLoader,
     ident: Ident,
 ) {
-    let lib = locator::find_plugin_registrar(sess, metadata_loader, ident.span, ident.name);
-    let fun = dylink_registrar(lib).unwrap_or_else(|err| {
-        // This is fatal: there are almost certainly macros we need inside this crate, so
-        // continuing would spew "macro undefined" errors.
-        sess.emit_fatal(LoadPluginError { span: ident.span, msg: err.to_string() });
-    });
-    plugins.push(fun);
+    #[cfg(any(unix, windows))]
+    {
+        let lib = locator::find_plugin_registrar(sess, metadata_loader, ident.span, ident.name);
+        let fun = dylink_registrar(lib).unwrap_or_else(|err| {
+            // This is fatal: there are almost certainly macros we need inside this crate, so
+            // continuing would spew "macro undefined" errors.
+            sess.emit_fatal(LoadPluginError { span: ident.span, msg: err.to_string() });
+        });
+        plugins.push(fun);
+    }
+    #[cfg(not(any(unix, windows)))]
+    panic!("Can't load rustc plugins");
 }
 
 /// Dynamically link a registrar function into the compiler process.
+#[cfg(any(unix, windows))]
 fn dylink_registrar(lib_path: PathBuf) -> Result<PluginRegistrarFn, libloading::Error> {
     // Make sure the path contains a / or the linker will search for it.
     let lib_path = env::current_dir().unwrap().join(&lib_path);
