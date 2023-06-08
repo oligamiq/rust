@@ -5,7 +5,6 @@ edition = "2021"
 
 [dependencies]
 # tidy-alphabetical-start
-libloading = "0.7.1"
 rustc-rayon = { version = "0.5.0", optional = true }
 rustc-rayon-core = { version = "0.5.0", optional = true }
 rustc_ast = { path = "../rustc_ast" }
@@ -49,6 +48,9 @@ rustc_traits = { path = "../rustc_traits" }
 rustc_ty_utils = { path = "../rustc_ty_utils" }
 tracing = "0.1"
 # tidy-alphabetical-end
+
+[target.'cfg(any(unix, windows))'.dependencies]
+libloading = "0.7.1"
 
 [features]
 # tidy-alphabetical-start

@@ -1,0 +1,7 @@
+Got a new version up. This time all logic to handle using different codegen backends for the different stages, so you don't need to do a multi stage process.
+
+* Make sure you are running on Linux.
+* Clone https://github.com/bjorn3/rust
+* Checkout the `compile_rustc_for_wasm10` branch
+* Download and extract https://github.com/WebAssembly/wasi-sdk/releases/download/wasi-sdk-20/wasi-sdk-20.0-linux.tar.gz into the rust checkout.
+* Run `./x.py build --host wasm32-wasi --target x86_64-unknown-linux-gnu`.

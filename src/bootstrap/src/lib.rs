@@ -724,12 +724,12 @@ impl Build {
     }
 
     /// Gets the space-separated set of activated features for the compiler.
-    fn rustc_features(&self, kind: Kind) -> String {
+    fn rustc_features(&self, kind: Kind, target: TargetSelection) -> String {
         let mut features = vec![];
         if self.config.jemalloc {
             features.push("jemalloc");
         }
-        if self.config.llvm_enabled() || kind == Kind::Check {
+        if (self.config.llvm_enabled() || kind == Kind::Check) && !target.contains("wasm") {
             features.push("llvm");
         }
         // keep in sync with `bootstrap/compile.rs:rustc_cargo_env`

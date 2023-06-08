@@ -154,7 +154,7 @@ impl Step for Std {
 
         // Profiler information requires LLVM's compiler-rt
         if builder.config.profiler {
-            builder.update_submodule(&Path::new("src/llvm-project"));
+            //builder.update_submodule(&Path::new("src/llvm-project"));
         }
 
         let mut target_deps = builder.ensure(StartupObjects { compiler, target });
@@ -983,7 +983,7 @@ impl Step for Rustc {
 pub fn rustc_cargo(builder: &Builder<'_>, cargo: &mut Cargo, target: TargetSelection, stage: u32) {
     cargo
         .arg("--features")
-        .arg(builder.rustc_features(builder.kind))
+        .arg(builder.rustc_features(builder.kind, target))
         .arg("--manifest-path")
         .arg(builder.src.join("compiler/rustc/Cargo.toml"));
 
@@ -1059,7 +1059,7 @@ pub fn rustc_cargo_env(
         // `top_stage == stage` might be false for `check --stage 1`, if we are building the stage 1 compiler
         let can_skip_build = builder.kind == Kind::Check && builder.top_stage == stage;
         let should_skip_build = building_is_expensive && can_skip_build;
-        if !should_skip_build {
+        if !should_skip_build && !target.contains("wasm") {
             rustc_llvm_env(builder, cargo, target)
         }
     }
@@ -1217,6 +1217,7 @@ fn is_codegen_cfg_needed(path: &TaskPath, run: &RunConfig<'_>) -> bool {
                 "WARNING: no codegen-backends config matched the requested path to build a codegen backend. \
                 HELP: add backend to codegen-backends in config.toml.",
             );
+            run.builder.info(&format!("{path:?}"));
             return true;
         }
     }
@@ -1231,7 +1232,7 @@ impl Step for CodegenBackend {
     const DEFAULT: bool = true;
 
     fn should_run(run: ShouldRun<'_>) -> ShouldRun<'_> {
-        run.paths(&["compiler/rustc_codegen_cranelift", "compiler/rustc_codegen_gcc"])
+        run.paths(&["compiler/rustc_codegen_cranelift" /*, "compiler/rustc_codegen_gcc"*/])
     }
 
     fn make_run(run: RunConfig<'_>) {
@@ -1735,7 +1736,9 @@ impl Step for Assemble {
             }
         }
 
-        if builder.config.rust_codegen_backends.contains(&INTERNER.intern_str("llvm")) {
+        if builder.config.rust_codegen_backends.contains(&INTERNER.intern_str("llvm"))
+            && !target_compiler.host.contains("wasm")
+        {
             let llvm::LlvmResult { llvm_config, .. } =
                 builder.ensure(llvm::Llvm { target: target_compiler.host });
             if !builder.config.dry_run() {

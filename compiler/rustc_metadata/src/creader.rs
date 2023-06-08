@@ -28,6 +28,7 @@ use rustc_span::{Span, DUMMY_SP};
 use rustc_target::spec::{PanicStrategy, TargetTriple};
 
 use proc_macro::bridge::client::ProcMacro;
+#[cfg(any(unix, windows))]
 use std::error::Error;
 use std::ops::Fn;
 use std::path::Path;
@@ -677,20 +678,25 @@ impl<'a, 'tcx> CrateLoader<'a, 'tcx> {
         path: &Path,
         stable_crate_id: StableCrateId,
     ) -> Result<&'static [ProcMacro], CrateError> {
-        // Make sure the path contains a / or the linker will search for it.
-        let path = try_canonicalize(path).unwrap();
-        let lib = load_dylib(&path, 5).map_err(|err| CrateError::DlOpen(err))?;
+        #[cfg(any(unix, windows))]
+        {
+            // Make sure the path contains a / or the linker will search for it.
+            let path = try_canonicalize(path).unwrap();
+            let lib = load_dylib(&path, 5).map_err(|err| CrateError::DlOpen(err))?;
 
-        let sym_name = self.sess.generate_proc_macro_decls_symbol(stable_crate_id);
-        let sym = unsafe { lib.get::<*const &[ProcMacro]>(sym_name.as_bytes()) }
-            .map_err(|err| CrateError::DlSym(err.to_string()))?;
+            let sym_name = self.sess.generate_proc_macro_decls_symbol(stable_crate_id);
+            let sym = unsafe { lib.get::<*const &[ProcMacro]>(sym_name.as_bytes()) }
+                .map_err(|err| CrateError::DlSym(err.to_string()))?;
 
-        // Intentionally leak the dynamic library. We can't ever unload it
-        // since the library can make things that will live arbitrarily long.
-        let sym = unsafe { sym.into_raw() };
-        std::mem::forget(lib);
+            // Intentionally leak the dynamic library. We can't ever unload it
+            // since the library can make things that will live arbitrarily long.
+            let sym = unsafe { sym.into_raw() };
+            std::mem::forget(lib);
 
-        Ok(unsafe { **sym })
+            Ok(unsafe { **sym })
+        }
+        #[cfg(not(any(unix, windows)))]
+        panic!("Can't load proc macros");
     }
 
     fn inject_panic_runtime(&mut self, krate: &ast::Crate) {
@@ -1103,6 +1109,7 @@ fn alloc_error_handler_spans(krate: &ast::Crate) -> Vec<Span> {
 // proc-macro DLL with `Error::LoadLibraryExW`. It is suspected that something in the
 // system still holds a lock on the file, so we retry a few times before calling it
 // an error.
+#[cfg(any(unix, windows))]
 fn load_dylib(path: &Path, max_attempts: usize) -> Result<libloading::Library, String> {
     assert!(max_attempts > 0);
 

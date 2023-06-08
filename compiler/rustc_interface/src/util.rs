@@ -1,5 +1,6 @@
 use crate::errors;
 use info;
+#[cfg(any(unix, windows))]
 use libloading::Library;
 use rustc_ast as ast;
 use rustc_codegen_ssa::traits::CodegenBackend;
@@ -59,32 +60,37 @@ pub(crate) fn run_in_thread_with_globals<F: FnOnce() -> R + Send, R: Send>(
     edition: Edition,
     f: F,
 ) -> R {
-    // The "thread pool" is a single spawned thread in the non-parallel
-    // compiler. We run on a spawned thread instead of the main thread (a) to
-    // provide control over the stack size, and (b) to increase similarity with
-    // the parallel compiler, in particular to ensure there is no accidental
-    // sharing of data between the main thread and the compilation thread
-    // (which might cause problems for the parallel compiler).
-    let mut builder = thread::Builder::new().name("rustc".to_string());
-    if let Some(size) = get_stack_size() {
-        builder = builder.stack_size(size);
-    }
-
-    // We build the session globals and run `f` on the spawned thread, because
-    // `SessionGlobals` does not impl `Send` in the non-parallel compiler.
-    thread::scope(|s| {
-        // `unwrap` is ok here because `spawn_scoped` only panics if the thread
-        // name contains null bytes.
-        let r = builder
-            .spawn_scoped(s, move || rustc_span::create_session_globals_then(edition, f))
-            .unwrap()
-            .join();
-
-        match r {
-            Ok(v) => v,
-            Err(e) => std::panic::resume_unwind(e),
+    #[cfg(any(unix, windows))]
+    {
+        // The "thread pool" is a single spawned thread in the non-parallel
+        // compiler. We run on a spawned thread instead of the main thread (a) to
+        // provide control over the stack size, and (b) to increase similarity with
+        // the parallel compiler, in particular to ensure there is no accidental
+        // sharing of data between the main thread and the compilation thread
+        // (which might cause problems for the parallel compiler).
+        let mut builder = thread::Builder::new().name("rustc".to_string());
+        if let Some(size) = get_stack_size() {
+            builder = builder.stack_size(size);
         }
-    })
+
+        // We build the session globals and run `f` on the spawned thread, because
+        // `SessionGlobals` does not impl `Send` in the non-parallel compiler.
+        thread::scope(|s| {
+            // `unwrap` is ok here because `spawn_scoped` only panics if the thread
+            // name contains null bytes.
+            let r = builder
+                .spawn_scoped(s, move || rustc_span::create_session_globals_then(edition, f))
+                .unwrap()
+                .join();
+
+            match r {
+                Ok(v) => v,
+                Err(e) => std::panic::resume_unwind(e),
+            }
+        })
+    }
+    #[cfg(not(any(unix, windows)))]
+    f()
 }
 
 #[cfg(not(parallel_compiler))]
@@ -165,23 +171,28 @@ pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
 }
 
 fn load_backend_from_dylib(handler: &EarlyErrorHandler, path: &Path) -> MakeBackendFn {
-    let lib = unsafe { Library::new(path) }.unwrap_or_else(|err| {
-        let err = format!("couldn't load codegen backend {path:?}: {err}");
-        handler.early_error(err);
-    });
-
-    let backend_sym = unsafe { lib.get::<MakeBackendFn>(b"__rustc_codegen_backend") }
-        .unwrap_or_else(|e| {
-            let err = format!("couldn't load codegen backend: {e}");
+    #[cfg(any(unix, windows))]
+    {
+        let lib = unsafe { Library::new(path) }.unwrap_or_else(|err| {
+            let err = format!("couldn't load codegen backend {path:?}: {err}");
             handler.early_error(err);
         });
 
-    // Intentionally leak the dynamic library. We can't ever unload it
-    // since the library can make things that will live arbitrarily long.
-    let backend_sym = unsafe { backend_sym.into_raw() };
-    mem::forget(lib);
+        let backend_sym = unsafe { lib.get::<MakeBackendFn>(b"__rustc_codegen_backend") }
+            .unwrap_or_else(|e| {
+                let err = format!("couldn't load codegen backend: {e}");
+                handler.early_error(err);
+            });
 
-    *backend_sym
+        // Intentionally leak the dynamic library. We can't ever unload it
+        // since the library can make things that will live arbitrarily long.
+        let backend_sym = unsafe { backend_sym.into_raw() };
+        mem::forget(lib);
+
+        *backend_sym
+    }
+    #[cfg(not(any(unix, windows)))]
+    panic!("Can't load external codegen backends");
 }
 
 /// Get the codegen backend based on the name and specified sysroot.
