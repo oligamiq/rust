@@ -666,9 +666,9 @@ impl<'a> Builder<'a> {
                 compile::CodegenBackend,
                 compile::StartupObjects,
                 tool::BuildManifest,
-                tool::Rustbook,
+                //tool::Rustbook,
                 tool::ErrorIndex,
-                tool::UnstableBookGen,
+                //tool::UnstableBookGen,
                 tool::Tidy,
                 tool::Linkchecker,
                 tool::CargoTest,
@@ -679,19 +679,19 @@ impl<'a> Builder<'a> {
                 tool::Cargo,
                 tool::Rls,
                 tool::RustAnalyzer,
-                tool::RustAnalyzerProcMacroSrv,
+                //tool::RustAnalyzerProcMacroSrv,
                 tool::RustDemangler,
-                tool::Rustdoc,
+                //tool::Rustdoc,
                 tool::Clippy,
                 tool::CargoClippy,
-                llvm::Llvm,
+                //llvm::Llvm,
                 llvm::Sanitizers,
                 tool::Rustfmt,
                 tool::Miri,
                 tool::CargoMiri,
                 llvm::Lld,
                 llvm::CrtBeginEnd,
-                tool::RustdocGUITest,
+                //tool::RustdocGUITest,
             ),
             Kind::Check | Kind::Clippy | Kind::Fix => describe!(
                 check::Std,
@@ -792,9 +792,9 @@ impl<'a> Builder<'a> {
                 doc::Bootstrap,
             ),
             Kind::Dist => describe!(
-                dist::Docs,
-                dist::RustcDocs,
-                dist::JsonDocs,
+                //dist::Docs,
+                //dist::RustcDocs,
+                //dist::JsonDocs,
                 dist::Mingw,
                 dist::Rustc,
                 dist::Std,
@@ -808,8 +808,8 @@ impl<'a> Builder<'a> {
                 dist::RustDemangler,
                 dist::Clippy,
                 dist::Miri,
-                dist::LlvmTools,
-                dist::RustDev,
+                //dist::LlvmTools,
+                //dist::RustDev,
                 dist::Bootstrap,
                 dist::Extended,
                 // It seems that PlainSourceTarball somehow changes how some of the tools
@@ -821,7 +821,7 @@ impl<'a> Builder<'a> {
                 dist::ReproducibleArtifacts,
             ),
             Kind::Install => describe!(
-                install::Docs,
+                //install::Docs,
                 install::Std,
                 install::Cargo,
                 install::RustAnalyzer,
@@ -829,7 +829,7 @@ impl<'a> Builder<'a> {
                 install::RustDemangler,
                 install::Clippy,
                 install::Miri,
-                install::LlvmTools,
+                //install::LlvmTools,
                 install::Src,
                 install::Rustc
             ),
@@ -1181,7 +1181,11 @@ impl<'a> Builder<'a> {
     /// Note that this returns `None` if LLVM is disabled, or if we're in a
     /// check build or dry-run, where there's no need to build all of LLVM.
     fn llvm_config(&self, target: TargetSelection) -> Option<PathBuf> {
-        if self.config.llvm_enabled() && self.kind != Kind::Check && !self.config.dry_run() {
+        if self.config.llvm_enabled()
+            && self.kind != Kind::Check
+            && !self.config.dry_run()
+            && !target.contains("wasm")
+        {
             let llvm::LlvmResult { llvm_config, .. } = self.ensure(llvm::Llvm { target });
             if llvm_config.is_file() {
                 return Some(llvm_config);
@@ -2021,7 +2025,8 @@ impl<'a> Builder<'a> {
             };
 
             if let Some(limit) = limit {
-                if stage == 0 || self.config.default_codegen_backend().unwrap_or_default() == "llvm"
+                if stage == 0
+                    || self.config.default_codegen_backend(target).unwrap_or_default() == "llvm"
                 {
                     rustflags.arg(&format!("-Cllvm-args=-import-instr-limit={}", limit));
                 }

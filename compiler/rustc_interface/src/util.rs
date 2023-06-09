@@ -166,7 +166,7 @@ pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce() -> R + Send, R: Send>(
         })
     }
     #[cfg(not(any(unix, windows)))]
-    f()
+    rustc_span::create_session_globals_then(edition, f)
 }
 
 #[cfg(parallel_compiler)]
@@ -265,6 +265,7 @@ pub fn get_codegen_backend(
             filename if filename.contains('.') => load_backend_from_dylib(filename.as_ref()),
             #[cfg(feature = "llvm")]
             "llvm" => rustc_codegen_llvm::LlvmCodegenBackend::new,
+            "cranelift" => rustc_codegen_cranelift::__rustc_codegen_backend,
             backend_name => get_codegen_sysroot(maybe_sysroot, backend_name),
         }
     });

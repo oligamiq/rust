@@ -1779,8 +1779,12 @@ impl Config {
         self.submodules.unwrap_or(rust_info.is_managed_git_subrepository())
     }
 
-    pub fn default_codegen_backend(&self) -> Option<Interned<String>> {
-        self.rust_codegen_backends.get(0).cloned()
+    pub fn default_codegen_backend(&self, target: TargetSelection) -> Option<Interned<String>> {
+        self.rust_codegen_backends
+            .iter()
+            .filter(|backend| !target.contains("wasm") || &**backend != "llvm")
+            .next()
+            .cloned()
     }
 
     pub fn check_build_rustc_version(&self, rustc_path: &str) {

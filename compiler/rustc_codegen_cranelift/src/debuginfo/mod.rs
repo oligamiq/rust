@@ -23,7 +23,7 @@ pub(crate) use unwind::UnwindContext;
 pub(crate) fn producer() -> String {
     format!(
         "cg_clif (rustc {}, cranelift {})",
-        rustc_interface::util::rustc_version_str().unwrap_or("unknown version"),
+        option_env!("CFG_VERSION").unwrap_or("unknown version"),
         cranelift_codegen::VERSION,
     )
 }

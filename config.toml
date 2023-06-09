@@ -6,6 +6,13 @@ changelog-seen = 2
 codegen-backends = ["llvm", "cranelift"]
 deny-warnings = false
 
+[build]
+host = ["wasm32-wasi"]
+target = ["x86_64-unknown-linux-gnu"]
+
+[install]
+prefix = "dist"
+
 [target.'wasm32-wasi']
 wasi-root = "wasi-sdk-20.0/share/wasi-sysroot"
 linker = "wasi-sdk-20.0/bin/clang"
