@@ -1012,7 +1012,7 @@ pub fn rustc_cargo_env(
         cargo.env("CFG_OMIT_GIT_HASH", "1");
     }
 
-    if let Some(backend) = builder.config.default_codegen_backend() {
+    if let Some(backend) = builder.config.default_codegen_backend(target) {
         cargo.env("CFG_DEFAULT_CODEGEN_BACKEND", backend);
     }
 
@@ -1232,7 +1232,7 @@ impl Step for CodegenBackend {
     const DEFAULT: bool = true;
 
     fn should_run(run: ShouldRun<'_>) -> ShouldRun<'_> {
-        run.paths(&["compiler/rustc_codegen_cranelift" /*, "compiler/rustc_codegen_gcc"*/])
+        run.paths(&[/*"compiler/rustc_codegen_cranelift"*/ /*, "compiler/rustc_codegen_gcc"*/])
     }
 
     fn make_run(run: RunConfig<'_>) {
@@ -1241,7 +1241,7 @@ impl Step for CodegenBackend {
         }
 
         for &backend in &run.builder.config.rust_codegen_backends {
-            if backend == "llvm" {
+            if backend == "llvm" || backend == "cranelift" {
                 continue; // Already built as part of rustc
             }
 
@@ -1341,7 +1341,7 @@ fn copy_codegen_backends_to_sysroot(
     }
 
     for backend in builder.config.rust_codegen_backends.iter() {
-        if backend == "llvm" {
+        if backend == "llvm" || backend == "cranelift" {
             continue; // Already built as part of rustc
         }
 
@@ -1652,7 +1652,7 @@ impl Step for Assemble {
         }
 
         for &backend in builder.config.rust_codegen_backends.iter() {
-            if backend == "llvm" {
+            if backend == "llvm" || backend == "cranelift" {
                 continue; // Already built as part of rustc
             }
 

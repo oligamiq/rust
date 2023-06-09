@@ -172,6 +172,9 @@ fn current_dll_path() -> Result<PathBuf, String> {
 }
 
 pub fn sysroot_candidates() -> SmallVec<[PathBuf; 2]> {
+    #[cfg(not(any(unix, windows)))]
+    return smallvec![];
+
     let target = crate::config::host_triple();
     let mut sysroot_candidates: SmallVec<[PathBuf; 2]> =
         smallvec![get_or_default_sysroot().expect("Failed finding sysroot")];

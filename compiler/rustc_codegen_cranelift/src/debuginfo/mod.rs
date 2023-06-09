@@ -21,7 +21,7 @@ use crate::prelude::*;
 pub(crate) fn producer() -> String {
     format!(
         "rustc version {} with cranelift {}",
-        rustc_interface::util::rustc_version_str().unwrap_or("unknown version"),
+        option_env!("CFG_VERSION").unwrap_or("unknown version"),
         cranelift_codegen::VERSION,
     )
 }
