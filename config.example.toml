@@ -601,7 +601,7 @@ changelog-seen = 2
 # and currently the only standard options supported are `"llvm"`, `"cranelift"`
 # and `"gcc"`. The first backend in this list will be used as default by rustc
 # when no explicit backend is specified.
-#codegen-backends = ["llvm"]
+#codegen-backends = ["llvm", "cranelift"]
 
 # Indicates whether LLD will be compiled and made available in the sysroot for
 # rustc to execute.

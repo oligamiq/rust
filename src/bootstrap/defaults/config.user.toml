@@ -13,6 +13,8 @@ extended = true
 download-ci-llvm = false
 [rust]
 download-rustc = false
+# Skip building the cranelift backend. It isn't ready to be shipped yet.
+codegen-backends = ["llvm"]
 
 [dist]
 # Use better compression when preparing tarballs.
