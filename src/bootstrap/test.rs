@@ -2876,7 +2876,7 @@ impl Step for CodegenCranelift {
         ));
         let _time = util::timeit(&builder);
 
-        // FIXME handle vendoring for source tarballs
+        // FIXME handle vendoring for source tarballs before removing the --skip-test below
         let download_dir = builder.out.join("cg_clif_download");
 
         let mut prepare_cargo = build_cargo();
@@ -2901,9 +2901,10 @@ impl Step for CodegenCranelift {
             // Avoid having to vendor the standard library dependencies
             .arg("--sysroot")
             .arg("llvm")
-            // This test depends on non vendored crates
+            // These tests depend on crates that are not yet vendored
+            // FIXME remove once vendoring is handled
             .arg("--skip-test")
-            .arg("test.libcore");
+            .arg("testsuite.extended_sysroot");
         cargo.args(builder.config.test_args());
 
         try_run(builder, &mut cargo.into());
