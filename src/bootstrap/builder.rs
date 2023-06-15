@@ -1590,7 +1590,6 @@ impl<'a> Builder<'a> {
                 if cmd == "doc"
                     || cmd == "rustdoc"
                     || (cmd == "test" && want_rustdoc)
-                    // FIXME
                     || (cmd == "run" && want_rustdoc)
                 {
                     self.rustdoc(compiler)

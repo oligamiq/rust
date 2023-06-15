@@ -2880,11 +2880,7 @@ impl Step for CodegenCranelift {
         let download_dir = builder.out.join("cg_clif_download");
 
         let mut prepare_cargo = build_cargo();
-        prepare_cargo
-            .arg("--")
-            .arg("prepare")
-            .arg("--download-dir")
-            .arg(&download_dir);
+        prepare_cargo.arg("--").arg("prepare").arg("--download-dir").arg(&download_dir);
         try_run(builder, &mut prepare_cargo.into());
 
         let mut cargo = build_cargo();
