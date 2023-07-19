@@ -66,6 +66,8 @@ pub(crate) unsafe fn codegen(
 
             if tcx.sess.target.default_hidden_visibility {
                 llvm::LLVMRustSetVisibility(llfn, llvm::Visibility::Hidden);
+            } else {
+                llvm::LLVMRustSetVisibility(llfn, llvm::Visibility::Protected);
             }
             if tcx.sess.must_emit_unwind_tables() {
                 let uwtable = attributes::uwtable_attr(llcx);
@@ -117,6 +119,8 @@ pub(crate) unsafe fn codegen(
 
     if tcx.sess.target.default_hidden_visibility {
         llvm::LLVMRustSetVisibility(llfn, llvm::Visibility::Hidden);
+    } else {
+        llvm::LLVMRustSetVisibility(llfn, llvm::Visibility::Protected);
     }
     if tcx.sess.must_emit_unwind_tables() {
         let uwtable = attributes::uwtable_attr(llcx);
@@ -156,6 +160,8 @@ pub(crate) unsafe fn codegen(
     let ll_g = llvm::LLVMRustGetOrInsertGlobal(llmod, name.as_ptr().cast(), name.len(), i8);
     if tcx.sess.target.default_hidden_visibility {
         llvm::LLVMRustSetVisibility(ll_g, llvm::Visibility::Hidden);
+    } else {
+        llvm::LLVMRustSetVisibility(ll_g, llvm::Visibility::Protected);
     }
     let val = tcx.sess.opts.unstable_opts.oom.should_panic();
     let llval = llvm::LLVMConstInt(i8, val as u64, False);
@@ -165,6 +171,8 @@ pub(crate) unsafe fn codegen(
     let ll_g = llvm::LLVMRustGetOrInsertGlobal(llmod, name.as_ptr().cast(), name.len(), i8);
     if tcx.sess.target.default_hidden_visibility {
         llvm::LLVMRustSetVisibility(ll_g, llvm::Visibility::Hidden);
+    } else {
+        llvm::LLVMRustSetVisibility(ll_g, llvm::Visibility::Protected);
     }
     let llval = llvm::LLVMConstInt(i8, 0, False);
     llvm::LLVMSetInitializer(ll_g, llval);

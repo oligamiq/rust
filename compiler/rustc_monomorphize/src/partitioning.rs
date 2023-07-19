@@ -884,26 +884,37 @@ fn mono_item_visibility<'tcx>(
 }
 
 fn default_visibility(tcx: TyCtxt<'_>, id: DefId, is_generic: bool) -> Visibility {
-    if !tcx.sess.target.default_hidden_visibility {
-        return Visibility::Default;
-    }
+    let export_level = if is_generic {
+        // Generic functions never have export-level C.
+        SymbolExportLevel::Rust
+    } else if !id.is_local() {
+        // Things with export level C don't get instantiated in
+        // downstream crates.
+        SymbolExportLevel::Rust
+    } else {
+        match tcx.reachable_non_generics(id.krate).get(&id) {
+            Some(SymbolExportInfo { level: SymbolExportLevel::C, .. }) => SymbolExportLevel::C,
+            _ => SymbolExportLevel::Rust,
+        }
+    };
 
-    // Generic functions never have export-level C.
-    if is_generic {
-        return Visibility::Hidden;
-    }
+    match export_level {
+        // C-export level items remain at `Default` to allow C code to
+        // access and interpose them.
+        SymbolExportLevel::C => Visibility::Default,
 
-    // Things with export level C don't get instantiated in
-    // downstream crates.
-    if !id.is_local() {
-        return Visibility::Hidden;
-    }
-
-    // C-export level items remain at `Default`, all other internal
-    // items become `Hidden`.
-    match tcx.reachable_non_generics(id.krate).get(&id) {
-        Some(SymbolExportInfo { level: SymbolExportLevel::C, .. }) => Visibility::Default,
-        _ => Visibility::Hidden,
+        // All other items become `Hidden` or `Protected` depending on
+        // `default_hidden_visibility`.
+        SymbolExportLevel::Rust => {
+            if tcx.sess.target.default_hidden_visibility {
+                Visibility::Hidden
+            } else {
+                // Items with mangled symbols don't have a predictable name,
+                // so no dylib that doesn't depend on compiler internals can
+                // do interposition on rust items.
+                Visibility::Protected
+            }
+        }
     }
 }
 

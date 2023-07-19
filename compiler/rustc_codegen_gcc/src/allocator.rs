@@ -57,6 +57,9 @@ pub(crate) unsafe fn codegen(tcx: TyCtxt<'_>, mods: &mut GccContext, _module_nam
             if tcx.sess.target.options.default_hidden_visibility {
                 #[cfg(feature="master")]
                 func.add_attribute(FnAttribute::Visibility(gccjit::Visibility::Hidden));
+            } else {
+                #[cfg(feature="master")]
+                func.add_attribute(FnAttribute::Visibility(gccjit::Visibility::Protected));
             }
             if tcx.sess.must_emit_unwind_tables() {
                 // TODO(antoyo): emit unwind tables.
@@ -101,6 +104,9 @@ pub(crate) unsafe fn codegen(tcx: TyCtxt<'_>, mods: &mut GccContext, _module_nam
     if tcx.sess.target.default_hidden_visibility {
         #[cfg(feature="master")]
         func.add_attribute(FnAttribute::Visibility(gccjit::Visibility::Hidden));
+    } else {
+        #[cfg(feature="master")]
+        func.add_attribute(FnAttribute::Visibility(gccjit::Visibility::Protected));
     }
 
     let callee = alloc_error_handler_name(alloc_error_handler_kind);
