@@ -84,6 +84,7 @@ pub struct Queries<'tcx> {
     arena: WorkerLocal<Arena<'tcx>>,
     hir_arena: WorkerLocal<rustc_hir::Arena<'tcx>>,
 
+    // FIXME replace query stealing with some kind of enum
     parse: Query<ast::Crate>,
     // This just points to what's in `gcx_cell`.
     gcx: Query<&'tcx GlobalCtxt<'tcx>>,
@@ -123,6 +124,7 @@ impl<'tcx> Queries<'tcx> {
                 &sess.opts.unstable_opts.crate_attr,
             );
 
+            // FIXME modify krate.attrs in place once #65860 is a hard error.
             let pre_configured_attrs =
                 rustc_expand::config::pre_configure_attrs(sess, &krate.attrs);
 
