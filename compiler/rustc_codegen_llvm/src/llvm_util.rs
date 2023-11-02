@@ -6,7 +6,8 @@ use crate::errors::{
 use crate::llvm;
 use libc::c_int;
 use rustc_codegen_ssa::target_features::{
-    supported_target_features, tied_target_features, RUSTC_SPECIFIC_FEATURES,
+    globally_enabled_target_features, supported_target_features, tied_target_features,
+    RUSTC_SPECIFIC_FEATURES,
 };
 use rustc_codegen_ssa::traits::PrintBackendInfo;
 use rustc_data_structures::fx::{FxHashMap, FxHashSet};
@@ -290,27 +291,16 @@ pub fn check_tied_features(
 /// Must express features in the way Rust understands them
 pub fn target_features(sess: &Session, allow_unstable: bool) -> Vec<Symbol> {
     let target_machine = create_informational_target_machine(sess);
-    supported_target_features(sess)
-        .iter()
-        .filter_map(|&(feature, gate)| {
-            if sess.is_nightly_build() || allow_unstable || gate.is_none() {
-                Some(feature)
-            } else {
-                None
+    globally_enabled_target_features(sess, allow_unstable, |feature| {
+        // check that all features in a given smallvec are enabled
+        for llvm_feature in to_llvm_features(sess, feature) {
+            let cstr = SmallCStr::new(llvm_feature);
+            if !unsafe { llvm::LLVMRustHasFeature(&target_machine, cstr.as_ptr()) } {
+                return false;
             }
-        })
-        .filter(|feature| {
-            // check that all features in a given smallvec are enabled
-            for llvm_feature in to_llvm_features(sess, feature) {
-                let cstr = SmallCStr::new(llvm_feature);
-                if !unsafe { llvm::LLVMRustHasFeature(&target_machine, cstr.as_ptr()) } {
-                    return false;
-                }
-            }
-            true
-        })
-        .map(|feature| Symbol::intern(feature))
-        .collect()
+        }
+        true
+    })
 }
 
 pub fn print_version() {

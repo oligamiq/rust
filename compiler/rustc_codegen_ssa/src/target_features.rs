@@ -399,6 +399,25 @@ pub fn tied_target_features(sess: &Session) -> &'static [&'static [&'static str]
     }
 }
 
+pub fn globally_enabled_target_features(
+    sess: &Session,
+    allow_unstable: bool,
+    enabled: impl Fn(&'static str) -> bool,
+) -> Vec<Symbol> {
+    supported_target_features(sess)
+        .iter()
+        .filter_map(|&(feature, gate)| {
+            if sess.is_nightly_build() || allow_unstable || gate.is_none() {
+                Some(feature)
+            } else {
+                None
+            }
+        })
+        .filter(|feature| enabled(feature))
+        .map(|feature| Symbol::intern(feature))
+        .collect()
+}
+
 pub fn from_target_feature(
     tcx: TyCtxt<'_>,
     attr: &ast::Attribute,

@@ -95,7 +95,7 @@ use rustc_codegen_ssa::{CodegenResults, CompiledModule, ModuleCodegen};
 use rustc_codegen_ssa::base::codegen_crate;
 use rustc_codegen_ssa::back::write::{CodegenContext, FatLtoInput, ModuleConfig, TargetMachineFactoryFn};
 use rustc_codegen_ssa::back::lto::{LtoModuleCodegen, SerializedModule, ThinModule};
-use rustc_codegen_ssa::target_features::supported_target_features;
+use rustc_codegen_ssa::target_features::globally_enabled_target_features;
 use rustc_data_structures::fx::FxIndexMap;
 use rustc_data_structures::sync::IntoDynSyncSend;
 use rustc_codegen_ssa::traits::{CodegenBackend, ExtraBackendMethods, ThinBufferMethods, WriteBackendMethods};
@@ -379,23 +379,18 @@ fn to_gcc_opt_level(optlevel: Option<OptLevel>) -> OptimizationLevel {
     }
 }
 
-pub fn target_features(sess: &Session, allow_unstable: bool, target_info: &LockedTargetInfo) -> Vec<Symbol> {
-    supported_target_features(sess)
-        .iter()
-        .filter_map(
-            |&(feature, gate)| {
-                if sess.is_nightly_build() || allow_unstable || gate.is_none() { Some(feature) } else { None }
-            },
-        )
-        .filter(|_feature| {
-            target_info.cpu_supports(_feature)
-            /*
-               adx, aes, avx, avx2, avx512bf16, avx512bitalg, avx512bw, avx512cd, avx512dq, avx512er, avx512f, avx512ifma,
-               avx512pf, avx512vbmi, avx512vbmi2, avx512vl, avx512vnni, avx512vp2intersect, avx512vpopcntdq,
-               bmi1, bmi2, cmpxchg16b, ermsb, f16c, fma, fxsr, gfni, lzcnt, movbe, pclmulqdq, popcnt, rdrand, rdseed, rtm,
-               sha, sse, sse2, sse3, sse4.1, sse4.2, sse4a, ssse3, tbm, vaes, vpclmulqdq, xsave, xsavec, xsaveopt, xsaves
-             */
-        })
-        .map(|feature| Symbol::intern(feature))
-        .collect()
+pub fn target_features(
+    sess: &Session,
+    allow_unstable: bool,
+    target_info: &LockedTargetInfo,
+) -> Vec<Symbol> {
+    globally_enabled_target_features(sess, allow_unstable, |feature| {
+        target_info.cpu_supports(feature)
+        /*
+        adx, aes, avx, avx2, avx512bf16, avx512bitalg, avx512bw, avx512cd, avx512dq, avx512er, avx512f, avx512ifma,
+        avx512pf, avx512vbmi, avx512vbmi2, avx512vl, avx512vnni, avx512vp2intersect, avx512vpopcntdq,
+        bmi1, bmi2, cmpxchg16b, ermsb, f16c, fma, fxsr, gfni, lzcnt, movbe, pclmulqdq, popcnt, rdrand, rdseed, rtm,
+        sha, sse, sse2, sse3, sse4.1, sse4.2, sse4a, ssse3, tbm, vaes, vpclmulqdq, xsave, xsavec, xsaveopt, xsaves
+        */
+    })
 }
