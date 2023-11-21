@@ -140,7 +140,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
         }
     }
 
-    pub(crate) fn as_call_operand(
+    fn as_call_operand(
         &mut self,
         mut block: BasicBlock,
         scope: Option<region::Scope>,

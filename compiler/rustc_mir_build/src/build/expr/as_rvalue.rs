@@ -36,7 +36,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
     }
 
     /// Compile `expr`, yielding an rvalue.
-    pub(crate) fn as_rvalue(
+    fn as_rvalue(
         &mut self,
         mut block: BasicBlock,
         scope: Option<region::Scope>,

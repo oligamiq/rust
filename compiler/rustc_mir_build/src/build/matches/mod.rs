@@ -1047,7 +1047,7 @@ enum TestKind<'tcx> {
 /// [`Test`] is just the test to perform; it does not include the value
 /// to be tested.
 #[derive(Debug)]
-pub(crate) struct Test<'tcx> {
+struct Test<'tcx> {
     span: Span,
     kind: TestKind<'tcx>,
 }
@@ -1055,7 +1055,7 @@ pub(crate) struct Test<'tcx> {
 /// `ArmHasGuard` is a wrapper around a boolean flag. It indicates whether
 /// a match arm has a guard expression attached to it.
 #[derive(Copy, Clone, Debug)]
-pub(crate) struct ArmHasGuard(pub(crate) bool);
+struct ArmHasGuard(bool);
 
 ///////////////////////////////////////////////////////////////////////////
 // Main matching algorithm
