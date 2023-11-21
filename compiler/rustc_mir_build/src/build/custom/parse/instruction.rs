@@ -244,12 +244,7 @@ impl<'tcx, 'body> ParseCtxt<'tcx, 'body> {
             @call(mir_move, args) => self.parse_place(args[0]).map(Operand::Move),
             @call(mir_static, args) => self.parse_static(args[0]),
             @call(mir_static_mut, args) => self.parse_static(args[0]),
-            ExprKind::Literal { .. }
-            | ExprKind::NamedConst { .. }
-            | ExprKind::NonHirLiteral { .. }
-            | ExprKind::ZstLiteral { .. }
-            | ExprKind::ConstParam { .. }
-            | ExprKind::ConstBlock { .. } => {
+            ExprKind::Constant(_) => {
                 Ok(Operand::Constant(Box::new(
                     as_constant_inner(expr, |_| None, self.tcx)
                 )))
@@ -315,7 +310,7 @@ impl<'tcx, 'body> ParseCtxt<'tcx, 'body> {
         );
 
         parse_by_kind!(self, expr_id, expr, "static",
-            ExprKind::StaticRef { alloc_id, ty, .. } => {
+            ExprKind::Constant(ConstantExpr::StaticRef { alloc_id, ty, .. }) => {
                 let const_val =
                     ConstValue::Scalar(Scalar::from_pointer((*alloc_id).into(), &self.tcx));
                 let const_ = Const::Val(const_val, *ty);
@@ -331,10 +326,10 @@ impl<'tcx, 'body> ParseCtxt<'tcx, 'body> {
 
     fn parse_integer_literal(&self, expr_id: ExprId) -> PResult<u128> {
         parse_by_kind!(self, expr_id, expr, "constant",
-            ExprKind::Literal { .. }
-            | ExprKind::NamedConst { .. }
-            | ExprKind::NonHirLiteral { .. }
-            | ExprKind::ConstBlock { .. } => Ok({
+            ExprKind::Constant(ConstantExpr::Literal { .. })
+            | ExprKind::Constant(ConstantExpr::NamedConst { .. })
+            | ExprKind::Constant(ConstantExpr::NonHirLiteral { .. })
+            | ExprKind::Constant(ConstantExpr::ConstBlock { .. }) => Ok({
                 let value = as_constant_inner(expr, |_| None, self.tcx);
                 value.const_.eval_bits(self.tcx, self.param_env)
             }),

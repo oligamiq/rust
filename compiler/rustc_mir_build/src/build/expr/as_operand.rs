@@ -1,6 +1,5 @@
 //! See docs in build/expr/mod.rs
 
-use crate::build::expr::category::Category;
 use crate::build::{BlockAnd, BlockAndExtension, Builder, NeedsTemporary};
 use rustc_middle::middle::region;
 use rustc_middle::mir::*;
@@ -115,29 +114,26 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             });
         }
 
-        let category = Category::of(&expr.kind).unwrap();
-        debug!(?category, ?expr.kind);
-        match category {
-            Category::Constant
-                if matches!(needs_temporary, NeedsTemporary::No)
-                    || !expr.ty.needs_drop(this.tcx, this.param_env) =>
+        debug!(?expr.kind);
+
+        if let ExprKind::Constant(_) = expr.kind {
+            if matches!(needs_temporary, NeedsTemporary::No)
+                || !expr.ty.needs_drop(this.tcx, this.param_env)
             {
                 let constant = this.as_constant(expr);
-                block.and(Operand::Constant(Box::new(constant)))
-            }
-            Category::Constant | Category::Place | Category::Rvalue(..) => {
-                let operand = unpack!(block = this.as_temp(block, scope, expr, Mutability::Mut));
-                // Overwrite temp local info if we have something more interesting to record.
-                if !matches!(local_info, LocalInfo::Boring) {
-                    let decl_info =
-                        this.local_decls[operand].local_info.as_mut().assert_crate_local();
-                    if let LocalInfo::Boring | LocalInfo::BlockTailTemp(_) = **decl_info {
-                        **decl_info = local_info;
-                    }
-                }
-                block.and(Operand::Move(Place::from(operand)))
+                return block.and(Operand::Constant(Box::new(constant)));
             }
         }
+
+        let operand = unpack!(block = this.as_temp(block, scope, expr, Mutability::Mut));
+        // Overwrite temp local info if we have something more interesting to record.
+        if !matches!(local_info, LocalInfo::Boring) {
+            let decl_info = this.local_decls[operand].local_info.as_mut().assert_crate_local();
+            if let LocalInfo::Boring | LocalInfo::BlockTailTemp(_) = **decl_info {
+                **decl_info = local_info;
+            }
+        }
+        block.and(Operand::Move(Place::from(operand)))
     }
 
     fn as_call_operand(

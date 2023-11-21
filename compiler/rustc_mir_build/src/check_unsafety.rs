@@ -330,12 +330,7 @@ impl<'a, 'tcx> Visitor<'a, 'tcx> for UnsafetyVisitor<'a, 'tcx> {
             | ExprKind::Binary { .. }
             | ExprKind::Block { .. }
             | ExprKind::Borrow { .. }
-            | ExprKind::Literal { .. }
-            | ExprKind::NamedConst { .. }
-            | ExprKind::NonHirLiteral { .. }
-            | ExprKind::ZstLiteral { .. }
-            | ExprKind::ConstParam { .. }
-            | ExprKind::ConstBlock { .. }
+            | ExprKind::Constant(_)
             | ExprKind::Deref { .. }
             | ExprKind::Index { .. }
             | ExprKind::NeverToAny { .. }
@@ -343,7 +338,6 @@ impl<'a, 'tcx> Visitor<'a, 'tcx> for UnsafetyVisitor<'a, 'tcx> {
             | ExprKind::ValueTypeAscription { .. }
             | ExprKind::PointerCoercion { .. }
             | ExprKind::Repeat { .. }
-            | ExprKind::StaticRef { .. }
             | ExprKind::ThreadLocalRef { .. }
             | ExprKind::Tuple { .. }
             | ExprKind::Unary { .. }
@@ -405,8 +399,8 @@ impl<'a, 'tcx> Visitor<'a, 'tcx> for UnsafetyVisitor<'a, 'tcx> {
                 }
             }
             ExprKind::Deref { arg } => {
-                if let ExprKind::StaticRef { def_id, .. } | ExprKind::ThreadLocalRef(def_id) =
-                    self.thir[arg].kind
+                if let ExprKind::Constant(ConstantExpr::StaticRef { def_id, .. })
+                | ExprKind::ThreadLocalRef(def_id) = self.thir[arg].kind
                 {
                     if self.tcx.is_mutable_static(def_id) {
                         self.requires_unsafe(expr.span, UseOfMutableStatic);
@@ -440,7 +434,7 @@ impl<'a, 'tcx> Visitor<'a, 'tcx> for UnsafetyVisitor<'a, 'tcx> {
             }) => {
                 self.visit_inner_body(closure_id);
             }
-            ExprKind::ConstBlock { did, args: _ } => {
+            ExprKind::Constant(ConstantExpr::ConstBlock { did, args: _ }) => {
                 let def_id = did.expect_local();
                 self.visit_inner_body(def_id);
             }

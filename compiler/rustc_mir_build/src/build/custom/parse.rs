@@ -247,7 +247,7 @@ impl<'tcx, 'body> ParseCtxt<'tcx, 'body> {
                 },
             );
             let name = parse_by_kind!(self, name, _, "debuginfo",
-                ExprKind::Literal { lit, neg: false } => lit,
+                ExprKind::Constant(ConstantExpr::Literal { lit, neg: false }) => lit,
             );
             let Some(name) = name.node.str() else {
                 return Err(ParseError {

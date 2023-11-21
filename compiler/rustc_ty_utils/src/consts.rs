@@ -115,7 +115,7 @@ fn recurse_build<'tcx>(
         | &ExprKind::ValueTypeAscription { source, .. } => {
             recurse_build(tcx, body, source, root_span)?
         }
-        &ExprKind::Literal { lit, neg } => {
+        &ExprKind::Constant(thir::ConstantExpr::Literal { lit, neg }) => {
             let sp = node.span;
             match tcx.at(sp).lit_to_const(LitToConstInput { lit: &lit.node, ty: node.ty, neg }) {
                 Ok(c) => c,
@@ -125,19 +125,21 @@ fn recurse_build<'tcx>(
                 }
             }
         }
-        &ExprKind::NonHirLiteral { lit, user_ty: _ } => {
+        &ExprKind::Constant(thir::ConstantExpr::NonHirLiteral { lit, user_ty: _ }) => {
             let val = ty::ValTree::from_scalar_int(lit);
             ty::Const::new_value(tcx, val, node.ty)
         }
-        &ExprKind::ZstLiteral { user_ty: _ } => {
+        &ExprKind::Constant(thir::ConstantExpr::ZstLiteral { user_ty: _ }) => {
             let val = ty::ValTree::zst();
             ty::Const::new_value(tcx, val, node.ty)
         }
-        &ExprKind::NamedConst { def_id, args, user_ty: _ } => {
+        &ExprKind::Constant(thir::ConstantExpr::NamedConst { def_id, args, user_ty: _ }) => {
             let uneval = ty::UnevaluatedConst::new(def_id, args);
             ty::Const::new_unevaluated(tcx, uneval, node.ty)
         }
-        ExprKind::ConstParam { param, .. } => ty::Const::new_param(tcx, *param, node.ty),
+        ExprKind::Constant(thir::ConstantExpr::ConstParam { param, .. }) => {
+            ty::Const::new_param(tcx, *param, node.ty)
+        }
 
         ExprKind::Call { fun, args, .. } => {
             let fun = recurse_build(tcx, body, *fun, root_span)?;
@@ -214,7 +216,7 @@ fn recurse_build<'tcx>(
         ExprKind::Field { .. } => {
             maybe_supported_error(GenericConstantTooComplexSub::FieldNotSupported(node.span))?
         }
-        ExprKind::ConstBlock { .. } => {
+        ExprKind::Constant(thir::ConstantExpr::ConstBlock { .. }) => {
             maybe_supported_error(GenericConstantTooComplexSub::ConstBlockNotSupported(node.span))?
         }
         ExprKind::Adt(_) => {
@@ -258,7 +260,7 @@ fn recurse_build<'tcx>(
         // we dont permit let stmts so `VarRef` and `UpvarRef` cant happen
         ExprKind::VarRef { .. }
         | ExprKind::UpvarRef { .. }
-        | ExprKind::StaticRef { .. }
+        | ExprKind::Constant(thir::ConstantExpr::StaticRef { .. })
         | ExprKind::OffsetOf { .. }
         | ExprKind::ThreadLocalRef(_) => {
             error(GenericConstantTooComplexSub::OperationNotSupported(node.span))?
@@ -306,10 +308,11 @@ impl<'a, 'tcx> IsThirPolymorphic<'a, 'tcx> {
         }
 
         match expr.kind {
-            thir::ExprKind::NamedConst { args, .. } | thir::ExprKind::ConstBlock { args, .. } => {
+            thir::ExprKind::Constant(thir::ConstantExpr::NamedConst { args, .. })
+            | thir::ExprKind::Constant(thir::ConstantExpr::ConstBlock { args, .. }) => {
                 args.has_non_region_param()
             }
-            thir::ExprKind::ConstParam { .. } => true,
+            thir::ExprKind::Constant(thir::ConstantExpr::ConstParam { .. }) => true,
             thir::ExprKind::Repeat { value, count } => {
                 self.visit_expr(&self.thir()[value]);
                 count.has_non_region_param()
@@ -348,10 +351,10 @@ impl<'a, 'tcx> IsThirPolymorphic<'a, 'tcx> {
             | thir::ExprKind::PlaceTypeAscription { .. }
             | thir::ExprKind::ValueTypeAscription { .. }
             | thir::ExprKind::Closure(_)
-            | thir::ExprKind::Literal { .. }
-            | thir::ExprKind::NonHirLiteral { .. }
-            | thir::ExprKind::ZstLiteral { .. }
-            | thir::ExprKind::StaticRef { .. }
+            | thir::ExprKind::Constant(thir::ConstantExpr::Literal { .. })
+            | thir::ExprKind::Constant(thir::ConstantExpr::NonHirLiteral { .. })
+            | thir::ExprKind::Constant(thir::ConstantExpr::ZstLiteral { .. })
+            | thir::ExprKind::Constant(thir::ConstantExpr::StaticRef { .. })
             | thir::ExprKind::InlineAsm(_)
             | thir::ExprKind::OffsetOf { .. }
             | thir::ExprKind::ThreadLocalRef(_)

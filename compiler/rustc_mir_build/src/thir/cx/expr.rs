@@ -223,14 +223,18 @@ impl<'tcx> Cx<'tcx> {
                 .size;
 
             let lit = ScalarInt::try_from_uint(discr_offset as u128, size).unwrap();
-            let kind = ExprKind::NonHirLiteral { lit, user_ty: None };
+            let kind = ExprKind::Constant(ConstantExpr::NonHirLiteral { lit, user_ty: None });
             let offset = self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind });
 
             let source = match discr_did {
                 // in case we are offsetting from a computed discriminant
                 // and not the beginning of discriminants (which is always `0`)
                 Some(did) => {
-                    let kind = ExprKind::NamedConst { def_id: did, args, user_ty: None };
+                    let kind = ExprKind::Constant(ConstantExpr::NamedConst {
+                        def_id: did,
+                        args,
+                        user_ty: None,
+                    });
                     let lhs =
                         self.thir.exprs.push(Expr { temp_lifetime, ty: discr_ty, span, kind });
                     let bin = ExprKind::Binary { op: BinOp::Add, lhs, rhs: offset };
@@ -435,7 +439,9 @@ impl<'tcx> Cx<'tcx> {
                 }
             }
 
-            hir::ExprKind::Lit(ref lit) => ExprKind::Literal { lit, neg: false },
+            hir::ExprKind::Lit(ref lit) => {
+                ExprKind::Constant(ConstantExpr::Literal { lit, neg: false })
+            }
 
             hir::ExprKind::Binary(op, ref lhs, ref rhs) => {
                 if self.typeck_results().is_method_call(expr) {
@@ -505,7 +511,7 @@ impl<'tcx> Cx<'tcx> {
                     let arg = self.mirror_expr(arg);
                     self.overloaded_operator(expr, Box::new([arg]))
                 } else if let hir::ExprKind::Lit(ref lit) = arg.kind {
-                    ExprKind::Literal { lit, neg: true }
+                    ExprKind::Constant(ConstantExpr::Literal { lit, neg: true })
                 } else {
                     ExprKind::Unary { op: UnOp::Neg, arg: self.mirror_expr(arg) }
                 }
@@ -683,7 +689,7 @@ impl<'tcx> Cx<'tcx> {
                     tcx.erase_regions(GenericArgs::identity_for_item(tcx, typeck_root_def_id));
                 let args = InlineConstArgs::new(tcx, InlineConstArgsParts { parent_args, ty }).args;
 
-                ExprKind::ConstBlock { did, args }
+                ExprKind::Constant(ConstantExpr::ConstBlock { did, args })
             }
             // Now comes the rote stuff:
             hir::ExprKind::Repeat(ref v, _) => {
@@ -865,7 +871,12 @@ impl<'tcx> Cx<'tcx> {
                 )
             }
         };
-        Expr { temp_lifetime, ty, span, kind: ExprKind::ZstLiteral { user_ty } }
+        Expr {
+            temp_lifetime,
+            ty,
+            span,
+            kind: ExprKind::Constant(ConstantExpr::ZstLiteral { user_ty }),
+        }
     }
 
     fn convert_arm(&mut self, arm: &'tcx hir::Arm<'tcx>) -> ArmId {
@@ -894,7 +905,7 @@ impl<'tcx> Cx<'tcx> {
             | Res::Def(DefKind::Ctor(_, CtorKind::Fn), _)
             | Res::SelfCtor(_) => {
                 let user_ty = self.user_args_applied_to_res(expr.hir_id, res);
-                ExprKind::ZstLiteral { user_ty }
+                ExprKind::Constant(ConstantExpr::ZstLiteral { user_ty })
             }
 
             Res::Def(DefKind::ConstParam, def_id) => {
@@ -904,12 +915,12 @@ impl<'tcx> Cx<'tcx> {
                 let name = self.tcx.hir().name(hir_id);
                 let param = ty::ParamConst::new(index, name);
 
-                ExprKind::ConstParam { param, def_id }
+                ExprKind::Constant(ConstantExpr::ConstParam { param, def_id })
             }
 
             Res::Def(DefKind::Const, def_id) | Res::Def(DefKind::AssocConst, def_id) => {
                 let user_ty = self.user_args_applied_to_res(expr.hir_id, res);
-                ExprKind::NamedConst { def_id, args, user_ty }
+                ExprKind::Constant(ConstantExpr::NamedConst { def_id, args, user_ty })
             }
 
             Res::Def(DefKind::Ctor(_, CtorKind::Const), def_id) => {
@@ -943,7 +954,7 @@ impl<'tcx> Cx<'tcx> {
                     ExprKind::ThreadLocalRef(id)
                 } else {
                     let alloc_id = self.tcx.reserve_and_set_static_alloc(id);
-                    ExprKind::StaticRef { alloc_id, ty, def_id: id }
+                    ExprKind::Constant(ConstantExpr::StaticRef { alloc_id, ty, def_id: id })
                 };
                 ExprKind::Deref {
                     arg: self.thir.exprs.push(Expr { ty, temp_lifetime, span: expr.span, kind }),

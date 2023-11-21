@@ -419,11 +419,7 @@ pub enum ExprKind<'tcx> {
     Become {
         value: ExprId,
     },
-    /// An inline `const` block, e.g. `const {}`.
-    ConstBlock {
-        did: DefId,
-        args: GenericArgsRef<'tcx>,
-    },
+    Constant(ConstantExpr<'tcx>),
     /// An array literal constructed from one repeated element, e.g. `[1; 5]`.
     Repeat {
         value: ExprId,
@@ -453,6 +449,37 @@ pub enum ExprKind<'tcx> {
     },
     /// A closure definition.
     Closure(Box<ClosureExpr<'tcx>>),
+    /// Inline assembly, i.e. `asm!()`.
+    InlineAsm(Box<InlineAsmExpr<'tcx>>),
+    /// Field offset (`offset_of!`)
+    OffsetOf {
+        container: Ty<'tcx>,
+        fields: &'tcx List<(VariantIdx, FieldIdx)>,
+    },
+    /// An expression taking a reference to a thread local.
+    ThreadLocalRef(DefId),
+    /// A `yield` expression.
+    Yield {
+        value: ExprId,
+    },
+}
+
+/// Represents the association of a field identifier and an expression.
+///
+/// This is used in struct constructors.
+#[derive(Clone, Debug, HashStable)]
+pub struct FieldExpr {
+    pub name: FieldIdx,
+    pub expr: ExprId,
+}
+
+#[derive(Clone, Debug, HashStable)]
+pub enum ConstantExpr<'tcx> {
+    /// An inline `const` block, e.g. `const {}`.
+    ConstBlock {
+        did: DefId,
+        args: GenericArgsRef<'tcx>,
+    },
     /// A literal.
     Literal {
         lit: &'tcx hir::Lit,
@@ -487,28 +514,6 @@ pub enum ExprKind<'tcx> {
         ty: Ty<'tcx>,
         def_id: DefId,
     },
-    /// Inline assembly, i.e. `asm!()`.
-    InlineAsm(Box<InlineAsmExpr<'tcx>>),
-    /// Field offset (`offset_of!`)
-    OffsetOf {
-        container: Ty<'tcx>,
-        fields: &'tcx List<(VariantIdx, FieldIdx)>,
-    },
-    /// An expression taking a reference to a thread local.
-    ThreadLocalRef(DefId),
-    /// A `yield` expression.
-    Yield {
-        value: ExprId,
-    },
-}
-
-/// Represents the association of a field identifier and an expression.
-///
-/// This is used in struct constructors.
-#[derive(Clone, Debug, HashStable)]
-pub struct FieldExpr {
-    pub name: FieldIdx,
-    pub expr: ExprId,
 }
 
 #[derive(Clone, Debug, HashStable)]
@@ -1211,7 +1216,7 @@ impl<'tcx> fmt::Display for Pat<'tcx> {
 }
 
 // Some nodes are used a lot. Make sure they don't unintentionally get bigger.
-#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
+//#[cfg(all(target_arch = "x86_64", target_pointer_width = "64"))]
 mod size_asserts {
     use super::*;
     // tidy-alphabetical-start

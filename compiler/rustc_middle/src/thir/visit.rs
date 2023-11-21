@@ -102,7 +102,6 @@ pub fn walk_expr<'a, 'tcx: 'a, V: Visitor<'a, 'tcx>>(visitor: &mut V, expr: &Exp
             }
         }
         Become { value } => visitor.visit_expr(&visitor.thir()[value]),
-        ConstBlock { did: _, args: _ } => {}
         Repeat { value, count: _ } => {
             visitor.visit_expr(&visitor.thir()[value]);
         }
@@ -136,12 +135,7 @@ pub fn walk_expr<'a, 'tcx: 'a, V: Visitor<'a, 'tcx>>(visitor: &mut V, expr: &Exp
             movability: _,
             fake_reads: _,
         }) => {}
-        Literal { lit: _, neg: _ } => {}
-        NonHirLiteral { lit: _, user_ty: _ } => {}
-        ZstLiteral { user_ty: _ } => {}
-        NamedConst { def_id: _, args: _, user_ty: _ } => {}
-        ConstParam { param: _, def_id: _ } => {}
-        StaticRef { alloc_id: _, ty: _, def_id: _ } => {}
+        Constant(_) => {}
         InlineAsm(box InlineAsmExpr { ref operands, template: _, options: _, line_spans: _ }) => {
             for op in &**operands {
                 use InlineAsmOperand::*;

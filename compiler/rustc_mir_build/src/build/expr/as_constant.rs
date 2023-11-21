@@ -36,8 +36,12 @@ pub(crate) fn as_constant_inner<'tcx>(
     tcx: TyCtxt<'tcx>,
 ) -> ConstOperand<'tcx> {
     let Expr { ty, temp_lifetime: _, span, ref kind } = *expr;
-    match *kind {
-        ExprKind::Literal { lit, neg } => {
+    let const_expr = match kind {
+        ExprKind::Constant(const_expr) => const_expr,
+        _ => span_bug!(span, "expression is not a valid constant {:?}", kind),
+    };
+    match *const_expr {
+        ConstantExpr::Literal { lit, neg } => {
             let const_ = match lit_to_mir_constant(tcx, LitToConstInput { lit: &lit.node, ty, neg })
             {
                 Ok(c) => c,
@@ -51,21 +55,21 @@ pub(crate) fn as_constant_inner<'tcx>(
 
             ConstOperand { span, user_ty: None, const_ }
         }
-        ExprKind::NonHirLiteral { lit, ref user_ty } => {
+        ConstantExpr::NonHirLiteral { lit, ref user_ty } => {
             let user_ty = user_ty.as_ref().and_then(push_cuta);
 
             let const_ = Const::Val(ConstValue::Scalar(Scalar::Int(lit)), ty);
 
             ConstOperand { span, user_ty, const_ }
         }
-        ExprKind::ZstLiteral { ref user_ty } => {
+        ConstantExpr::ZstLiteral { ref user_ty } => {
             let user_ty = user_ty.as_ref().and_then(push_cuta);
 
             let const_ = Const::Val(ConstValue::ZeroSized, ty);
 
             ConstOperand { span, user_ty, const_ }
         }
-        ExprKind::NamedConst { def_id, args, ref user_ty } => {
+        ConstantExpr::NamedConst { def_id, args, ref user_ty } => {
             let user_ty = user_ty.as_ref().and_then(push_cuta);
 
             let uneval = mir::UnevaluatedConst::new(def_id, args);
@@ -73,25 +77,24 @@ pub(crate) fn as_constant_inner<'tcx>(
 
             ConstOperand { user_ty, span, const_ }
         }
-        ExprKind::ConstParam { param, def_id: _ } => {
+        ConstantExpr::ConstParam { param, def_id: _ } => {
             let const_param = ty::Const::new_param(tcx, param, expr.ty);
             let const_ = Const::Ty(const_param);
 
             ConstOperand { user_ty: None, span, const_ }
         }
-        ExprKind::ConstBlock { did: def_id, args } => {
+        ConstantExpr::ConstBlock { did: def_id, args } => {
             let uneval = mir::UnevaluatedConst::new(def_id, args);
             let const_ = Const::Unevaluated(uneval, ty);
 
             ConstOperand { user_ty: None, span, const_ }
         }
-        ExprKind::StaticRef { alloc_id, ty, .. } => {
+        ConstantExpr::StaticRef { alloc_id, ty, .. } => {
             let const_val = ConstValue::Scalar(Scalar::from_pointer(alloc_id.into(), &tcx));
             let const_ = Const::Val(const_val, ty);
 
             ConstOperand { span, user_ty: None, const_ }
         }
-        _ => span_bug!(span, "expression is not a valid constant {:?}", kind),
     }
 }
 
