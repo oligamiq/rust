@@ -1,6 +1,5 @@
 //! See docs in build/expr/mod.rs
 
-use crate::build::expr::category::{Category, RvalueFunc};
 use crate::build::{BlockAnd, BlockAndExtension, BlockFrame, Builder, NeedsTemporary};
 use rustc_ast::InlineAsmOptions;
 use rustc_data_structures::fx::FxHashMap;
@@ -562,18 +561,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | ExprKind::Constant(_)
             | ExprKind::ThreadLocalRef(_)
             | ExprKind::OffsetOf { .. } => {
-                debug_assert!(match Category::of(&expr.kind).unwrap() {
-                    // should be handled above
-                    Category::Rvalue(RvalueFunc::Into) => false,
-
-                    // must be handled above or else we get an
-                    // infinite loop in the builder; see
-                    // e.g., `ExprKind::Place(PlaceExpr::VarRef)` above
-                    Category::Place => false,
-
-                    _ => true,
-                });
-
                 let rvalue = unpack!(block = this.as_local_rvalue(block, expr));
                 this.cfg.push_assign(block, source_info, destination, rvalue);
                 block.unit()

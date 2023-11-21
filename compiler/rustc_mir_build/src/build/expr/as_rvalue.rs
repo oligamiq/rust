@@ -5,7 +5,6 @@ use rustc_middle::ty::util::IntTypeExt;
 use rustc_target::abi::{Abi, FieldIdx, Primitive};
 
 use crate::build::expr::as_place::PlaceBase;
-use crate::build::expr::category::{Category, RvalueFunc};
 use crate::build::{BlockAnd, BlockAndExtension, Builder, NeedsTemporary};
 use rustc_hir::lang_items::LangItem;
 use rustc_middle::middle::region;
@@ -544,10 +543,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | ExprKind::Place(PlaceExpr::ValueTypeAscription { .. }) => {
                 // these do not have corresponding `Rvalue` variants,
                 // so make an operand and then return that
-                debug_assert!(!matches!(
-                    Category::of(&expr.kind),
-                    Some(Category::Rvalue(RvalueFunc::AsRvalue) | Category::Constant)
-                ));
                 let operand = unpack!(
                     block =
                         this.as_operand(block, scope, expr, LocalInfo::Boring, NeedsTemporary::No)
