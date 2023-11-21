@@ -129,7 +129,7 @@ impl<'tcx> Cx<'tcx> {
             Adjust::NeverToAny => ExprKind::NeverToAny { source: self.thir.exprs.push(expr) },
             Adjust::Deref(None) => {
                 adjust_span(&mut expr);
-                ExprKind::Deref { arg: self.thir.exprs.push(expr) }
+                ExprKind::Place(PlaceExpr::Deref { arg: self.thir.exprs.push(expr) })
             }
             Adjust::Deref(Some(deref)) => {
                 // We don't need to do call adjust_span here since
@@ -484,7 +484,10 @@ impl<'tcx> Cx<'tcx> {
                         brackets_span,
                     )
                 } else {
-                    ExprKind::Index { lhs: self.mirror_expr(lhs), index: self.mirror_expr(index) }
+                    ExprKind::Place(PlaceExpr::Index {
+                        lhs: self.mirror_expr(lhs),
+                        index: self.mirror_expr(index),
+                    })
                 }
             }
 
@@ -493,7 +496,7 @@ impl<'tcx> Cx<'tcx> {
                     let arg = self.mirror_expr(arg);
                     self.overloaded_place(expr, expr_ty, None, Box::new([arg]), expr.span)
                 } else {
-                    ExprKind::Deref { arg: self.mirror_expr(arg) }
+                    ExprKind::Place(PlaceExpr::Deref { arg: self.mirror_expr(arg) })
                 }
             }
 
@@ -747,11 +750,11 @@ impl<'tcx> Cx<'tcx> {
                 });
                 ExprKind::Loop { body }
             }
-            hir::ExprKind::Field(ref source, ..) => ExprKind::Field {
+            hir::ExprKind::Field(ref source, ..) => ExprKind::Place(PlaceExpr::Field {
                 lhs: self.mirror_expr(source),
                 variant_index: FIRST_VARIANT,
                 name: self.typeck_results.field_index(expr.hir_id),
-            },
+            }),
             hir::ExprKind::Cast(ref source, ref cast_ty) => {
                 // Check for a user-given type annotation on this `cast`
                 let user_provided_types = self.typeck_results.user_provided_types();
@@ -775,10 +778,10 @@ impl<'tcx> Cx<'tcx> {
                     });
                     debug!("make_mirror_unadjusted: (cast) user_ty={:?}", user_ty);
 
-                    ExprKind::ValueTypeAscription {
+                    ExprKind::Place(PlaceExpr::ValueTypeAscription {
                         source: cast_expr,
                         user_ty: Some(Box::new(*user_ty)),
-                    }
+                    })
                 } else {
                     cast
                 }
@@ -789,9 +792,9 @@ impl<'tcx> Cx<'tcx> {
                 debug!("make_mirror_unadjusted: (type) user_ty={:?}", user_ty);
                 let mirrored = self.mirror_expr(source);
                 if source.is_syntactic_place_expr() {
-                    ExprKind::PlaceTypeAscription { source: mirrored, user_ty }
+                    ExprKind::Place(PlaceExpr::PlaceTypeAscription { source: mirrored, user_ty })
                 } else {
-                    ExprKind::ValueTypeAscription { source: mirrored, user_ty }
+                    ExprKind::Place(PlaceExpr::ValueTypeAscription { source: mirrored, user_ty })
                 }
             }
             hir::ExprKind::DropTemps(ref source) => {
@@ -956,9 +959,9 @@ impl<'tcx> Cx<'tcx> {
                     let alloc_id = self.tcx.reserve_and_set_static_alloc(id);
                     ExprKind::Constant(ConstantExpr::StaticRef { alloc_id, ty, def_id: id })
                 };
-                ExprKind::Deref {
+                ExprKind::Place(PlaceExpr::Deref {
                     arg: self.thir.exprs.push(Expr { ty, temp_lifetime, span: expr.span, kind }),
-                }
+                })
             }
 
             Res::Local(var_hir_id) => self.convert_var(var_hir_id),
@@ -981,12 +984,12 @@ impl<'tcx> Cx<'tcx> {
         );
 
         if is_upvar {
-            ExprKind::UpvarRef {
+            ExprKind::Place(PlaceExpr::UpvarRef {
                 closure_def_id: self.body_owner,
                 var_hir_id: LocalVarId(var_hir_id),
-            }
+            })
         } else {
-            ExprKind::VarRef { id: LocalVarId(var_hir_id) }
+            ExprKind::Place(PlaceExpr::VarRef { id: LocalVarId(var_hir_id) })
         }
     }
 
@@ -1041,7 +1044,7 @@ impl<'tcx> Cx<'tcx> {
         });
 
         // construct and return a deref wrapper `*foo()`
-        ExprKind::Deref { arg: ref_expr }
+        ExprKind::Place(PlaceExpr::Deref { arg: ref_expr })
     }
 
     fn convert_captured_hir_place(
@@ -1073,14 +1076,16 @@ impl<'tcx> Cx<'tcx> {
 
         for proj in place.projections.iter() {
             let kind = match proj.kind {
-                HirProjectionKind::Deref => {
-                    ExprKind::Deref { arg: self.thir.exprs.push(captured_place_expr) }
+                HirProjectionKind::Deref => ExprKind::Place(PlaceExpr::Deref {
+                    arg: self.thir.exprs.push(captured_place_expr),
+                }),
+                HirProjectionKind::Field(field, variant_index) => {
+                    ExprKind::Place(PlaceExpr::Field {
+                        lhs: self.thir.exprs.push(captured_place_expr),
+                        variant_index,
+                        name: field,
+                    })
                 }
-                HirProjectionKind::Field(field, variant_index) => ExprKind::Field {
-                    lhs: self.thir.exprs.push(captured_place_expr),
-                    variant_index,
-                    name: field,
-                },
                 HirProjectionKind::OpaqueCast => {
                     ExprKind::Use { source: self.thir.exprs.push(captured_place_expr) }
                 }

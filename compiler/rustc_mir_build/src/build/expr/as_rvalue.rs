@@ -437,7 +437,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     .copied()
                     .map(|upvar| {
                         let upvar = &this.thir[upvar];
-                        match Category::of(&upvar.kind) {
+                        match upvar.kind {
                             // Use as_place to avoid creating a temporary when
                             // moving a variable into a closure, so that
                             // borrowck knows which variables to mark as being
@@ -446,7 +446,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                             // disjoint places.
                             // This occurs when capturing by copy/move, while
                             // by reference captures use as_operand
-                            Some(Category::Place) => {
+                            ExprKind::Place(_) => {
                                 let place = unpack!(block = this.as_place(block, upvar));
                                 this.consume_by_copy_or_move(place)
                             }
@@ -529,19 +529,19 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | ExprKind::Loop { .. }
             | ExprKind::LogicalOp { .. }
             | ExprKind::Call { .. }
-            | ExprKind::Field { .. }
+            | ExprKind::Place(PlaceExpr::Field { .. })
             | ExprKind::Let { .. }
-            | ExprKind::Deref { .. }
-            | ExprKind::Index { .. }
-            | ExprKind::VarRef { .. }
-            | ExprKind::UpvarRef { .. }
+            | ExprKind::Place(PlaceExpr::Deref { .. })
+            | ExprKind::Place(PlaceExpr::Index { .. })
+            | ExprKind::Place(PlaceExpr::VarRef { .. })
+            | ExprKind::Place(PlaceExpr::UpvarRef { .. })
             | ExprKind::Break { .. }
             | ExprKind::Continue { .. }
             | ExprKind::Return { .. }
             | ExprKind::Become { .. }
             | ExprKind::InlineAsm { .. }
-            | ExprKind::PlaceTypeAscription { .. }
-            | ExprKind::ValueTypeAscription { .. } => {
+            | ExprKind::Place(PlaceExpr::PlaceTypeAscription { .. })
+            | ExprKind::Place(PlaceExpr::ValueTypeAscription { .. }) => {
                 // these do not have corresponding `Rvalue` variants,
                 // so make an operand and then return that
                 debug_assert!(!matches!(

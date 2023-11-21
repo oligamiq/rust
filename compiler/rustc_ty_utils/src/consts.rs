@@ -111,8 +111,8 @@ fn recurse_build<'tcx>(
     Ok(match &node.kind {
         // I dont know if handling of these 3 is correct
         &ExprKind::Scope { value, .. } => recurse_build(tcx, body, value, root_span)?,
-        &ExprKind::PlaceTypeAscription { source, .. }
-        | &ExprKind::ValueTypeAscription { source, .. } => {
+        &ExprKind::Place(thir::PlaceExpr::PlaceTypeAscription { source, .. })
+        | &ExprKind::Place(thir::PlaceExpr::ValueTypeAscription { source, .. }) => {
             recurse_build(tcx, body, source, root_span)?
         }
         &ExprKind::Constant(thir::ConstantExpr::Literal { lit, neg }) => {
@@ -191,16 +191,18 @@ fn recurse_build<'tcx>(
             // Skip reborrows for now until we allow Deref/Borrow/AddressOf
             // expressions.
             // FIXME(generic_const_exprs): Verify/explain why this is sound
-            if let ExprKind::Deref { arg } = arg_node.kind {
+            if let ExprKind::Place(thir::PlaceExpr::Deref { arg }) = arg_node.kind {
                 recurse_build(tcx, body, arg, root_span)?
             } else {
                 maybe_supported_error(GenericConstantTooComplexSub::BorrowNotSupported(node.span))?
             }
         }
         // FIXME(generic_const_exprs): We may want to support these.
-        ExprKind::AddressOf { .. } | ExprKind::Deref { .. } => maybe_supported_error(
-            GenericConstantTooComplexSub::AddressAndDerefNotSupported(node.span),
-        )?,
+        ExprKind::AddressOf { .. } | ExprKind::Place(thir::PlaceExpr::Deref { .. }) => {
+            maybe_supported_error(GenericConstantTooComplexSub::AddressAndDerefNotSupported(
+                node.span,
+            ))?
+        }
         ExprKind::Repeat { .. } | ExprKind::Array { .. } => {
             maybe_supported_error(GenericConstantTooComplexSub::ArrayNotSupported(node.span))?
         }
@@ -210,10 +212,10 @@ fn recurse_build<'tcx>(
         ExprKind::Tuple { .. } => {
             maybe_supported_error(GenericConstantTooComplexSub::TupleNotSupported(node.span))?
         }
-        ExprKind::Index { .. } => {
+        ExprKind::Place(thir::PlaceExpr::Index { .. }) => {
             maybe_supported_error(GenericConstantTooComplexSub::IndexNotSupported(node.span))?
         }
-        ExprKind::Field { .. } => {
+        ExprKind::Place(thir::PlaceExpr::Field { .. }) => {
             maybe_supported_error(GenericConstantTooComplexSub::FieldNotSupported(node.span))?
         }
         ExprKind::Constant(thir::ConstantExpr::ConstBlock { .. }) => {
@@ -258,8 +260,8 @@ fn recurse_build<'tcx>(
         }
 
         // we dont permit let stmts so `VarRef` and `UpvarRef` cant happen
-        ExprKind::VarRef { .. }
-        | ExprKind::UpvarRef { .. }
+        ExprKind::Place(thir::PlaceExpr::VarRef { .. })
+        | ExprKind::Place(thir::PlaceExpr::UpvarRef { .. })
         | ExprKind::Constant(thir::ConstantExpr::StaticRef { .. })
         | ExprKind::OffsetOf { .. }
         | ExprKind::ThreadLocalRef(_) => {
@@ -321,7 +323,7 @@ impl<'a, 'tcx> IsThirPolymorphic<'a, 'tcx> {
             | thir::ExprKind::Box { .. }
             | thir::ExprKind::If { .. }
             | thir::ExprKind::Call { .. }
-            | thir::ExprKind::Deref { .. }
+            | thir::ExprKind::Place(thir::PlaceExpr::Deref { .. })
             | thir::ExprKind::Binary { .. }
             | thir::ExprKind::LogicalOp { .. }
             | thir::ExprKind::Unary { .. }
@@ -335,10 +337,10 @@ impl<'a, 'tcx> IsThirPolymorphic<'a, 'tcx> {
             | thir::ExprKind::Block { .. }
             | thir::ExprKind::Assign { .. }
             | thir::ExprKind::AssignOp { .. }
-            | thir::ExprKind::Field { .. }
-            | thir::ExprKind::Index { .. }
-            | thir::ExprKind::VarRef { .. }
-            | thir::ExprKind::UpvarRef { .. }
+            | thir::ExprKind::Place(thir::PlaceExpr::Field { .. })
+            | thir::ExprKind::Place(thir::PlaceExpr::Index { .. })
+            | thir::ExprKind::Place(thir::PlaceExpr::VarRef { .. })
+            | thir::ExprKind::Place(thir::PlaceExpr::UpvarRef { .. })
             | thir::ExprKind::Borrow { .. }
             | thir::ExprKind::AddressOf { .. }
             | thir::ExprKind::Break { .. }
@@ -348,8 +350,8 @@ impl<'a, 'tcx> IsThirPolymorphic<'a, 'tcx> {
             | thir::ExprKind::Array { .. }
             | thir::ExprKind::Tuple { .. }
             | thir::ExprKind::Adt(_)
-            | thir::ExprKind::PlaceTypeAscription { .. }
-            | thir::ExprKind::ValueTypeAscription { .. }
+            | thir::ExprKind::Place(thir::PlaceExpr::PlaceTypeAscription { .. })
+            | thir::ExprKind::Place(thir::PlaceExpr::ValueTypeAscription { .. })
             | thir::ExprKind::Closure(_)
             | thir::ExprKind::Constant(thir::ConstantExpr::Literal { .. })
             | thir::ExprKind::Constant(thir::ConstantExpr::NonHirLiteral { .. })

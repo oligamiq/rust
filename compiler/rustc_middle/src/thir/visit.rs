@@ -1,6 +1,6 @@
 use super::{
     AdtExpr, Arm, Block, ClosureExpr, Expr, ExprKind, Guard, InlineAsmExpr, InlineAsmOperand, Pat,
-    PatKind, Stmt, StmtKind, Thir,
+    PatKind, PlaceExpr, Stmt, StmtKind, Thir,
 };
 
 pub trait Visitor<'a, 'tcx: 'a>: Sized {
@@ -56,7 +56,7 @@ pub fn walk_expr<'a, 'tcx: 'a, V: Visitor<'a, 'tcx>>(visitor: &mut V, expr: &Exp
                 visitor.visit_expr(&visitor.thir()[arg]);
             }
         }
-        Deref { arg } => visitor.visit_expr(&visitor.thir()[arg]),
+        Place(PlaceExpr::Deref { arg }) => visitor.visit_expr(&visitor.thir()[arg]),
         Binary { lhs, rhs, op: _ } | LogicalOp { lhs, rhs, op: _ } => {
             visitor.visit_expr(&visitor.thir()[lhs]);
             visitor.visit_expr(&visitor.thir()[rhs]);
@@ -82,12 +82,15 @@ pub fn walk_expr<'a, 'tcx: 'a, V: Visitor<'a, 'tcx>>(visitor: &mut V, expr: &Exp
             visitor.visit_expr(&visitor.thir()[lhs]);
             visitor.visit_expr(&visitor.thir()[rhs]);
         }
-        Field { lhs, variant_index: _, name: _ } => visitor.visit_expr(&visitor.thir()[lhs]),
-        Index { lhs, index } => {
+        Place(PlaceExpr::Field { lhs, variant_index: _, name: _ }) => {
+            visitor.visit_expr(&visitor.thir()[lhs])
+        }
+        Place(PlaceExpr::Index { lhs, index }) => {
             visitor.visit_expr(&visitor.thir()[lhs]);
             visitor.visit_expr(&visitor.thir()[index]);
         }
-        VarRef { id: _ } | UpvarRef { closure_def_id: _, var_hir_id: _ } => {}
+        Place(PlaceExpr::VarRef { id: _ })
+        | Place(PlaceExpr::UpvarRef { closure_def_id: _, var_hir_id: _ }) => {}
         Borrow { arg, borrow_kind: _ } => visitor.visit_expr(&visitor.thir()[arg]),
         AddressOf { arg, mutability: _ } => visitor.visit_expr(&visitor.thir()[arg]),
         Break { value, label: _ } => {
@@ -125,7 +128,8 @@ pub fn walk_expr<'a, 'tcx: 'a, V: Visitor<'a, 'tcx>>(visitor: &mut V, expr: &Exp
                 visitor.visit_expr(&visitor.thir()[base.base]);
             }
         }
-        PlaceTypeAscription { source, user_ty: _ } | ValueTypeAscription { source, user_ty: _ } => {
+        Place(PlaceExpr::PlaceTypeAscription { source, user_ty: _ })
+        | Place(PlaceExpr::ValueTypeAscription { source, user_ty: _ }) => {
             visitor.visit_expr(&visitor.thir()[source])
         }
         Closure(box ClosureExpr {

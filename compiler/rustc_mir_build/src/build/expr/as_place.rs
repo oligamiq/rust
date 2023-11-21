@@ -1,6 +1,5 @@
 //! See docs in build/expr/mod.rs
 
-use crate::build::expr::category::Category;
 use crate::build::ForGuard::{OutsideGuard, RefWithinGuard};
 use crate::build::{BlockAnd, BlockAndExtension, Builder, Capture, CaptureMap};
 use rustc_hir::def_id::LocalDefId;
@@ -416,7 +415,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                     this.expr_as_place(block, &this.thir[value], mutability, fake_borrow_temps)
                 })
             }
-            ExprKind::Field { lhs, variant_index, name } => {
+            ExprKind::Place(PlaceExpr::Field { lhs, variant_index, name }) => {
                 let lhs = &this.thir[lhs];
                 let mut place_builder =
                     unpack!(block = this.expr_as_place(block, lhs, mutability, fake_borrow_temps,));
@@ -427,14 +426,14 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 }
                 block.and(place_builder.field(name, expr.ty))
             }
-            ExprKind::Deref { arg } => {
+            ExprKind::Place(PlaceExpr::Deref { arg }) => {
                 let place_builder = unpack!(
                     block =
                         this.expr_as_place(block, &this.thir[arg], mutability, fake_borrow_temps,)
                 );
                 block.and(place_builder.deref())
             }
-            ExprKind::Index { lhs, index } => this.lower_index_expression(
+            ExprKind::Place(PlaceExpr::Index { lhs, index }) => this.lower_index_expression(
                 block,
                 &this.thir[lhs],
                 &this.thir[index],
@@ -444,11 +443,11 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 expr_span,
                 source_info,
             ),
-            ExprKind::UpvarRef { closure_def_id, var_hir_id } => {
+            ExprKind::Place(PlaceExpr::UpvarRef { closure_def_id, var_hir_id }) => {
                 this.lower_captured_upvar(block, closure_def_id.expect_local(), var_hir_id)
             }
 
-            ExprKind::VarRef { id } => {
+            ExprKind::Place(PlaceExpr::VarRef { id }) => {
                 let place_builder = if this.is_bound_var_in_guard(id) {
                     let index = this.var_local_id(id, RefWithinGuard);
                     PlaceBuilder::from(index).deref()
@@ -459,7 +458,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 block.and(place_builder)
             }
 
-            ExprKind::PlaceTypeAscription { source, ref user_ty } => {
+            ExprKind::Place(PlaceExpr::PlaceTypeAscription { source, ref user_ty }) => {
                 let place_builder = unpack!(
                     block = this.expr_as_place(
                         block,
@@ -493,7 +492,7 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
                 }
                 block.and(place_builder)
             }
-            ExprKind::ValueTypeAscription { source, ref user_ty } => {
+            ExprKind::Place(PlaceExpr::ValueTypeAscription { source, ref user_ty }) => {
                 let source = &this.thir[source];
                 let temp =
                     unpack!(block = this.as_temp(block, source.temp_lifetime, source, mutability));
@@ -554,7 +553,6 @@ impl<'a, 'tcx> Builder<'a, 'tcx> {
             | ExprKind::ThreadLocalRef(_)
             | ExprKind::Call { .. } => {
                 // these are not places, so we need to make a temporary.
-                debug_assert!(!matches!(Category::of(&expr.kind), Some(Category::Place)));
                 let temp =
                     unpack!(block = this.as_temp(block, expr.temp_lifetime, expr, mutability));
                 block.and(PlaceBuilder::from(temp))
