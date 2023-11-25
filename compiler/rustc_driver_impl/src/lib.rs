@@ -1288,6 +1288,7 @@ fn ice_path() -> &'static Option<PathBuf> {
                 }
                 PathBuf::from(s)
             }
+            None if cfg!(target_family = "wasm") => std::path::PathBuf::new(),
             None => std::env::current_dir().unwrap_or_default(),
         };
         let now: OffsetDateTime = SystemTime::now().into();
@@ -1298,7 +1299,7 @@ fn ice_path() -> &'static Option<PathBuf> {
                     .unwrap(),
             )
             .unwrap_or_default();
-        let pid = std::process::id();
+        let pid = if cfg!(target_family = "wasm") { 1 } else { std::process::id() };
         path.push(format!("rustc-ice-{file_now}-{pid}.txt"));
         Some(path)
     })

@@ -104,28 +104,30 @@ pub fn get_linker<'a>(
 
     // The compiler's sysroot often has some bundled tools, so add it to the
     // PATH for the child.
-    let mut new_path = sess.get_tools_search_paths(self_contained);
-    let mut msvc_changed_path = false;
-    if sess.target.is_like_msvc {
-        if let Some(ref tool) = msvc_tool {
-            cmd.args(tool.args());
-            for (k, v) in tool.env() {
-                if k == "PATH" {
-                    new_path.extend(env::split_paths(v));
-                    msvc_changed_path = true;
-                } else {
-                    cmd.env(k, v);
+    if cfg!(not(target_family = "wasm")) {
+        let mut new_path = sess.get_tools_search_paths(self_contained);
+        let mut msvc_changed_path = false;
+        if sess.target.is_like_msvc {
+            if let Some(ref tool) = msvc_tool {
+                cmd.args(tool.args());
+                for (k, v) in tool.env() {
+                    if k == "PATH" {
+                        new_path.extend(env::split_paths(v));
+                        msvc_changed_path = true;
+                    } else {
+                        cmd.env(k, v);
+                    }
                 }
             }
         }
-    }
 
-    if !msvc_changed_path {
-        if let Some(path) = env::var_os("PATH") {
-            new_path.extend(env::split_paths(&path));
+        if !msvc_changed_path {
+            if let Some(path) = env::var_os("PATH") {
+                new_path.extend(env::split_paths(&path));
+            }
         }
+        cmd.env("PATH", env::join_paths(new_path).unwrap());
     }
-    cmd.env("PATH", env::join_paths(new_path).unwrap());
 
     // FIXME: Move `/LIBPATH` addition for uwp targets from the linker construction
     // to the linker args construction.

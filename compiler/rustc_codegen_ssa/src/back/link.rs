@@ -95,10 +95,17 @@ pub fn link_binary<'a>(
         });
 
         if outputs.outputs.should_link() {
-            let tmpdir = TempFileBuilder::new()
-                .prefix("rustc")
-                .tempdir()
-                .unwrap_or_else(|error| sess.emit_fatal(errors::CreateTempDir { error }));
+            let tmpdir = if cfg!(target_family = "wasm") {
+                TempFileBuilder::new()
+                    .prefix("rustc")
+                    .tempdir_in(std::env::current_dir().unwrap())
+                    .unwrap_or_else(|error| sess.emit_fatal(errors::CreateTempDir { error }))
+            } else {
+                TempFileBuilder::new()
+                    .prefix("rustc")
+                    .tempdir()
+                    .unwrap_or_else(|error| sess.emit_fatal(errors::CreateTempDir { error }))
+            };
             let path = MaybeTempDir::new(tmpdir, sess.opts.cg.save_temps);
             let output = out_filename(
                 sess,
