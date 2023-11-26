@@ -147,16 +147,17 @@ impl<'tcx> Queries<'tcx> {
             debug_assert_eq!(_id, CRATE_DEF_ID);
             let untracked = Untracked { cstore, source_span, definitions };
 
-            let qcx = passes::create_global_ctxt(
-                self.compiler,
-                crate_types,
-                stable_crate_id,
-                dep_graph,
-                untracked,
-                &self.gcx_cell,
-                &self.arena,
-                &self.hir_arena,
-            );
+            let qcx = self.gcx_cell.get_or_init(|| {
+                passes::create_empty_global_ctxt(
+                    self.compiler,
+                    crate_types,
+                    stable_crate_id,
+                    dep_graph,
+                    untracked,
+                    &self.arena,
+                    &self.hir_arena,
+                )
+            });
 
             qcx.enter(|tcx| {
                 let feed = tcx.feed_local_crate();
