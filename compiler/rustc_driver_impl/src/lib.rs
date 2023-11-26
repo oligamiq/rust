@@ -31,7 +31,7 @@ use rustc_errors::{markdown, ColorConfig};
 use rustc_errors::{ErrorGuaranteed, Handler, PResult};
 use rustc_feature::find_gated_cfg;
 use rustc_interface::util::{self, collect_crate_types, get_codegen_backend};
-use rustc_interface::{interface, Linker, Queries};
+use rustc_interface::{interface, write_dep_info, Linker, Queries};
 use rustc_lint::unerased_lint_store;
 use rustc_metadata::locator;
 use rustc_middle::ty::TyCtxt;
@@ -176,7 +176,7 @@ pub trait Callbacks {
     fn after_expansion<'tcx>(
         &mut self,
         _compiler: &interface::Compiler,
-        _queries: &'tcx Queries<'tcx>,
+        _tcx: TyCtxt<'tcx>,
     ) -> Compilation {
         Compilation::Continue
     }
@@ -391,10 +391,9 @@ fn run_compiler(
                     queries.global_ctxt()?.enter(|tcx| {
                         tcx.ensure().early_lint_checks(());
                         pretty::print(sess, *ppm, pretty::PrintExtra::NeedsAstMap { tcx });
+                        write_dep_info(tcx);
                         Ok(())
                     })?;
-
-                    queries.write_dep_info()?;
                 } else {
                     let krate = queries.parse()?;
                     pretty::print(
@@ -415,50 +414,49 @@ fn run_compiler(
                 return early_exit();
             }
 
-            // Make sure name resolution and macro expansion is run.
-            queries.global_ctxt()?.enter(|tcx| tcx.resolver_for_lowering(()));
+            queries.global_ctxt()?.enter(|tcx| {
+                // Make sure name resolution and macro expansion is run.
+                let _ = tcx.resolver_for_lowering(());
 
-            if callbacks.after_expansion(compiler, queries) == Compilation::Stop {
-                return early_exit();
-            }
+                if callbacks.after_expansion(compiler, tcx) == Compilation::Stop {
+                    return early_exit();
+                }
 
-            queries.write_dep_info()?;
+                write_dep_info(tcx);
 
-            if sess.opts.output_types.contains_key(&OutputType::DepInfo)
-                && sess.opts.output_types.len() == 1
-            {
-                return early_exit();
-            }
+                if sess.opts.output_types.contains_key(&OutputType::DepInfo)
+                    && sess.opts.output_types.len() == 1
+                {
+                    return early_exit();
+                }
 
-            if sess.opts.unstable_opts.no_analysis {
-                return early_exit();
-            }
+                if sess.opts.unstable_opts.no_analysis {
+                    return early_exit();
+                }
 
-            queries.global_ctxt()?.enter(|tcx| tcx.analysis(()))?;
+                tcx.analysis(())?;
 
-            if queries.global_ctxt()?.enter(|tcx| callbacks.after_analysis(compiler, tcx))
-                == Compilation::Stop
-            {
-                return early_exit();
-            }
+                if callbacks.after_analysis(compiler, tcx) == Compilation::Stop {
+                    return early_exit();
+                }
 
-            let linker = queries
-                .global_ctxt()?
-                .enter(|tcx| Linker::codegen_and_build_linker(tcx, &*compiler.codegen_backend))?;
+                let linker = Linker::codegen_and_build_linker(tcx, &*compiler.codegen_backend)?;
 
-            // This must run after monomorphization so that all generic types
-            // have been instantiated.
-            if sess.opts.unstable_opts.print_type_sizes {
-                sess.code_stats.print_type_sizes();
-            }
+                // This must run after monomorphization so that all generic types
+                // have been instantiated.
+                if sess.opts.unstable_opts.print_type_sizes {
+                    sess.code_stats.print_type_sizes();
+                }
 
-            if sess.opts.unstable_opts.print_vtable_sizes {
-                let crate_name = queries.global_ctxt()?.enter(|tcx| tcx.crate_name(LOCAL_CRATE));
+                if sess.opts.unstable_opts.print_vtable_sizes {
+                    let crate_name =
+                        queries.global_ctxt()?.enter(|tcx| tcx.crate_name(LOCAL_CRATE));
 
-                sess.code_stats.print_vtable_sizes(crate_name);
-            }
+                    sess.code_stats.print_vtable_sizes(crate_name);
+                }
 
-            Ok(Some(linker))
+                Ok(Some(linker))
+            })
         })?;
 
         // Linking is done outside the `compiler.enter()` so that the

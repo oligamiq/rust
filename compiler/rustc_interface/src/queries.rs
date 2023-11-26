@@ -116,13 +116,6 @@ impl<'tcx> Queries<'tcx> {
             )
         })
     }
-
-    pub fn write_dep_info(&'tcx self) -> Result<()> {
-        self.global_ctxt()?.enter(|tcx| {
-            passes::write_dep_info(tcx);
-        });
-        Ok(())
-    }
 }
 
 pub struct Linker {

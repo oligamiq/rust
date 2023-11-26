@@ -23,7 +23,7 @@ pub mod util;
 
 pub use callbacks::setup_callbacks;
 pub use interface::{run_compiler, Config};
-pub use passes::DEFAULT_QUERY_PROVIDERS;
+pub use passes::{write_dep_info, DEFAULT_QUERY_PROVIDERS};
 pub use queries::{Linker, Queries};
 
 #[cfg(test)]
