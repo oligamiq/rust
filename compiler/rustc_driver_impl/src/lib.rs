@@ -34,6 +34,7 @@ use rustc_interface::util::{self, collect_crate_types, get_codegen_backend};
 use rustc_interface::{interface, Linker, Queries};
 use rustc_lint::unerased_lint_store;
 use rustc_metadata::locator;
+use rustc_middle::ty::TyCtxt;
 use rustc_session::config::{nightly_options, CG_OPTIONS, Z_OPTIONS};
 use rustc_session::config::{ErrorOutputType, Input, OutFileName, OutputType, TrimmedDefPaths};
 use rustc_session::cstore::MetadataLoader;
@@ -184,7 +185,7 @@ pub trait Callbacks {
     fn after_analysis<'tcx>(
         &mut self,
         _compiler: &interface::Compiler,
-        _queries: &'tcx Queries<'tcx>,
+        _tcx: TyCtxt<'tcx>,
     ) -> Compilation {
         Compilation::Continue
     }
@@ -435,7 +436,9 @@ fn run_compiler(
 
             queries.global_ctxt()?.enter(|tcx| tcx.analysis(()))?;
 
-            if callbacks.after_analysis(compiler, queries) == Compilation::Stop {
+            if queries.global_ctxt()?.enter(|tcx| callbacks.after_analysis(compiler, tcx))
+                == Compilation::Stop
+            {
                 return early_exit();
             }
 

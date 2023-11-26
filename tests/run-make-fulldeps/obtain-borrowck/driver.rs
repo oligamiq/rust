@@ -56,55 +56,49 @@ impl rustc_driver::Callbacks for CompilerCalls {
 
     // In this callback we trigger borrow checking of all functions and obtain
     // the result.
-    fn after_analysis<'tcx>(
-        &mut self,
-        compiler: &Compiler,
-        queries: &'tcx Queries<'tcx>,
-    ) -> Compilation {
-        compiler.sess.abort_if_errors();
-        queries.global_ctxt().unwrap().enter(|tcx| {
-            // Collect definition ids of MIR bodies.
-            let hir = tcx.hir();
-            let mut bodies = Vec::new();
+    fn after_analysis<'tcx>(&mut self, _compiler: &Compiler, tcx: TyCtxt<'tcx>) -> Compilation {
+        tcx.sess.abort_if_errors();
+        // Collect definition ids of MIR bodies.
+        let hir = tcx.hir();
+        let mut bodies = Vec::new();
 
-            let crate_items = tcx.hir_crate_items(());
-            for id in crate_items.items() {
-                if matches!(tcx.def_kind(id.owner_id), DefKind::Fn) {
-                    bodies.push(id.owner_id);
-                }
+        let crate_items = tcx.hir_crate_items(());
+        for id in crate_items.items() {
+            if matches!(tcx.def_kind(id.owner_id), DefKind::Fn) {
+                bodies.push(id.owner_id);
             }
+        }
 
-            for id in crate_items.trait_items() {
-                if matches!(tcx.def_kind(id.owner_id), DefKind::AssocFn) {
-                    let trait_item = hir.trait_item(id);
-                    if let rustc_hir::TraitItemKind::Fn(_, trait_fn) = &trait_item.kind {
-                        if let rustc_hir::TraitFn::Provided(_) = trait_fn {
-                            bodies.push(trait_item.owner_id);
-                        }
+        for id in crate_items.trait_items() {
+            if matches!(tcx.def_kind(id.owner_id), DefKind::AssocFn) {
+                let trait_item = hir.trait_item(id);
+                if let rustc_hir::TraitItemKind::Fn(_, trait_fn) = &trait_item.kind {
+                    if let rustc_hir::TraitFn::Provided(_) = trait_fn {
+                        bodies.push(trait_item.owner_id);
                     }
                 }
             }
+        }
 
-            for id in crate_items.impl_items() {
-                if matches!(tcx.def_kind(id.owner_id), DefKind::AssocFn) {
-                    bodies.push(id.owner_id);
-                }
+        for id in crate_items.impl_items() {
+            if matches!(tcx.def_kind(id.owner_id), DefKind::AssocFn) {
+                bodies.push(id.owner_id);
             }
+        }
 
-            // Trigger borrow checking of all bodies.
-            for def_id in bodies {
-                let _ = tcx.optimized_mir(def_id);
-            }
+        // Trigger borrow checking of all bodies.
+        for def_id in bodies {
+            let _ = tcx.optimized_mir(def_id);
+        }
 
-            // See what bodies were borrow checked.
-            let mut bodies = get_bodies(tcx);
-            bodies.sort_by(|(def_id1, _), (def_id2, _)| def_id1.cmp(def_id2));
-            println!("Bodies retrieved for:");
-            for (def_id, body) in bodies {
-                println!("{}", def_id);
-                assert!(body.input_facts.unwrap().cfg_edge.len() > 0);
-            }
-        });
+        // See what bodies were borrow checked.
+        let mut bodies = get_bodies(tcx);
+        bodies.sort_by(|(def_id1, _), (def_id2, _)| def_id1.cmp(def_id2));
+        println!("Bodies retrieved for:");
+        for (def_id, body) in bodies {
+            println!("{}", def_id);
+            assert!(body.input_facts.unwrap().cfg_edge.len() > 0);
+        }
 
         Compilation::Continue
     }

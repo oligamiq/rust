@@ -242,19 +242,17 @@ macro_rules! run {
             fn after_analysis<'tcx>(
                 &mut self,
                 _compiler: &interface::Compiler,
-                queries: &'tcx Queries<'tcx>,
+                tcx: TyCtxt<'tcx>,
             ) -> Compilation {
-                queries.global_ctxt().unwrap().enter(|tcx| {
-                    rustc_internal::run(tcx, || {
-                        self.result = Some((self.callback)(tcx));
-                    })
-                    .unwrap();
-                    if self.result.as_ref().is_some_and(|val| val.is_continue()) {
-                        Compilation::Continue
-                    } else {
-                        Compilation::Stop
-                    }
+                rustc_internal::run(tcx, || {
+                    self.result = Some((self.callback)(tcx));
                 })
+                .unwrap();
+                if self.result.as_ref().is_some_and(|val| val.is_continue()) {
+                    Compilation::Continue
+                } else {
+                    Compilation::Stop
+                }
             }
         }
 

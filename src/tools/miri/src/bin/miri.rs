@@ -62,56 +62,52 @@ impl rustc_driver::Callbacks for MiriCompilerCalls {
     fn after_analysis<'tcx>(
         &mut self,
         _: &rustc_interface::interface::Compiler,
-        queries: &'tcx rustc_interface::Queries<'tcx>,
+        tcx: TyCtxt<'tcx>,
     ) -> Compilation {
-        queries.global_ctxt().unwrap().enter(|tcx| {
-            if tcx.sess.compile_status().is_err() {
-                tcx.sess.fatal("miri cannot be run on programs that fail compilation");
-            }
+        if tcx.sess.compile_status().is_err() {
+            tcx.sess.fatal("miri cannot be run on programs that fail compilation");
+        }
 
-            let handler = EarlyErrorHandler::new(tcx.sess.opts.error_format);
-            init_late_loggers(&handler, tcx);
-            if !tcx.crate_types().contains(&CrateType::Executable) {
-                tcx.sess.fatal("miri only makes sense on bin crates");
-            }
+        let handler = EarlyErrorHandler::new(tcx.sess.opts.error_format);
+        init_late_loggers(&handler, tcx);
+        if !tcx.crate_types().contains(&CrateType::Executable) {
+            tcx.sess.fatal("miri only makes sense on bin crates");
+        }
 
-            let (entry_def_id, entry_type) = if let Some(entry_def) = tcx.entry_fn(()) {
-                entry_def
-            } else {
-                tcx.sess.fatal("miri can only run programs that have a main function");
-            };
-            let mut config = self.miri_config.clone();
+        let (entry_def_id, entry_type) = if let Some(entry_def) = tcx.entry_fn(()) {
+            entry_def
+        } else {
+            tcx.sess.fatal("miri can only run programs that have a main function");
+        };
+        let mut config = self.miri_config.clone();
 
-            // Add filename to `miri` arguments.
-            config.args.insert(0, tcx.sess.io.input.filestem().to_string());
+        // Add filename to `miri` arguments.
+        config.args.insert(0, tcx.sess.io.input.filestem().to_string());
 
-            // Adjust working directory for interpretation.
-            if let Some(cwd) = env::var_os("MIRI_CWD") {
-                env::set_current_dir(cwd).unwrap();
-            }
+        // Adjust working directory for interpretation.
+        if let Some(cwd) = env::var_os("MIRI_CWD") {
+            env::set_current_dir(cwd).unwrap();
+        }
 
-            if tcx.sess.opts.optimize != OptLevel::No {
-                tcx.sess.warn("Miri does not support optimizations. If you have enabled optimizations \
+        if tcx.sess.opts.optimize != OptLevel::No {
+            tcx.sess.warn("Miri does not support optimizations. If you have enabled optimizations \
                     by selecting a Cargo profile (such as --release) which changes other profile settings \
                     such as whether debug assertions and overflow checks are enabled, those settings are \
                     still applied.");
-            }
-            if tcx.sess.mir_opt_level() > 0 {
-                tcx.sess.warn("You have explicitly enabled MIR optimizations, overriding Miri's default \
+        }
+        if tcx.sess.mir_opt_level() > 0 {
+            tcx.sess.warn("You have explicitly enabled MIR optimizations, overriding Miri's default \
                     which is to completely disable them. Any optimizations may hide UB that Miri would \
                     otherwise detect, and it is not necessarily possible to predict what kind of UB will \
                     be missed. If you are enabling optimizations to make Miri run faster, we advise using \
                     cfg(miri) to shrink your workload instead. The performance benefit of enabling MIR \
                     optimizations is usually marginal at best.");
-            }
+        }
 
-            if let Some(return_code) = miri::eval_entry(tcx, entry_def_id, entry_type, config) {
-                std::process::exit(
-                    i32::try_from(return_code).expect("Return value was too large!"),
-                );
-            }
-            tcx.sess.abort_if_errors();
-        });
+        if let Some(return_code) = miri::eval_entry(tcx, entry_def_id, entry_type, config) {
+            std::process::exit(i32::try_from(return_code).expect("Return value was too large!"));
+        }
+        tcx.sess.abort_if_errors();
 
         Compilation::Stop
     }
