@@ -336,20 +336,12 @@ fn run_compiler(
         expanded_args: args,
     };
 
-    let has_input = match make_input(&default_handler, &matches.free) {
-        Err(reported) => return Err(reported),
-        Ok(Some(input)) => {
+    let has_input = match make_input(&default_handler, &matches.free)? {
+        Some(input) => {
             config.input = input;
             true // has input: normal compilation
         }
-        Ok(None) => match matches.free.len() {
-            0 => false, // no input: we will exit early
-            1 => panic!("make_input should have provided valid inputs"),
-            _ => default_handler.early_error(format!(
-                "multiple input filenames provided (first two filenames are `{}` and `{}`)",
-                matches.free[0], matches.free[1],
-            )),
-        },
+        None => false, // no input: we will exit early
     };
 
     callbacks.config(&mut config);
@@ -498,9 +490,9 @@ fn make_input(
     handler: &EarlyErrorHandler,
     free_matches: &[String],
 ) -> Result<Option<Input>, ErrorGuaranteed> {
-    if free_matches.len() == 1 {
-        let ifile = &free_matches[0];
-        if ifile == "-" {
+    match free_matches {
+        [] => Ok(None), // no input: we will exit early,
+        [ifile] if ifile == "-" => {
             let mut src = String::new();
             if io::stdin().read_to_string(&mut src).is_err() {
                 // Immediately stop compilation if there was an issue reading
@@ -522,11 +514,12 @@ fn make_input(
             } else {
                 Ok(Some(Input::Str { name: FileName::anon_source_code(&src), input: src }))
             }
-        } else {
-            Ok(Some(Input::File(PathBuf::from(ifile))))
         }
-    } else {
-        Ok(None)
+        [ifile] => Ok(Some(Input::File(PathBuf::from(ifile)))),
+        _ => Err(handler.early_error_no_abort(format!(
+            "multiple input filenames provided (first two filenames are `{}` and `{}`)",
+            free_matches[0], free_matches[1],
+        ))),
     }
 }
 
