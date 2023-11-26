@@ -8,12 +8,14 @@ use rustc_borrowck as mir_borrowck;
 use rustc_codegen_ssa::traits::CodegenBackend;
 use rustc_data_structures::parallel;
 use rustc_data_structures::steal::Steal;
-use rustc_data_structures::sync::{Lrc, OnceLock, WorkerLocal};
+use rustc_data_structures::sync::{AppendOnlyIndexVec, FreezeLock, Lrc, OnceLock, WorkerLocal};
 use rustc_errors::PResult;
 use rustc_expand::base::{ExtCtxt, LintStoreExpand};
 use rustc_feature::Features;
 use rustc_fs_util::try_canonicalize;
-use rustc_hir::def_id::{StableCrateId, LOCAL_CRATE};
+use rustc_hir::def_id::{StableCrateId, CRATE_DEF_ID, LOCAL_CRATE};
+use rustc_hir::definitions::Definitions;
+use rustc_incremental::setup_dep_graph;
 use rustc_lint::{unerased_lint_store, BufferedEarlyLint, EarlyCheckNode, LintStore};
 use rustc_metadata::creader::CStore;
 use rustc_middle::arena::Arena;
@@ -27,7 +29,7 @@ use rustc_resolve::Resolver;
 use rustc_session::code_stats::VTableSizeInfo;
 use rustc_session::config::{CrateType, Input, OutFileName, OutputFilenames, OutputType};
 use rustc_session::cstore::Untracked;
-use rustc_session::output::filename_for_input;
+use rustc_session::output::{filename_for_input, find_crate_name};
 use rustc_session::search_paths::PathKind;
 use rustc_session::{Limit, Session};
 use rustc_span::symbol::{sym, Symbol};
@@ -39,7 +41,7 @@ use std::any::Any;
 use std::ffi::OsString;
 use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
-use std::sync::LazyLock;
+use std::sync::{Arc, LazyLock};
 use std::{env, fs, iter};
 
 pub fn parse<'a>(sess: &'a Session) -> PResult<'a, ast::Crate> {
@@ -630,6 +632,73 @@ pub static DEFAULT_QUERY_PROVIDERS: LazyLock<Providers> = LazyLock::new(|| {
     rustc_codegen_ssa::provide(providers);
     *providers
 });
+
+pub fn create_global_ctxt<'tcx>(
+    compiler: &'tcx Compiler,
+    mut krate: ast::Crate,
+    gcx_cell: &'tcx OnceLock<GlobalCtxt<'tcx>>,
+    arena: &'tcx WorkerLocal<Arena<'tcx>>,
+    hir_arena: &'tcx WorkerLocal<rustc_hir::Arena<'tcx>>,
+) -> Result<&'tcx GlobalCtxt<'tcx>> {
+    let sess = &compiler.sess;
+
+    rustc_builtin_macros::cmdline_attrs::inject(
+        &mut krate,
+        &sess.parse_sess,
+        &sess.opts.unstable_opts.crate_attr,
+    );
+
+    let pre_configured_attrs = rustc_expand::config::pre_configure_attrs(sess, &krate.attrs);
+
+    // parse `#[crate_name]` even if `--crate-name` was passed, to make sure it matches.
+    let crate_name = find_crate_name(sess, &pre_configured_attrs);
+    let crate_types = util::collect_crate_types(sess, &pre_configured_attrs);
+    let stable_crate_id = StableCrateId::new(
+        crate_name,
+        crate_types.contains(&CrateType::Executable),
+        sess.opts.cg.metadata.clone(),
+        sess.cfg_version,
+    );
+    let outputs = util::build_output_filenames(&pre_configured_attrs, sess);
+    let dep_graph = setup_dep_graph(sess, crate_name, stable_crate_id)?;
+
+    let cstore = FreezeLock::new(Box::new(CStore::new(
+        compiler.codegen_backend.metadata_loader(),
+        stable_crate_id,
+    )) as _);
+    let definitions = FreezeLock::new(Definitions::new(stable_crate_id));
+    let source_span = AppendOnlyIndexVec::new();
+    let _id = source_span.push(krate.spans.inner_span);
+    debug_assert_eq!(_id, CRATE_DEF_ID);
+    let untracked = Untracked { cstore, source_span, definitions };
+
+    let qcx = gcx_cell.get_or_init(|| {
+        create_empty_global_ctxt(
+            compiler,
+            crate_types,
+            stable_crate_id,
+            dep_graph,
+            untracked,
+            arena,
+            hir_arena,
+        )
+    });
+
+    qcx.enter(|tcx| {
+        let feed = tcx.feed_local_crate();
+        feed.crate_name(crate_name);
+
+        let feed = tcx.feed_unit_query();
+        feed.features_query(tcx.arena.alloc(rustc_expand::config::features(
+            sess,
+            &pre_configured_attrs,
+            crate_name,
+        )));
+        feed.crate_for_resolver(tcx.arena.alloc(Steal::new((krate, pre_configured_attrs))));
+        feed.output_filenames(Arc::new(outputs));
+    });
+    Ok(qcx)
+}
 
 pub fn create_empty_global_ctxt<'tcx>(
     compiler: &'tcx Compiler,
