@@ -123,33 +123,6 @@ impl<'tcx> Queries<'tcx> {
         });
         Ok(())
     }
-
-    pub fn codegen_and_build_linker(&'tcx self) -> Result<Linker> {
-        self.global_ctxt()?.enter(|tcx| {
-            // Don't do code generation if there were any errors
-            self.compiler.sess.compile_status()?;
-
-            // If we have any delayed bugs, for example because we created TyKind::Error earlier,
-            // it's likely that codegen will only cause more ICEs, obscuring the original problem
-            self.compiler.sess.diagnostic().flush_delayed();
-
-            // Hook for UI tests.
-            passes::check_for_rustc_errors_attr(tcx);
-
-            let ongoing_codegen = passes::start_codegen(&*self.compiler.codegen_backend, tcx);
-
-            Ok(Linker {
-                dep_graph: tcx.dep_graph.clone(),
-                output_filenames: tcx.output_filenames(()).clone(),
-                crate_hash: if tcx.needs_crate_hash() {
-                    Some(tcx.crate_hash(LOCAL_CRATE))
-                } else {
-                    None
-                },
-                ongoing_codegen,
-            })
-        })
-    }
 }
 
 pub struct Linker {
@@ -161,6 +134,34 @@ pub struct Linker {
 }
 
 impl Linker {
+    pub fn codegen_and_build_linker(
+        tcx: TyCtxt<'_>,
+        codegen_backend: &dyn CodegenBackend,
+    ) -> Result<Self> {
+        // Don't do code generation if there were any errors
+        tcx.sess.compile_status()?;
+
+        // If we have any delayed bugs, for example because we created TyKind::Error earlier,
+        // it's likely that codegen will only cause more ICEs, obscuring the original problem
+        tcx.sess.diagnostic().flush_delayed();
+
+        // Hook for UI tests.
+        passes::check_for_rustc_errors_attr(tcx);
+
+        let ongoing_codegen = passes::start_codegen(codegen_backend, tcx);
+
+        Ok(Linker {
+            dep_graph: tcx.dep_graph.clone(),
+            output_filenames: tcx.output_filenames(()).clone(),
+            crate_hash: if tcx.needs_crate_hash() {
+                Some(tcx.crate_hash(LOCAL_CRATE))
+            } else {
+                None
+            },
+            ongoing_codegen,
+        })
+    }
+
     pub fn link(self, sess: &Session, codegen_backend: &dyn CodegenBackend) -> Result<()> {
         let (codegen_results, work_products) =
             codegen_backend.join_codegen(self.ongoing_codegen, sess, &self.output_filenames)?;

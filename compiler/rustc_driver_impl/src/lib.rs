@@ -31,7 +31,7 @@ use rustc_errors::{markdown, ColorConfig};
 use rustc_errors::{ErrorGuaranteed, Handler, PResult};
 use rustc_feature::find_gated_cfg;
 use rustc_interface::util::{self, collect_crate_types, get_codegen_backend};
-use rustc_interface::{interface, Queries};
+use rustc_interface::{interface, Linker, Queries};
 use rustc_lint::unerased_lint_store;
 use rustc_metadata::locator;
 use rustc_session::config::{nightly_options, CG_OPTIONS, Z_OPTIONS};
@@ -439,7 +439,9 @@ fn run_compiler(
                 return early_exit();
             }
 
-            let linker = queries.codegen_and_build_linker()?;
+            let linker = queries
+                .global_ctxt()?
+                .enter(|tcx| Linker::codegen_and_build_linker(tcx, &*compiler.codegen_backend))?;
 
             // This must run after monomorphization so that all generic types
             // have been instantiated.
