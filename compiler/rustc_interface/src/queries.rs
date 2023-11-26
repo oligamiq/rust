@@ -1,4 +1,4 @@
-use crate::errors::{FailedWritingFile, RustcErrorFatal, RustcErrorUnexpectedAnnotation};
+use crate::errors::FailedWritingFile;
 use crate::interface::{Compiler, Result};
 use crate::{errors, passes, util};
 
@@ -20,7 +20,6 @@ use rustc_session::config::{self, CrateType, OutputFilenames, OutputType};
 use rustc_session::cstore::Untracked;
 use rustc_session::output::find_crate_name;
 use rustc_session::Session;
-use rustc_span::symbol::sym;
 use std::any::Any;
 use std::cell::{RefCell, RefMut};
 use std::sync::Arc;
@@ -183,40 +182,6 @@ impl<'tcx> Queries<'tcx> {
         Ok(())
     }
 
-    /// Check for the `#[rustc_error]` annotation, which forces an error in codegen. This is used
-    /// to write UI tests that actually test that compilation succeeds without reporting
-    /// an error.
-    fn check_for_rustc_errors_attr(tcx: TyCtxt<'_>) {
-        let Some((def_id, _)) = tcx.entry_fn(()) else { return };
-        for attr in tcx.get_attrs(def_id, sym::rustc_error) {
-            match attr.meta_item_list() {
-                // Check if there is a `#[rustc_error(delay_span_bug_from_inside_query)]`.
-                Some(list)
-                    if list.iter().any(|list_item| {
-                        matches!(
-                            list_item.ident().map(|i| i.name),
-                            Some(sym::delay_span_bug_from_inside_query)
-                        )
-                    }) =>
-                {
-                    tcx.ensure().trigger_delay_span_bug(def_id);
-                }
-
-                // Bare `#[rustc_error]`.
-                None => {
-                    tcx.sess.emit_fatal(RustcErrorFatal { span: tcx.def_span(def_id) });
-                }
-
-                // Some other attribute.
-                Some(_) => {
-                    tcx.sess.emit_warning(RustcErrorUnexpectedAnnotation {
-                        span: tcx.def_span(def_id),
-                    });
-                }
-            }
-        }
-    }
-
     pub fn codegen_and_build_linker(&'tcx self) -> Result<Linker> {
         self.global_ctxt()?.enter(|tcx| {
             // Don't do code generation if there were any errors
@@ -227,7 +192,7 @@ impl<'tcx> Queries<'tcx> {
             self.compiler.sess.diagnostic().flush_delayed();
 
             // Hook for UI tests.
-            Self::check_for_rustc_errors_attr(tcx);
+            passes::check_for_rustc_errors_attr(tcx);
 
             let ongoing_codegen = passes::start_codegen(&*self.compiler.codegen_backend, tcx);
 
