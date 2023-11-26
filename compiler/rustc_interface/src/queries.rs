@@ -100,9 +100,7 @@ impl<'tcx> Queries<'tcx> {
     }
 
     pub fn parse(&self) -> Result<QueryResult<'_, ast::Crate>> {
-        self.parse.compute(|| {
-            passes::parse(&self.compiler.sess).map_err(|mut parse_error| parse_error.emit())
-        })
+        self.parse.compute(|| passes::parse(&self.compiler.sess))
     }
 
     pub fn global_ctxt(&'tcx self) -> Result<QueryResult<'_, &'tcx GlobalCtxt<'tcx>>> {

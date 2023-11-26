@@ -9,7 +9,6 @@ use rustc_codegen_ssa::traits::CodegenBackend;
 use rustc_data_structures::parallel;
 use rustc_data_structures::steal::Steal;
 use rustc_data_structures::sync::{AppendOnlyIndexVec, FreezeLock, Lrc, OnceLock, WorkerLocal};
-use rustc_errors::PResult;
 use rustc_expand::base::{ExtCtxt, LintStoreExpand};
 use rustc_feature::Features;
 use rustc_fs_util::try_canonicalize;
@@ -44,13 +43,15 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, LazyLock};
 use std::{env, fs, iter};
 
-pub fn parse<'a>(sess: &'a Session) -> PResult<'a, ast::Crate> {
-    let krate = sess.time("parse_crate", || match &sess.io.input {
-        Input::File(file) => parse_crate_from_file(file, &sess.parse_sess),
-        Input::Str { input, name } => {
-            parse_crate_from_source_str(name.clone(), input.clone(), &sess.parse_sess)
-        }
-    })?;
+pub fn parse<'a>(sess: &'a Session) -> Result<ast::Crate> {
+    let krate = sess
+        .time("parse_crate", || match &sess.io.input {
+            Input::File(file) => parse_crate_from_file(file, &sess.parse_sess),
+            Input::Str { input, name } => {
+                parse_crate_from_source_str(name.clone(), input.clone(), &sess.parse_sess)
+            }
+        })
+        .map_err(|mut parse_error| parse_error.emit())?;
 
     if sess.opts.unstable_opts.input_stats {
         eprintln!("Lines of code:             {}", sess.source_map().count_lines());
