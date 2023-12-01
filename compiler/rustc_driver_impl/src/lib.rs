@@ -25,15 +25,16 @@ use rustc_codegen_ssa::{traits::CodegenBackend, CodegenErrors, CodegenResults};
 use rustc_data_structures::profiling::{
     get_resident_set_size, print_time_passes_entry, TimePassesFormat,
 };
-use rustc_data_structures::sync::SeqCst;
+use rustc_data_structures::sync::{SeqCst, WorkerLocal};
 use rustc_errors::registry::{InvalidErrorCode, Registry};
 use rustc_errors::{markdown, ColorConfig};
 use rustc_errors::{ErrorGuaranteed, Handler, PResult};
 use rustc_feature::find_gated_cfg;
 use rustc_interface::util::{self, collect_crate_types, get_codegen_backend};
-use rustc_interface::{interface, write_dep_info, Linker, Queries};
+use rustc_interface::{create_global_ctxt, interface, write_dep_info, Linker, Queries};
 use rustc_lint::unerased_lint_store;
 use rustc_metadata::locator;
+use rustc_middle::arena::Arena;
 use rustc_middle::ty::TyCtxt;
 use rustc_session::config::{nightly_options, CG_OPTIONS, Z_OPTIONS};
 use rustc_session::config::{ErrorOutputType, Input, OutFileName, OutputType, TrimmedDefPaths};
@@ -388,12 +389,20 @@ fn run_compiler(
 
             if let Some(ppm) = &sess.opts.pretty {
                 if ppm.needs_ast_map() {
-                    queries.global_ctxt()?.enter(|tcx| {
-                        tcx.ensure().early_lint_checks(());
-                        pretty::print(sess, *ppm, pretty::PrintExtra::NeedsAstMap { tcx });
-                        write_dep_info(tcx);
-                        Ok(())
-                    })?;
+                    let krate = queries.parse()?.steal();
+
+                    let gcx_cell = OnceLock::new();
+                    let arena = WorkerLocal::new(|_| Arena::default());
+                    let hir_arena = WorkerLocal::new(|_| rustc_hir::Arena::default());
+
+                    create_global_ctxt(&compiler, krate, &gcx_cell, &arena, &hir_arena)?.enter(
+                        |tcx| {
+                            tcx.ensure().early_lint_checks(());
+                            pretty::print(sess, *ppm, pretty::PrintExtra::NeedsAstMap { tcx });
+                            write_dep_info(tcx);
+                            Ok(())
+                        },
+                    )?;
                 } else {
                     let krate = queries.parse()?;
                     pretty::print(
