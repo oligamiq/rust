@@ -10,7 +10,7 @@ deny-warnings = false
 docs = false
 extended = true
 tools = ["miri"]
-host = ["wasm32-wasi"]
+host = ["wasm32-wasi-preview1-threads"]
 target = ["x86_64-unknown-linux-gnu"]
 
 [install]
@@ -18,6 +18,11 @@ prefix = "dist"
 sysconfdir = "etc"
 
 [target.'wasm32-wasi']
+wasi-root = "wasi-sdk-20.0/share/wasi-sysroot"
+linker = "wasi-sdk-20.0/bin/clang"
+codegen-backends = ["cranelift"]
+
+[target.'wasm32-wasi-preview1-threads']
 wasi-root = "wasi-sdk-20.0/share/wasi-sysroot"
 linker = "wasi-sdk-20.0/bin/clang"
 codegen-backends = ["cranelift"]
