@@ -13,6 +13,7 @@ use smallvec::SmallVec;
 impl<'ctx> rustc_target::HashStableContext for StableHashingContext<'ctx> {}
 
 impl<'a> HashStable<StableHashingContext<'a>> for [ast::Attribute] {
+    // FIXME remove this specialization
     fn hash_stable(&self, hcx: &mut StableHashingContext<'a>, hasher: &mut StableHasher) {
         if self.is_empty() {
             self.len().hash_stable(hcx, hasher);
