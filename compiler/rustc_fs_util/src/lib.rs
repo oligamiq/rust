@@ -1,3 +1,4 @@
+#[cfg(any(unix, windows))]
 use std::ffi::CString;
 use std::path::{absolute, Path, PathBuf};
 use std::{fs, io};

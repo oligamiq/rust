@@ -1,5 +1,6 @@
 //! Validates all used crates and extern libraries and loads their metadata
 
+#[cfg(any(unix, windows))]
 use std::error::Error;
 use std::ops::Fn;
 use std::path::Path;
@@ -16,6 +17,7 @@ use rustc_data_structures::svh::Svh;
 use rustc_data_structures::sync::{self, FreezeReadGuard, FreezeWriteGuard};
 use rustc_errors::DiagCtxtHandle;
 use rustc_expand::base::SyntaxExtension;
+#[cfg(any(unix, windows))]
 use rustc_fs_util::try_canonicalize;
 use rustc_hir::def_id::{CrateNum, LocalDefId, StableCrateId, LOCAL_CRATE};
 use rustc_hir::definitions::Definitions;
@@ -1144,6 +1146,7 @@ fn alloc_error_handler_spans(krate: &ast::Crate) -> Vec<Span> {
     f.spans
 }
 
+#[cfg(any(unix, windows))]
 fn format_dlopen_err(e: &(dyn std::error::Error + 'static)) -> String {
     e.sources().map(|e| format!(": {e}")).collect()
 }
@@ -1152,6 +1155,7 @@ fn format_dlopen_err(e: &(dyn std::error::Error + 'static)) -> String {
 // proc-macro DLL with `Error::LoadLibraryExW`. It is suspected that something in the
 // system still holds a lock on the file, so we retry a few times before calling it
 // an error.
+#[cfg(any(unix, windows))]
 fn load_dylib(path: &Path, max_attempts: usize) -> Result<libloading::Library, String> {
     assert!(max_attempts > 0);
 
@@ -1213,6 +1217,7 @@ impl From<DylibError> for CrateError {
     }
 }
 
+#[cfg(any(unix, windows))]
 pub unsafe fn load_symbol_from_dylib<T: Copy>(
     path: &Path,
     sym_name: &str,
@@ -1231,4 +1236,15 @@ pub unsafe fn load_symbol_from_dylib<T: Copy>(
     std::mem::forget(lib);
 
     Ok(*sym)
+}
+
+#[cfg(not(any(unix, windows)))]
+pub unsafe fn load_symbol_from_dylib<T: Copy>(
+    path: &Path,
+    _sym_name: &str,
+) -> Result<T, DylibError> {
+    Err(DylibError::DlOpen(
+        path.display().to_string(),
+        "dlopen not supported on this platform".to_owned(),
+    ))
 }

@@ -1693,7 +1693,7 @@ impl<'a> Builder<'a> {
             Mode::Std | Mode::ToolBootstrap | Mode::ToolStd => {}
             Mode::Rustc | Mode::Codegen | Mode::ToolRustc => {
                 // Build proc macros both for the host and the target
-                if target != compiler.host && cmd_kind != Kind::Check {
+                if target != compiler.host && cmd_kind != Kind::Check && !target.contains("wasm") {
                     cargo.arg("-Zdual-proc-macros");
                     rustflags.arg("-Zdual-proc-macros");
                 }
