@@ -746,6 +746,11 @@ impl Build {
         if self.config.llvm_enabled(target) || kind == Kind::Check {
             features.push("llvm");
         }
+        if self.config.codegen_backends(target).contains(&"cranelift".to_owned())
+            || kind == Kind::Check
+        {
+            features.push("cranelift");
+        }
         // keep in sync with `bootstrap/compile.rs:rustc_cargo_env`
         if self.config.rustc_parallel {
             features.push("rustc_use_parallel_compiler");

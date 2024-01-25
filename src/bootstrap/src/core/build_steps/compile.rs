@@ -1321,7 +1321,7 @@ impl Step for CodegenBackend {
         }
 
         for backend in run.builder.config.codegen_backends(run.target) {
-            if backend == "llvm" {
+            if backend == "llvm" || backend == "cranelift" {
                 continue; // Already built as part of rustc
             }
 
@@ -1428,7 +1428,7 @@ fn copy_codegen_backends_to_sysroot(
     }
 
     for backend in builder.config.codegen_backends(target) {
-        if backend == "llvm" {
+        if backend == "llvm" || backend == "cranelift" {
             continue; // Already built as part of rustc
         }
 
@@ -1733,7 +1733,7 @@ impl Step for Assemble {
         build_compiler.stage = actual_stage;
 
         for backend in builder.config.codegen_backends(target_compiler.host) {
-            if backend == "llvm" {
+            if backend == "llvm" || backend == "cranelift" {
                 continue; // Already built as part of rustc
             }
 
