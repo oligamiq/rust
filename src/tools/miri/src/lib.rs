@@ -12,7 +12,7 @@
 #![feature(let_chains)]
 #![feature(lint_reasons)]
 #![feature(trait_upcasting)]
-#![feature(wasi_ext)]
+#![cfg_attr(target_os = "wasi", feature(wasi_ext))]
 // Configure clippy and other lints
 #![allow(
     clippy::collapsible_else_if,
