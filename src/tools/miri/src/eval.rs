@@ -12,9 +12,10 @@ use crate::diagnostics::report_leaks;
 use rustc_data_structures::fx::FxHashSet;
 use rustc_hir::def::Namespace;
 use rustc_hir::def_id::DefId;
+use rustc_middle::mir;
 use rustc_middle::ty::{
     self,
-    layout::{LayoutCx, LayoutOf},
+    layout::{FnAbiOf, LayoutCx, LayoutOf},
     Ty, TyCtxt,
 };
 use rustc_target::spec::abi::Abi;
@@ -402,6 +403,47 @@ pub fn create_ecx<'mir, 'tcx: 'mir>(
                 &[argc.into(), argv],
                 Some(&ret_place.into()),
                 StackPopCleanup::Root { cleanup: true },
+            )?;
+        }
+    }
+
+    // Run all static constructors in .init_array
+    // FIXME add a way to directly check if the binary format is ELF
+    if !tcx.sess.target.is_like_osx
+        && !tcx.sess.target.is_like_windows
+        && !tcx.sess.target.is_like_aix
+    {
+        // .init_array only exists on ELF
+
+        let args = if tcx.sess.target.os == "linux" && tcx.sess.target.env == "gnu" {
+            // glibc passes argc, argv and envp as arguments to the static constructor
+            let argc = Scalar::from_i32(i32::try_from(config.args.len()).unwrap());
+            let envp = Immediate::new_pointer_with_meta(
+                ecx.machine.env_vars.environ.as_ref().unwrap().ptr(),
+                MemPlaceMeta::None,
+                &ecx,
+            );
+            vec![argc.into(), argv, envp]
+        } else {
+            vec![]
+        };
+        for init_func in ecx.lookup_init_array()?.into_iter().rev() {
+            // Static constructors nominally don't have any arguments, yet glibc still passes some.
+            // To make static constructors which don't accept any arguments work we trim all extra
+            // args here.
+            let arg_count =
+                ecx.fn_abi_of_instance(init_func, ty::List::empty()).unwrap().args.len();
+            let args = &args[..arg_count];
+
+            ecx.call_function(
+                init_func,
+                Abi::C { unwind: false },
+                &args,
+                None,
+                StackPopCleanup::Goto {
+                    ret: Some(mir::Location::START.block),
+                    unwind: mir::UnwindAction::Terminate(mir::UnwindTerminateReason::Abi),
+                },
             )?;
         }
     }
