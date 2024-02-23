@@ -110,15 +110,6 @@ extern "Rust" {
     /// written using this function will emerge from the interpreter's stderr.
     pub fn miri_write_to_stderr(bytes: &[u8]);
 
-    /// Miri-provided extern function to allocate memory from the interpreter.
-    ///
-    /// This is useful when no fundamental way of allocating memory is
-    /// available, e.g. when using `no_std` + `alloc`.
-    pub fn miri_alloc(size: usize, align: usize) -> *mut u8;
-
-    /// Miri-provided extern function to deallocate memory.
-    pub fn miri_dealloc(ptr: *mut u8, size: usize, align: usize);
-
     /// Convert a path from the host Miri runs on to the target Miri interprets.
     /// Performs conversion of path separators as needed.
     ///

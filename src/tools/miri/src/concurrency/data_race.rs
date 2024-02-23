@@ -809,7 +809,6 @@ impl VClockAlloc {
             // User allocated and stack memory should track allocation.
             MemoryKind::Machine(
                 MiriMemoryKind::Rust
-                | MiriMemoryKind::Miri
                 | MiriMemoryKind::C
                 | MiriMemoryKind::WinHeap
                 | MiriMemoryKind::Mmap,

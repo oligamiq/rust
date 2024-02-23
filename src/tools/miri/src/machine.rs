@@ -107,8 +107,6 @@ impl VisitProvenance for FrameExtra<'_> {
 pub enum MiriMemoryKind {
     /// `__rust_alloc` memory.
     Rust,
-    /// `miri_alloc` memory.
-    Miri,
     /// `malloc` memory.
     C,
     /// Windows `HeapAlloc` memory.
@@ -144,7 +142,7 @@ impl MayLeak for MiriMemoryKind {
     fn may_leak(self) -> bool {
         use self::MiriMemoryKind::*;
         match self {
-            Rust | Miri | C | WinHeap | Runtime => false,
+            Rust | C | WinHeap | Runtime => false,
             Machine | Global | ExternStatic | Tls | Mmap => true,
         }
     }
@@ -156,7 +154,7 @@ impl MiriMemoryKind {
         use self::MiriMemoryKind::*;
         match self {
             // Heap allocations are fine since the `Allocation` is created immediately.
-            Rust | Miri | C | WinHeap | Mmap => true,
+            Rust | C | WinHeap | Mmap => true,
             // Everything else is unclear, let's not show potentially confusing spans.
             Machine | Global | ExternStatic | Tls | Runtime => false,
         }
@@ -168,7 +166,6 @@ impl fmt::Display for MiriMemoryKind {
         use self::MiriMemoryKind::*;
         match self {
             Rust => write!(f, "Rust heap"),
-            Miri => write!(f, "Miri bare-metal heap"),
             C => write!(f, "C heap"),
             WinHeap => write!(f, "Windows heap"),
             Machine => write!(f, "machine-managed memory"),

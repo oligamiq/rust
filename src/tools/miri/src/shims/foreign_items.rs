@@ -631,8 +631,8 @@ trait EvalContextExtPriv<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
             }
 
             // Rust allocation
-            "__rust_alloc" | "miri_alloc" => {
-                let default = |this: &mut MiriInterpCx<'mir, 'tcx>| {
+            "__rust_alloc" => {
+                return this.emulate_allocator(|this| {
                     // Only call `check_shim` when `#[global_allocator]` isn't used. When that
                     // macro is used, we act like no shim exists, so that the exported function can run.
                     let [size, align] = this.check_shim(abi, Abi::Rust, link_name, args)?;
@@ -641,29 +641,14 @@ trait EvalContextExtPriv<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
 
                     Self::check_alloc_request(size, align)?;
 
-                    let memory_kind = match link_name.as_str() {
-                        "__rust_alloc" => MiriMemoryKind::Rust,
-                        "miri_alloc" => MiriMemoryKind::Miri,
-                        _ => unreachable!(),
-                    };
-
                     let ptr = this.allocate_ptr(
                         Size::from_bytes(size),
                         Align::from_bytes(align).unwrap(),
-                        memory_kind.into(),
+                        MiriMemoryKind::Rust.into(),
                     )?;
 
                     this.write_pointer(ptr, dest)
-                };
-
-                match link_name.as_str() {
-                    "__rust_alloc" => return this.emulate_allocator(default),
-                    "miri_alloc" => {
-                        default(this)?;
-                        return Ok(EmulateForeignItemResult::NeedsJumping);
-                    }
-                    _ => unreachable!(),
-                }
+                });
             }
             "__rust_alloc_zeroed" => {
                 return this.emulate_allocator(|this| {
@@ -690,8 +675,8 @@ trait EvalContextExtPriv<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
                     this.write_pointer(ptr, dest)
                 });
             }
-            "__rust_dealloc" | "miri_dealloc" => {
-                let default = |this: &mut MiriInterpCx<'mir, 'tcx>| {
+            "__rust_dealloc" => {
+                return this.emulate_allocator(|this| {
                     // See the comment for `__rust_alloc` why `check_shim` is only called in the
                     // default case.
                     let [ptr, old_size, align] =
@@ -700,30 +685,13 @@ trait EvalContextExtPriv<'mir, 'tcx: 'mir>: crate::MiriInterpCxExt<'mir, 'tcx> {
                     let old_size = this.read_target_usize(old_size)?;
                     let align = this.read_target_usize(align)?;
 
-                    let memory_kind = match link_name.as_str() {
-                        "__rust_dealloc" => MiriMemoryKind::Rust,
-                        "miri_dealloc" => MiriMemoryKind::Miri,
-                        _ => unreachable!(),
-                    };
-
                     // No need to check old_size/align; we anyway check that they match the allocation.
                     this.deallocate_ptr(
                         ptr,
                         Some((Size::from_bytes(old_size), Align::from_bytes(align).unwrap())),
-                        memory_kind.into(),
+                        MiriMemoryKind::Rust.into(),
                     )
-                };
-
-                match link_name.as_str() {
-                    "__rust_dealloc" => {
-                        return this.emulate_allocator(default);
-                    }
-                    "miri_dealloc" => {
-                        default(this)?;
-                        return Ok(EmulateForeignItemResult::NeedsJumping);
-                    }
-                    _ => unreachable!(),
-                }
+                });
             }
             "__rust_realloc" => {
                 return this.emulate_allocator(|this| {
