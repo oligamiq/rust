@@ -32,20 +32,24 @@ use core::any::Any;
 use core::panic::PanicPayload;
 
 cfg_if::cfg_if! {
-    if #[cfg(target_os = "emscripten")] {
+    if #[cfg(all(miri, target_env = "msvc"))] {
+        // Use the Miri runtime as SEH based unwinding isn't yet supported by miri.
+        #[path = "miri.rs"]
+        mod imp;
+    } else if #[cfg(target_os = "emscripten")] {
         #[path = "emcc.rs"]
-        mod real_imp;
+        mod imp;
     } else if #[cfg(target_os = "hermit")] {
         #[path = "hermit.rs"]
-        mod real_imp;
+        mod imp;
     } else if #[cfg(target_os = "l4re")] {
         // L4Re is unix family but does not yet support unwinding.
         #[path = "dummy.rs"]
-        mod real_imp;
+        mod imp;
     } else if #[cfg(all(target_env = "msvc", not(target_arch = "arm")))] {
         // LLVM does not support unwinding on 32 bit ARM msvc (thumbv7a-pc-windows-msvc)
         #[path = "seh.rs"]
-        mod real_imp;
+        mod imp;
     } else if #[cfg(any(
         all(target_family = "windows", target_env = "gnu"),
         target_os = "psp",
@@ -55,7 +59,7 @@ cfg_if::cfg_if! {
         all(target_vendor = "fortanix", target_env = "sgx"),
     ))] {
         #[path = "gcc.rs"]
-        mod real_imp;
+        mod imp;
     } else {
         // Targets that don't support unwinding.
         // - family=wasm
@@ -65,20 +69,7 @@ cfg_if::cfg_if! {
         // - nvptx64-nvidia-cuda
         // - arch=avr
         #[path = "dummy.rs"]
-        mod real_imp;
-    }
-}
-
-cfg_if::cfg_if! {
-    if #[cfg(miri)] {
-        // Use the Miri runtime.
-        // We still need to also load the normal runtime above, as rustc expects certain lang
-        // items from there to be defined.
-        #[path = "miri.rs"]
         mod imp;
-    } else {
-        // Use the real runtime.
-        use real_imp as imp;
     }
 }
 
