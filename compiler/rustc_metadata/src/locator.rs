@@ -255,9 +255,6 @@ pub(crate) struct CrateLocator<'a> {
     pub triple: TargetTriple,
     pub filesearch: FileSearch<'a>,
     pub is_proc_macro: bool,
-
-    // Mutable in-progress state or output.
-    crate_rejections: CrateRejections,
 }
 
 #[derive(Clone)]
@@ -350,34 +347,30 @@ impl<'a> CrateLocator<'a> {
                 sess.target_filesearch(path_kind)
             },
             is_proc_macro: false,
-            crate_rejections: CrateRejections::default(),
         }
     }
 
-    pub(crate) fn reset(&mut self) {
-        self.crate_rejections.via_hash.clear();
-        self.crate_rejections.via_triple.clear();
-        self.crate_rejections.via_kind.clear();
-        self.crate_rejections.via_version.clear();
-        self.crate_rejections.via_filename.clear();
-        self.crate_rejections.via_invalid.clear();
-    }
-
-    pub(crate) fn maybe_load_library_crate(&mut self) -> Result<Option<Library>, CrateError> {
+    pub(crate) fn maybe_load_library_crate(
+        &self,
+        crate_rejections: &mut CrateRejections,
+    ) -> Result<Option<Library>, CrateError> {
         if !self.exact_paths.is_empty() {
-            return self.find_commandline_library();
+            return self.find_commandline_library(crate_rejections);
         }
         let mut seen_paths = FxHashSet::default();
         if let Some(extra_filename) = self.extra_filename {
-            if let library @ Some(_) = self.find_library_crate(extra_filename, &mut seen_paths)? {
+            if let library @ Some(_) =
+                self.find_library_crate(crate_rejections, extra_filename, &mut seen_paths)?
+            {
                 return Ok(library);
             }
         }
-        self.find_library_crate("", &mut seen_paths)
+        self.find_library_crate(crate_rejections, "", &mut seen_paths)
     }
 
     fn find_library_crate(
-        &mut self,
+        &self,
+        crate_rejections: &mut CrateRejections,
         extra_prefix: &str,
         seen_paths: &mut FxHashSet<PathBuf>,
     ) -> Result<Option<Library>, CrateError> {
@@ -430,7 +423,7 @@ impl<'a> CrateLocator<'a> {
                     (&f[dylib_prefix.len()..(f.len() - dylib_suffix.len())], CrateFlavor::Dylib)
                 } else {
                     if f.starts_with(staticlib_prefix) && f.ends_with(staticlib_suffix.as_ref()) {
-                        self.crate_rejections.via_kind.push(CrateMismatch {
+                        crate_rejections.via_kind.push(CrateMismatch {
                             path: spf.path.clone(),
                             got: "static".to_string(),
                         });
@@ -464,7 +457,7 @@ impl<'a> CrateLocator<'a> {
         // search is being performed for.
         let mut libraries = FxHashMap::default();
         for (_hash, (rlibs, rmetas, dylibs)) in candidates {
-            if let Some((svh, lib)) = self.extract_lib(rlibs, rmetas, dylibs)? {
+            if let Some((svh, lib)) = self.extract_lib(crate_rejections, rlibs, rmetas, dylibs)? {
                 libraries.insert(svh, lib);
             }
         }
@@ -495,7 +488,8 @@ impl<'a> CrateLocator<'a> {
     }
 
     fn extract_lib(
-        &mut self,
+        &self,
+        crate_rejections: &mut CrateRejections,
         rlibs: FxHashMap<PathBuf, PathKind>,
         rmetas: FxHashMap<PathBuf, PathKind>,
         dylibs: FxHashMap<PathBuf, PathKind>,
@@ -504,9 +498,9 @@ impl<'a> CrateLocator<'a> {
         // Order here matters, rmeta should come first. See comment in
         // `extract_one` below.
         let source = CrateSource {
-            rmeta: self.extract_one(rmetas, CrateFlavor::Rmeta, &mut slot)?,
-            rlib: self.extract_one(rlibs, CrateFlavor::Rlib, &mut slot)?,
-            dylib: self.extract_one(dylibs, CrateFlavor::Dylib, &mut slot)?,
+            rmeta: self.extract_one(crate_rejections, rmetas, CrateFlavor::Rmeta, &mut slot)?,
+            rlib: self.extract_one(crate_rejections, rlibs, CrateFlavor::Rlib, &mut slot)?,
+            dylib: self.extract_one(crate_rejections, dylibs, CrateFlavor::Dylib, &mut slot)?,
         };
         Ok(slot.map(|(svh, metadata, _)| (svh, Library { source, metadata })))
     }
@@ -535,7 +529,8 @@ impl<'a> CrateLocator<'a> {
     //
     // The `PathBuf` in `slot` will only be used for diagnostic purposes.
     fn extract_one(
-        &mut self,
+        &self,
+        crate_rejections: &mut CrateRejections,
         m: FxHashMap<PathBuf, PathKind>,
         flavor: CrateFlavor,
         slot: &mut Option<(Svh, MetadataBlob, PathBuf)>,
@@ -576,7 +571,7 @@ impl<'a> CrateLocator<'a> {
                 self.cfg_version,
             ) {
                 Ok(blob) => {
-                    if let Some(h) = self.crate_matches(&blob, &lib) {
+                    if let Some(h) = self.crate_matches(crate_rejections, &blob, &lib) {
                         (h, blob)
                     } else {
                         info!("metadata mismatch");
@@ -591,7 +586,7 @@ impl<'a> CrateLocator<'a> {
                         "Rejecting via version: expected {} got {}",
                         expected_version, found_version
                     );
-                    self.crate_rejections
+                    crate_rejections
                         .via_version
                         .push(CrateMismatch { path: lib, got: found_version });
                     continue;
@@ -601,7 +596,7 @@ impl<'a> CrateLocator<'a> {
                     // The file was present and created by the same compiler version, but we
                     // couldn't load it for some reason. Give a hard error instead of silently
                     // ignoring it, but only if we would have given an error anyway.
-                    self.crate_rejections.via_invalid.push(CrateMismatch { path: lib, got: err });
+                    crate_rejections.via_invalid.push(CrateMismatch { path: lib, got: err });
                     continue;
                 }
                 Err(err @ MetadataError::NotPresent(_)) => {
@@ -662,7 +657,12 @@ impl<'a> CrateLocator<'a> {
         }
     }
 
-    fn crate_matches(&mut self, metadata: &MetadataBlob, libpath: &Path) -> Option<Svh> {
+    fn crate_matches(
+        &self,
+        crate_rejections: &mut CrateRejections,
+        metadata: &MetadataBlob,
+        libpath: &Path,
+    ) -> Option<Svh> {
         let header = metadata.get_header();
         if header.is_proc_macro_crate != self.is_proc_macro {
             info!(
@@ -679,7 +679,7 @@ impl<'a> CrateLocator<'a> {
 
         if header.triple != self.triple {
             info!("Rejecting via crate triple: expected {} got {}", self.triple, header.triple);
-            self.crate_rejections.via_triple.push(CrateMismatch {
+            crate_rejections.via_triple.push(CrateMismatch {
                 path: libpath.to_path_buf(),
                 got: header.triple.to_string(),
             });
@@ -690,7 +690,7 @@ impl<'a> CrateLocator<'a> {
         if let Some(expected_hash) = self.hash {
             if hash != expected_hash {
                 info!("Rejecting via hash: expected {} got {}", expected_hash, hash);
-                self.crate_rejections
+                crate_rejections
                     .via_hash
                     .push(CrateMismatch { path: libpath.to_path_buf(), got: hash.to_string() });
                 return None;
@@ -700,7 +700,10 @@ impl<'a> CrateLocator<'a> {
         Some(hash)
     }
 
-    fn find_commandline_library(&mut self) -> Result<Option<Library>, CrateError> {
+    fn find_commandline_library(
+        &self,
+        crate_rejections: &mut CrateRejections,
+    ) -> Result<Option<Library>, CrateError> {
         // First, filter out all libraries that look suspicious. We only accept
         // files which actually exist that have the correct naming scheme for
         // rlibs/dylibs.
@@ -748,24 +751,28 @@ impl<'a> CrateLocator<'a> {
                     dylibs.insert(loc_canon, PathKind::ExternFlag);
                 }
             } else {
-                self.crate_rejections
+                crate_rejections
                     .via_filename
                     .push(CrateMismatch { path: loc.original().clone(), got: String::new() });
             }
         }
 
         // Extract the dylib/rlib/rmeta triple.
-        Ok(self.extract_lib(rlibs, rmetas, dylibs)?.map(|(_, lib)| lib))
+        Ok(self.extract_lib(crate_rejections, rlibs, rmetas, dylibs)?.map(|(_, lib)| lib))
     }
 
-    pub(crate) fn into_error(self, root: Option<CratePaths>) -> CrateError {
+    pub(crate) fn into_error(
+        self,
+        crate_rejections: CrateRejections,
+        root: Option<CratePaths>,
+    ) -> CrateError {
         CrateError::LocatorCombined(Box::new(CombinedLocatorError {
             crate_name: self.crate_name,
             root,
             triple: self.triple,
             dll_prefix: self.target.dll_prefix.to_string(),
             dll_suffix: self.target.dll_suffix.to_string(),
-            crate_rejections: self.crate_rejections,
+            crate_rejections,
         }))
     }
 }
@@ -885,7 +892,7 @@ struct CrateMismatch {
 }
 
 #[derive(Clone, Default)]
-struct CrateRejections {
+pub(crate) struct CrateRejections {
     via_hash: Vec<CrateMismatch>,
     via_triple: Vec<CrateMismatch>,
     via_kind: Vec<CrateMismatch>,
