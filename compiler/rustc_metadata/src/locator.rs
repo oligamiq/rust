@@ -742,10 +742,9 @@ impl<'a> CrateLocator<'a> {
                 // the symlink, the file type is lost and we might treat rlibs and
                 // rmetas as dylibs.
                 let loc_canon = loc.canonicalized().clone();
-                let loc = loc.original();
-                if loc.file_name().unwrap().to_str().unwrap().ends_with(".rlib") {
+                if file.ends_with(".rlib") {
                     rlibs.insert(loc_canon, PathKind::ExternFlag);
-                } else if loc.file_name().unwrap().to_str().unwrap().ends_with(".rmeta") {
+                } else if file.ends_with(".rmeta") {
                     rmetas.insert(loc_canon, PathKind::ExternFlag);
                 } else {
                     dylibs.insert(loc_canon, PathKind::ExternFlag);
