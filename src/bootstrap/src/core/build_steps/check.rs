@@ -321,7 +321,7 @@ impl Step for CodegenBackend {
     }
 
     fn make_run(run: RunConfig<'_>) {
-        for &backend in &[INTERNER.intern_str("cranelift"), INTERNER.intern_str("gcc")] {
+        for &backend in &[INTERNER.intern_str("gcc")] {
             run.builder.ensure(CodegenBackend { target: run.target, backend });
         }
     }

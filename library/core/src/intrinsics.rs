@@ -3049,6 +3049,7 @@ pub const unsafe fn write_bytes<T>(dst: *mut T, val: u8, count: usize) {
 }
 
 /// Inform Miri that a given pointer definitely has a certain alignment.
+// FIXME turn this into an intrinsic that can be called even when miri is disabled
 #[cfg(miri)]
 pub(crate) const fn miri_promise_symbolic_alignment(ptr: *const (), align: usize) {
     extern "Rust" {
