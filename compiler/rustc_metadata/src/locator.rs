@@ -251,10 +251,10 @@ pub(crate) struct CrateLocator<'a> {
     exact_paths: Vec<CanonicalizedPath>,
     pub hash: Option<Svh>,
     extra_filename: Option<&'a str>,
-    pub target: &'a Target,
-    pub triple: TargetTriple,
-    pub filesearch: FileSearch<'a>,
-    pub is_proc_macro: bool,
+    target: &'a Target,
+    triple: TargetTriple,
+    filesearch: FileSearch<'a>,
+    is_proc_macro: bool,
 }
 
 #[derive(Clone)]
@@ -348,6 +348,28 @@ impl<'a> CrateLocator<'a> {
             },
             is_proc_macro: false,
         }
+    }
+
+    pub(crate) fn for_proc_macro(&mut self, sess: &'a Session, path_kind: PathKind) {
+        self.is_proc_macro = true;
+        self.target = &sess.host;
+        self.triple = TargetTriple::from_triple(config::host_triple());
+        self.filesearch = sess.host_filesearch(path_kind);
+    }
+
+    pub(crate) fn for_target_proc_macro(&mut self, sess: &'a Session, path_kind: PathKind) {
+        self.is_proc_macro = true;
+        self.target = &sess.target;
+        self.triple = sess.opts.target_triple.clone();
+        self.filesearch = sess.target_filesearch(path_kind);
+    }
+
+    pub(crate) fn triple(&self) -> &TargetTriple {
+        &self.triple
+    }
+
+    pub(crate) fn is_proc_macro(&self) -> bool {
+        self.is_proc_macro
     }
 
     pub(crate) fn maybe_load_library_crate(
