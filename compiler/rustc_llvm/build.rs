@@ -33,6 +33,8 @@ fn detect_llvm_link() -> (&'static str, &'static str) {
     // Force the link mode we want, preferring static by default, but
     // possibly overridden by `configure --enable-llvm-link-shared`.
     if tracked_env_var_os("LLVM_LINK_SHARED").is_some() {
+        panic!("LLVM_LINK_SHARED is not supported");
+
         ("dylib", "--link-shared")
     } else {
         ("static", "--link-static")
