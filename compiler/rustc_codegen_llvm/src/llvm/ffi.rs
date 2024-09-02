@@ -1519,6 +1519,7 @@ extern "C" {
 
 #[link(name = "llvm-wrapper", kind = "static")]
 extern "C" {
+    pub fn jWWWWWWWWWWWWWWWWWW();
     pub fn LLVMRustInstallErrorHandlers();
     pub fn LLVMRustDisableSystemDialogsOnCrash();
 
