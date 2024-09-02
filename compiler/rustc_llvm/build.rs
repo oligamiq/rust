@@ -287,9 +287,9 @@ fn main() {
         }
 
         let kind = if name.starts_with("LLVM") { llvm_kind } else { "dylib" };
-        if target != "wasm32-wasip1-threads" {
-            println!("cargo:rustc-link-lib={kind}={name}");
-        }
+        // if target != "wasm32-wasip1-threads" {
+        println!("cargo:rustc-link-lib={kind}={name}");
+        // }
     }
 
     // LLVM ldflags
