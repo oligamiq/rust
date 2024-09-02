@@ -34,13 +34,15 @@ pub fn item_namespace<'ll>(cx: &CodegenCx<'ll, '_>, def_id: DefId) -> &'ll DISco
     };
 
     let scope = unsafe {
-        llvm::LLVMRustDIBuilderCreateNameSpace(
-            DIB(cx),
-            parent_scope,
-            namespace_name_string.as_ptr().cast(),
-            namespace_name_string.len(),
-            false, // ExportSymbols (only relevant for C++ anonymous namespaces)
-        )
+        panic!("TODO: implement this");
+
+        // llvm::LLVMRustDIBuilderCreateNameSpace(
+        //     DIB(cx),
+        //     parent_scope,
+        //     namespace_name_string.as_ptr().cast(),
+        //     namespace_name_string.len(),
+        //     false, // ExportSymbols (only relevant for C++ anonymous namespaces)
+        // )
     };
 
     debug_context(cx).namespace_map.borrow_mut().insert(def_id, scope);
