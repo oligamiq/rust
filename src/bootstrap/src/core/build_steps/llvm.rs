@@ -294,8 +294,8 @@ impl Step for Llvm {
         let mut cfg = cmake::Config::new(builder.src.join(root));
 
         cfg.define("WASI", "TRUE")
-            .define("CMAKE_SYSTEM_PROCESSOR", "wasm32")
-            .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm");
+            .define("CMAKE_SYSTEM_PROCESSOR", "wasm32");
+            // .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm");
 
         let mut ldflags = LdFlags::default();
 

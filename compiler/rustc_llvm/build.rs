@@ -285,7 +285,9 @@ fn main() {
         }
 
         let kind = if name.starts_with("LLVM") { llvm_kind } else { "dylib" };
-        println!("cargo:rustc-link-lib={kind}={name}");
+        if target != "wasm32-wasip1-threads" {
+            println!("cargo:rustc-link-lib={kind}={name}");
+        }
     }
 
     // LLVM ldflags
@@ -369,7 +371,9 @@ fn main() {
         } else if cxxflags.contains("stdlib=libc++") {
             println!("cargo:rustc-link-lib=c++");
         } else {
-            println!("cargo:rustc-link-lib={stdcppname}");
+            if target != "wasm32-wasip1-threads" {
+                println!("cargo:rustc-link-lib={stdcppname}");
+            }
         }
     }
 
