@@ -373,9 +373,9 @@ fn main() {
         } else if cxxflags.contains("stdlib=libc++") {
             println!("cargo:rustc-link-lib=c++");
         } else {
-            if target != "wasm32-wasip1-threads" {
+            // if target != "wasm32-wasip1-threads" {
                 println!("cargo:rustc-link-lib={stdcppname}");
-            }
+            // }
         }
     }
 
