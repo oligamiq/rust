@@ -103,7 +103,7 @@ fn output(cmd: &mut Command) -> String {
 }
 
 fn main() {
-    if tracked_env_var_os("TARGET").expect("TARGET was not set").to_string().includes("wasi") {
+    if tracked_env_var_os("TARGET").expect("TARGET was not set").contains("wasi") {
         std::env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
     }
 
