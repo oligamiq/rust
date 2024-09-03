@@ -1519,8 +1519,6 @@ extern "C" {
 
 #[link(name = "llvm-wrapper", kind = "static")]
 extern "C" {
-    #[cfg(target_os = "wasi")]
-    pub fn jWWWWWWWWWWWWWWWWWW();
     pub fn LLVMRustInstallErrorHandlers();
     pub fn LLVMRustDisableSystemDialogsOnCrash();
 
