@@ -103,6 +103,10 @@ fn output(cmd: &mut Command) -> String {
 }
 
 fn main() {
+    if tracked_env_var_os("TARGET").expect("TARGET was not set").includes("wasi") {
+        std::env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
+    }
+
     for component in REQUIRED_COMPONENTS.iter().chain(OPTIONAL_COMPONENTS.iter()) {
         println!("cargo:rustc-check-cfg=cfg(llvm_component,values(\"{component}\"))");
     }
