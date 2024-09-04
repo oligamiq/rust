@@ -293,10 +293,6 @@ impl Step for Llvm {
         // https://llvm.org/docs/CMake.html
         let mut cfg = cmake::Config::new(builder.src.join(root));
 
-        cfg.define("WASI", "TRUE")
-            .define("CMAKE_SYSTEM_PROCESSOR", "wasm32");
-            // .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm");
-
         let mut ldflags = LdFlags::default();
 
         let profile = match (builder.config.llvm_optimize, builder.config.llvm_release_debuginfo) {
@@ -505,6 +501,14 @@ impl Step for Llvm {
 
         if builder.config.dry_run() {
             return res;
+        }
+
+        if target.contains("wasi") {
+            cfg.define("WASI", "TRUE")
+                .define("CMAKE_SYSTEM_PROCESSOR", "wasm32");
+                // .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm");
+
+            println!("cfg {:?}", cfg);
         }
 
         cfg.build();
