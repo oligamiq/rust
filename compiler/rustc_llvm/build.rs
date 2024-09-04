@@ -211,6 +211,7 @@ fn main() {
     if target.contains("wasi") {
         let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
         cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
+        cfg.flag("-pthread");
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));
