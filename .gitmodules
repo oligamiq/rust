@@ -30,11 +30,6 @@
 	path = src/doc/edition-guide
 	url = https://github.com/rust-lang/edition-guide.git
 	shallow = true
-[submodule "src/llvm-project"]
-	path = src/llvm-project
-	url = https://github.com/YoWASP/llvm-project
-	branch = main+wasm
-	shallow = true
 [submodule "src/doc/embedded-book"]
 	path = src/doc/embedded-book
 	url = https://github.com/rust-embedded/book.git
