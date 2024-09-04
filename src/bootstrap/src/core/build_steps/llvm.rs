@@ -510,7 +510,7 @@ impl Step for Llvm {
             let wasi_target = String::from(target.triple);
             let wasi_cflags = String::from("");
             let wasi_ldflags = String::from("");
-            let wasi_target_llvm = target.clone();
+            let wasi_target_llvm = String::from(target.triple);
             let wasi_cflags_llvm = format!("{wasi_cflags} -pthread");
             let wasi_ldflags_llvm = wasi_ldflags;
             // LLVM has some (unreachable in our configuration) calls to mmap.
