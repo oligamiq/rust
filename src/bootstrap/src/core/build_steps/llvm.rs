@@ -546,6 +546,7 @@ impl Step for Llvm {
             .define("CMAKE_CXX_COMPILER_TARGET", &wasi_target_llvm)
             .define("CMAKE_C_FLAGS", format!("{wasi_sysroot} {wasi_cflags_llvm}"))
             .define("CMAKE_CXX_FLAGS", format!("{wasi_sysroot} {wasi_cflags_llvm}"))
+            .define("CMAKE_EXE_LINKER_FLAGS", wasi_ldflags_llvm)
             .define("LLVM_BUILD_STATIC", "ON")
             .define("LLVM_BUILD_SHARED_LIBS", "OFF")
             .define("LLVM_INCLUDE_RUNTIMES", "OFF");
