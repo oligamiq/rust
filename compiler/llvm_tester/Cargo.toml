@@ -1,0 +1,7 @@
+[package]
+name = "llvm_tester"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rustc_llvm = { path = "../rustc_llvm" }
