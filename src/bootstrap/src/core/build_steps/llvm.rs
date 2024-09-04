@@ -339,7 +339,8 @@ impl Step for Llvm {
             .define("LLVM_PARALLEL_COMPILE_JOBS", builder.jobs().to_string())
             .define("LLVM_TARGET_ARCH", target_native.split('-').next().unwrap())
             .define("LLVM_DEFAULT_TARGET_TRIPLE", target_native)
-            .define("LLVM_ENABLE_WARNINGS", enable_warnings);
+            .define("LLVM_ENABLE_WARNINGS", enable_warnings)
+            .define("LLVM_BUILD_TOOLS", "OFF");
 
         // Parts of our test suite rely on the `FileCheck` tool, which is built by default in
         // `build/$TARGET/llvm/build/bin` is but *not* then installed to `build/$TARGET/llvm/bin`.
