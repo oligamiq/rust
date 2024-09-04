@@ -457,7 +457,7 @@ impl Step for Llvm {
 
         // https://llvm.org/docs/HowToCrossCompileLLVM.html
         if target != builder.config.build {
-            panic!("cross-compiling LLVM is not supported");
+            panic!("cross-compiling LLVM is not supported: target = {}, build = {}", target, builder.config.build);
             let LlvmResult { llvm_config, .. } =
                 builder.ensure(Llvm { target: builder.config.build });
             if !builder.config.dry_run() {
