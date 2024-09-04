@@ -589,7 +589,7 @@ impl Step for Llvm {
             .define("LLVM_TOOL_LLVM_DIS_BUILD", "OFF")
             .define("LLVM_TOOL_LLVM_DIS_FUZZER_BUILD", "OFF")
             .define("LLVM_TOOL_LLVM_DLANG_DEMANGLE_FUZZER_BUILD", "OFF")
-            // .define("LLVM_TOOL_LLVM_DRIVER_BUILD", "ON")
+            .define("LLVM_TOOL_LLVM_DRIVER_BUILD", "ON")
             .define("LLVM_TOOL_LLVM_DWARFDUMP_BUILD", "ON")
             .define("LLVM_TOOL_LLVM_DWARFUTIL_BUILD", "OFF")
             .define("LLVM_TOOL_LLVM_DWP_BUILD", "OFF")
