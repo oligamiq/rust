@@ -510,7 +510,7 @@ impl Step for Llvm {
             let wasi_target = target;
             let wasi_cflags = "";
             let wasi_ldflags = "";
-            let wasi_target_llvm = target;
+            let wasi_target_llvm = target.clone();
             let wasi_cflags_llvm = format!("{wasi_cflags} -pthread");
             let wasi_ldflags_llvm = wasi_ldflags;
             // LLVM has some (unreachable in our configuration) calls to mmap.
