@@ -505,6 +505,7 @@ impl Step for Llvm {
 
         if target.contains("wasi") {
             let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
+            let wasi_sysroot = format!("--sysroot={wasi_sysroot}");
             let wasi_sdk_path = std::path::Path::new(&wasi_sysroot).join("../../").canonicalize().expect("invalid WASI_SYSROOT");
             let wasi_sdk_path = wasi_sdk_path.to_str().expect("invalid WASI_SYSROOT");
             let wasi_target = target.triple.to_string();
