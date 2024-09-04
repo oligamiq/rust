@@ -209,7 +209,7 @@ fn main() {
 
 
     if target.contains("wasi") {
-        let wasi_sysroot = tracked_env_var_os("WASI_SYSROOT").expect("WASI_SYSROOT not set");
+        let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
         cfg.compiler(format!("{wasi_sysroot}/../../{target}-clang++"));
     }
 
