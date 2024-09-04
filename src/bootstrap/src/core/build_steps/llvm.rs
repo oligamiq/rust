@@ -643,7 +643,9 @@ fn configure_cmake(
     cfg.env("DESTDIR", "");
 
     if builder.ninja() {
-        cfg.generator("Ninja");
+        if !target.contains("wasi") {
+            cfg.generator("Ninja");
+        }
     }
     cfg.target(&target.triple).host(&builder.config.build.triple);
 
