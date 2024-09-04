@@ -549,7 +549,8 @@ impl Step for Llvm {
             .define("CMAKE_EXE_LINKER_FLAGS", wasi_ldflags_llvm)
             .define("LLVM_BUILD_STATIC", "ON")
             .define("LLVM_BUILD_SHARED_LIBS", "OFF")
-            .define("LLVM_INCLUDE_RUNTIMES", "OFF");
+            .define("LLVM_INCLUDE_RUNTIMES", "OFF")
+            .define("CMAKE_BUILD_TYPE", "MinSizeRel");
         }
 
         cfg.build();
