@@ -507,10 +507,10 @@ impl Step for Llvm {
             let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
             let wasi_sdk_path = std::path::Path::new(&wasi_sysroot).join("../../");
             let wasi_sdk_path = wasi_sdk_path.to_str().expect("invalid WASI_SYSROOT");
-            let wasi_target = String::from(target.triple);
+            let wasi_target = target.triple.to_string();
             let wasi_cflags = String::from("");
             let wasi_ldflags = String::from("");
-            let wasi_target_llvm = String::from(target.triple);
+            let wasi_target_llvm = target.triple.to_string();
             let wasi_cflags_llvm = format!("{wasi_cflags} -pthread");
             let wasi_ldflags_llvm = wasi_ldflags;
             // LLVM has some (unreachable in our configuration) calls to mmap.
