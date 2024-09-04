@@ -508,7 +508,7 @@ impl Step for Llvm {
                 .define("CMAKE_SYSTEM_PROCESSOR", "wasm32");
                 // .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm");
 
-            println!("cfg {:?}", cfg);
+            println!("cfg {:?}", cfg.cmake_command());
         }
 
         cfg.build();
