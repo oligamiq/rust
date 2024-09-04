@@ -547,7 +547,7 @@ impl Step for Llvm {
             .define("CMAKE_CXX_FLAGS", format!("{wasi_sysroot} {wasi_cflags_llvm}"))
             .define("LLVM_BUILD_STATIC", "ON")
             .define("LLVM_BUILD_SHARED_LIBS", "OFF")
-            .define("LLVM_INCLUDE_RUNTIMES", "OFF")
+            .define("LLVM_INCLUDE_RUNTIMES", "OFF");
         }
 
         cfg.build();
