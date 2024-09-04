@@ -504,11 +504,50 @@ impl Step for Llvm {
         }
 
         if target.contains("wasi") {
-            cfg.define("WASI", "TRUE")
-                .define("CMAKE_SYSTEM_PROCESSOR", "wasm32");
-                // .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm");
+            let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
+            let wasi_sdk_path = std::path::Path::new(wasi_sysroot).join("../../");
+            let wasi_target = target;
+            let wasi_cflags = "";
+            let wasi_ldflags = "";
+            let wasi_target_llvm = target;
+            let wasi_cflags_llvm = format!("{wasi_cflags} -pthread");
+            let wasi_ldflags_llvm = wasi_ldflags;
+            // LLVM has some (unreachable in our configuration) calls to mmap.
+            let wasi_cflags_llvm = format!("{wasi_cflags_llvm} -D_WASI_EMULATED_MMAN");
+            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -lwasi-emulated-mman");
+            // Depending on the code being compiled, both Clang and LLD can consume unbounded amounts of memory.
+            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -Wl,--max-memory=4294967296");
+            // Compiling C++ code requires a lot of stack space and can overflow and corrupt the heap.
+            // (For example, `#include <iostream>` alone does it in a build with the default stack size.)
+            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
+            // Some of the host APIs that are statically required by LLVM (notably threading) are dynamically
+            // never used. An LTO build removes imports of these APIs, simplifying deployment
+            let wasi_cflags_llvm = format!("{wasi_cflags_llvm} -flto");
+            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -flto -Wl,--strip-all");
 
-            println!("cfg {:?}", cfg.get_profile());
+            // We need two toolchain files: one for the compiler itself (which needs threads at the moment since
+            // -DLLVM_ENABLE_THREADS=OFF is kind of broken), and one for the runtime libs.
+            cfg.define("WASI", "TRUE")
+            .define("CMAKE_SYSTEM_NAME", "Generic")
+            .define("CMAKE_SYSTEM_VERSION", "1")
+            .define("CMAKE_SYSTEM_PROCESSOR", "wasm32")
+            .define("CMAKE_EXECUTABLE_SUFFIX", ".wasm")
+            .define("CMAKE_FIND_ROOT_PATH_MODE_PROGRAM", "NEVER")
+            .define("CMAKE_FIND_ROOT_PATH_MODE_LIBRARY", "ONLY")
+            .define("CMAKE_FIND_ROOT_PATH_MODE_INCLUDE", "ONLY")
+            .define("CMAKE_FIND_ROOT_PATH_MODE_PACKAGE", "ONLY")
+            .define("CMAKE_C_COMPILER", format!("{wasi_sdk_path}/bin/clang"))
+            .define("CMAKE_CXX_COMPILER", format!("{wasi_sdk_path}/bin/clang++"))
+            .define("CMAKE_LINKER", format!("{wasi_sdk_path}/bin/wasm-ld"))
+            .define("CMAKE_AR", format!("{wasi_sdk_path}/bin/ar"))
+            .define("CMAKE_RANLIB", format!("{wasi_sdk_path}/bin/ranlib"))
+            .define("CMAKE_C_COMPILER_TARGET", wasi_target_llvm)
+            .define("CMAKE_CXX_COMPILER_TARGET", wasi_target_llvm)
+            .define("CMAKE_C_FLAGS", fotmat!("{wasi_sysroot} {wasi_cflags_llvm}"))
+            .define("CMAKE_CXX_FLAGS", fotmat!("{wasi_sysroot} {wasi_cflags_llvm}"))
+            .define("LLVM_BUILD_STATIC", "ON")
+            .define("LLVM_BUILD_SHARED_LIBS", "OFF")
+            .define("LLVM_INCLUDE_RUNTIMES", "OFF")
         }
 
         cfg.build();
