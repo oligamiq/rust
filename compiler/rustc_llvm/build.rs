@@ -210,7 +210,7 @@ fn main() {
 
     if target.contains("wasi") {
         let wasi_sysroot = tracked_env_var_os("WASI_SYSROOT").expect("WASI_SYSROOT not set");
-        cfg.compiler(format!("{wasi_sysroot}/../../{target}-clang++"))
+        cfg.compiler(format!("{wasi_sysroot}/../../{target}-clang++"));
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));
