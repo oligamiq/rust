@@ -298,9 +298,9 @@ fn main() {
         }
 
         let kind = if name.starts_with("LLVM") { llvm_kind } else { "dylib" };
-        if target.contains("wasi") {
-            panic!("kind: {kind}, name: {name}");
-        }
+        // if target.contains("wasi") {
+        //     panic!("kind: {kind}, name: {name}");
+        // }
 
         println!("cargo:rustc-link-lib={kind}={name}");
     }
