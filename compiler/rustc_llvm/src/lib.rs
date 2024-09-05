@@ -206,7 +206,8 @@ pub fn initialize_available_targets() {
     );
 }
 
-#[cfg(all(target_os = "wasi", target_env = "p1"))]
+// #[cfg(all(target_os = "wasi", target_env = "p1"))]
+#[cfg(target_os = "wasi")]
 mod dl {
     pub extern "C" fn dlclose(handle: *mut u8) -> i32 {
         panic!("dlclose not supported on Wasi yet")
