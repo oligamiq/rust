@@ -670,7 +670,7 @@ impl Step for Llvm {
             .define("LLD_BUILD_TOOLS", "OFF")
             .define("CMAKE_BUILD_TYPE", "MinSizeRel");
         } else {
-            cfg.define("LLVM_TOOL_LLVM_CONFIG_BUILD", "ON")
+            cfg.define("LLVM_TOOL_LLVM_CONFIG_BUILD", "ON");
         }
 
         cfg.build();
