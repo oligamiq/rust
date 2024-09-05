@@ -209,6 +209,8 @@ pub fn initialize_available_targets() {
 // #[cfg(all(target_os = "wasi", target_env = "p1"))]
 #[cfg(target_os = "wasi")]
 mod dl {
+    use core::ffi::c_char;
+
     pub extern "C" fn dlclose(handle: *mut u8) -> i32 {
         panic!("dlclose not supported on Wasi yet")
     }
