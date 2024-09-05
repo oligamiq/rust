@@ -206,21 +206,21 @@ pub fn initialize_available_targets() {
     );
 }
 
-#[cfg(target_os = "wasi")]
-extern "C" {
-    pub fn dlclose(handle: *mut u8) -> i32 {
+#[cfg(all(target_os = "wasi", target_env = "p1"))]
+mod dl {
+    pub extern "C" fn dlclose(handle: *mut u8) -> i32 {
         panic!("dlclose not supported on Wasi yet")
     }
 
-    pub fn dlopen(filename: *const c_char, flags: i32) -> *mut u8 {
+    pub extern "C" fn dlopen(filename: *const c_char, flags: i32) -> *mut u8 {
         panic!("dlopen not supported on Wasi yet")
     }
 
-    pub fn dlsym(handle: *mut u8, symbol: *const c_char) -> *mut u8 {
+    pub extern "C" fn dlsym(handle: *mut u8, symbol: *const c_char) -> *mut u8 {
         panic!("dlsym not supported on Wasi yet")
     }
 
-    pub fn dlerror() -> *const c_char {
+    pub extern "C" fn dlerror() -> *const c_char {
         panic!("dlerror not supported on Wasi yet")
     }
 }
