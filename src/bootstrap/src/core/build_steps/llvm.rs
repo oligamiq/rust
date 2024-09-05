@@ -669,6 +669,8 @@ impl Step for Llvm {
             // .define("CLANG_LINKS_TO_CREATE", "")
             .define("LLD_BUILD_TOOLS", "OFF")
             .define("CMAKE_BUILD_TYPE", "MinSizeRel");
+        } else {
+            cfg.define("LLVM_TOOL_LLVM_CONFIG_BUILD", "ON")
         }
 
         cfg.build();
