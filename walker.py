@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# this code find unknown import functions in .a files
+
 import os
 import subprocess
 
