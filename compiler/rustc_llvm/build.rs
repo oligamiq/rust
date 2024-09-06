@@ -210,20 +210,19 @@ fn main() {
 
     if target.contains("wasi") {
         // ref src/bootstrap/src/core/build_steps/llvm.rs
-        let linker_flag = "-lwasi-emulated-mman";
-        let linker_flag = format!("{linker_flag} -Wl,--max-memory=4294967296");
-        let linker_flag = format!("{linker_flag} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
-        let linker_flag = format!("{linker_flag} -flto -Wl,--strip-all");
-
-        let c_flag = "-pthread";
-        let c_flag = format!("{c_flag} -D_WASI_EMULATED_MMAN");
-        let c_flag = format!("{c_flag} -flto");
 
         let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
         cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
-        cfg.flag(c_flag);
+        cfg.flag("-pthread");
+        cfg.flag("-D_WASI_EMULATED_MMAN");
+        cfg.flag("-flto");
 
-        println!("cargo:rustc-link-arg={linker_flag}");
+        println!("cargo:rustc-link-arg=-lwasi-emulated-mman");
+        println!("cargo:rustc-link-arg=-Wl,--max-memory=4294967296");
+        println!("cargo:rustc-link-arg=-Wl,-z,stack-size=1048576");
+        println!("cargo:rustc-link-arg=-Wl,--stack-first");
+        println!("cargo:rustc-link-arg=-flto");
+        println!("cargo:rustc-link-arg=-Wl,--strip-all");
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));
