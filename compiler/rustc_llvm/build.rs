@@ -209,9 +209,21 @@ fn main() {
 
 
     if target.contains("wasi") {
+        // ref src/bootstrap/src/core/build_steps/llvm.rs
+        let linker_flag = "-lwasi-emulated-mman";
+        let linker_flag = format!("{wasi_ldflags_llvm} -Wl,--max-memory=4294967296");
+        let linker_flag = format!("{wasi_ldflags_llvm} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
+        let linker_flag = format!("{wasi_ldflags_llvm} -flto -Wl,--strip-all");
+
+        let c_flag = "-pthread";
+        let c_flag = format!("{wasi_cflags_llvm} -D_WASI_EMULATED_MMAN");
+        let c_flag = format!("{wasi_cflags_llvm} -flto");
+
         let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
         cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
-        cfg.flag("-pthread");
+        cfg.flag(c_flag);
+
+        println!("cargo:rustc-link-arg={linker_flag}");
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));

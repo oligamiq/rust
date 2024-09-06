@@ -29,13 +29,12 @@ def explore_directory(directory, target):
                         if tmp_filename.endswith(".o") or tmp_filename.endswith(".obj"):
                             tmp_file = os.path.join(tmp_dirpath, tmp_filename)
                             # print(tmp_file)
-                            result = subprocess.run(["/home/oligami_dev/rust/wasi-sdk-22.0/bin/nm", tmp_file], capture_output=True, text=True)
+                            result = subprocess.run([f"{wasi_sdk_path}/bin/nm", tmp_file], capture_output=True, text=True)
                             output = result.stdout
                             warnings = result.stderr
                             # if warnings:
                                 # print(warnings)
                                 # throw Exception()
-
 
                             # outputにtargetという文字列があるかどうか
                             is_found = False
@@ -52,5 +51,7 @@ def explore_directory(directory, target):
                 # tmpの中を削除
                 os.system("rm -rf *")
 
-explore_directory("/home/oligami_dev/rust/build/wasm32-wasip1-threads/", ["dlclose"])
-explore_directory("/home/oligami_dev/rust/build/x86_64-unknown-linux-gnu/stage1-rustc/wasm32-wasip1-threads/", ["dlopen, dlsym", "dlerror", "dlclose"])
+now_dir = os.getcwd()
+wasi_sdk_path = f"{now_dir}/wasi-sdk-22.0/"
+explore_directory(f"{now_dir}/build/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose", "mmap", "munmap"])
+explore_directory(f"{now_dir}/build/x86_64-unknown-linux-gnu/stage1-rustc/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose", "mmap", "munmap"])

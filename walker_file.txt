@@ -1,0 +1,182 @@
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/build/lib/libLLVMSupport.a
+./Memory.cpp.obj
+         U errno
+         U mmap
+         U munmap
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/build/lib/libLLVMSupport.a
+./DynamicLibrary.cpp.obj
+         U dlclose
+         U dlerror
+         U dlopen
+         U dlsym
+         U free
+         U strlen
+         U wmemchr
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/build/lib/libLLVMSupport.a
+./Path.cpp.obj
+         U access
+         U chdir
+         U chmod
+         U close
+         U closedir
+         U errno
+         U fchmod
+         U free
+         U fstat
+         U fstatvfs
+         U ftruncate
+         U futimens
+         U getcwd
+         U getenv
+         U isalpha
+         U link
+         U lstat
+         U memcmp
+         U mkdir
+         U mmap
+         U munmap
+         U open
+         U opendir
+         U pread
+         U read
+         U readdir
+         U readlink
+         U realpath
+         U remove
+         U rename
+         U snprintf
+         U stat
+         U statvfs
+         U strchr
+         U strdup
+         U strlen
+         U strtok_r
+         U symlink
+         U write
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/build/lib/libLLVMOrcJIT.a
+./MemoryMapper.cpp.obj
+         U abort
+         U close
+         U errno
+         U free
+         U malloc
+         U mmap
+         U munmap
+         U shm_open
+         U shm_unlink
+         U strcpy
+         U strlen
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/build/lib/libLLVMOrcTargetProcess.a
+./ExecutorSharedMemoryMapperService.cpp.obj
+         U close
+         U errno
+         U free
+         U ftruncate
+         U malloc
+         U mmap
+         U mprotect
+         U munmap
+         U shm_open
+         U strcpy
+         U strlen
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/lib/libLLVMSupport.a
+./Memory.cpp.obj
+         U errno
+         U mmap
+         U munmap
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/lib/libLLVMSupport.a
+./DynamicLibrary.cpp.obj
+         U dlclose
+         U dlerror
+         U dlopen
+         U dlsym
+         U free
+         U strlen
+         U wmemchr
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/lib/libLLVMSupport.a
+./Path.cpp.obj
+         U access
+         U chdir
+         U chmod
+         U close
+         U closedir
+         U errno
+         U fchmod
+         U free
+         U fstat
+         U fstatvfs
+         U ftruncate
+         U futimens
+         U getcwd
+         U getenv
+         U isalpha
+         U link
+         U lstat
+         U memcmp
+         U mkdir
+         U mmap
+         U munmap
+         U open
+         U opendir
+         U pread
+         U read
+         U readdir
+         U readlink
+         U realpath
+         U remove
+         U rename
+         U snprintf
+         U stat
+         U statvfs
+         U strchr
+         U strdup
+         U strlen
+         U strtok_r
+         U symlink
+         U write
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/lib/libLLVMOrcJIT.a
+./MemoryMapper.cpp.obj
+         U abort
+         U close
+         U errno
+         U free
+         U malloc
+         U mmap
+         U munmap
+         U shm_open
+         U shm_unlink
+         U strcpy
+         U strlen
+
+Found!
+/home/oligami/rust/build/wasm32-wasip1-threads/llvm/lib/libLLVMOrcTargetProcess.a
+./ExecutorSharedMemoryMapperService.cpp.obj
+         U close
+         U errno
+         U free
+         U ftruncate
+         U malloc
+         U mmap
+         U mprotect
+         U munmap
+         U shm_open
+         U strcpy
+         U strlen
+
