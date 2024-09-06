@@ -205,25 +205,3 @@ pub fn initialize_available_targets() {
         LLVMInitializeBPFAsmParser
     );
 }
-
-// #[cfg(all(target_os = "wasi", target_env = "p1"))]
-#[cfg(target_os = "wasi")]
-mod dl {
-    use core::ffi::c_char;
-
-    pub extern "C" fn dlclose(handle: *mut u8) -> i32 {
-        panic!("dlclose not supported on Wasi yet")
-    }
-
-    pub extern "C" fn dlopen(filename: *const c_char, flags: i32) -> *mut u8 {
-        panic!("dlopen not supported on Wasi yet")
-    }
-
-    pub extern "C" fn dlsym(handle: *mut u8, symbol: *const c_char) -> *mut u8 {
-        panic!("dlsym not supported on Wasi yet")
-    }
-
-    pub extern "C" fn dlerror() -> *const c_char {
-        panic!("dlerror not supported on Wasi yet")
-    }
-}

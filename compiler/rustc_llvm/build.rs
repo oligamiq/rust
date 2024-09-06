@@ -211,13 +211,13 @@ fn main() {
     if target.contains("wasi") {
         // ref src/bootstrap/src/core/build_steps/llvm.rs
         let linker_flag = "-lwasi-emulated-mman";
-        let linker_flag = format!("{wasi_ldflags_llvm} -Wl,--max-memory=4294967296");
-        let linker_flag = format!("{wasi_ldflags_llvm} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
-        let linker_flag = format!("{wasi_ldflags_llvm} -flto -Wl,--strip-all");
+        let linker_flag = format!("{linker_flag} -Wl,--max-memory=4294967296");
+        let linker_flag = format!("{linker_flag} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
+        let linker_flag = format!("{linker_flag} -flto -Wl,--strip-all");
 
         let c_flag = "-pthread";
-        let c_flag = format!("{wasi_cflags_llvm} -D_WASI_EMULATED_MMAN");
-        let c_flag = format!("{wasi_cflags_llvm} -flto");
+        let c_flag = format!("{c_flag} -D_WASI_EMULATED_MMAN");
+        let c_flag = format!("{c_flag} -flto");
 
         let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
         cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
