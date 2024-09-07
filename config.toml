@@ -29,15 +29,31 @@ cargo-native-static = true
 prefix = "dist"
 sysconfdir = "etc"
 
-[target.'wasm32-wasi']
-wasi-root = "wasi-sdk-22.0/share/wasi-sysroot"
-linker = "wasi-sdk-22.0/bin/clang"
-# codegen-backends = ["cranelift"]
-codegen-backends = ["llvm"]
+# [target.'wasm32-wasi']
+# wasi-root = "wasi-sdk-22.0/share/wasi-sysroot"
+# linker = "wasi-sdk-22.0/bin/clang"
+# # codegen-backends = ["cranelift"]
+# codegen-backends = ["llvm"]
+# # This value is failed to compile by rustc
+# # rustflags = [
+# #     "-C",
+# #     "link-arg=-lwasi-emulated-mman",
+# #     "-C",
+# #     "link-arg=-Wl,--max-memory=4294967296",
+# #     "-C",
+# #     "link-arg=-Wl,-z,stack-size=1048576",
+# #     "-C",
+# #     "link-arg=-Wl,--stack-first",
+# #     "-C",
+# #     "link-arg=-flto",
+# #     "-C",
+# #     "link-arg=-Wl,--strip-all",
+# # ]
 
 [target.'wasm32-wasip1-threads']
 wasi-root = "wasi-sdk-22.0/share/wasi-sysroot"
-linker = "wasi-sdk-22.0/bin/clang"
+# linker = "wasi-sdk-22.0/bin/clang"
+linker = "./wrapper_linker.sh"
 # codegen-backends = ["cranelift"]
 codegen-backends = ["llvm"]
 

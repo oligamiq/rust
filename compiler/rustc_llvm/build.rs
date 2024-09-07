@@ -212,11 +212,14 @@ fn main() {
         // ref src/bootstrap/src/core/build_steps/llvm.rs
 
         let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
-        cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
+        // cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
+        let linker = env::var("WASI_CLANG_WRAPPER_LINKER").expect("WASI_CLANG_WRAPPER_LINKER not set");
+        cfg.compiler(linker);
         cfg.flag("-pthread");
         cfg.flag("-D_WASI_EMULATED_MMAN");
         cfg.flag("-flto");
 
+        println!("cargo:rustc-link=static=wasi-emulated-mman");
         println!("cargo:rustc-link-arg=-lwasi-emulated-mman");
         println!("cargo:rustc-link-arg=-Wl,--max-memory=4294967296");
         println!("cargo:rustc-link-arg=-Wl,-z,stack-size=1048576");

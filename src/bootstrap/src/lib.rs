@@ -1676,7 +1676,7 @@ impl Build {
     /// You can neither rely on this being a copy nor it being a link,
     /// so do not write to dst.
     pub fn copy_link(&self, src: &Path, dst: &Path) {
-        println!("copy_link: {src:?} -> {dst:?}");
+        // println!("copy_link: {src:?} -> {dst:?}");
         self.copy_link_internal(src, dst, false);
     }
 
