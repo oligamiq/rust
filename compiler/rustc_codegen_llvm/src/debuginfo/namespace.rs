@@ -34,8 +34,6 @@ pub fn item_namespace<'ll>(cx: &CodegenCx<'ll, '_>, def_id: DefId) -> &'ll DISco
     };
 
     let scope = unsafe {
-        panic!("TODO: implement this");
-
         llvm::LLVMRustDIBuilderCreateNameSpace(
             DIB(cx),
             parent_scope,
