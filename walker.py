@@ -56,5 +56,7 @@ wasi_sdk_path = f"{now_dir}/wasi-sdk-22.0/"
 # explore_directory(f"{now_dir}/build/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose", "mmap", "munmap"])
 # explore_directory(f"{now_dir}/build/x86_64-unknown-linux-gnu/stage1-rustc/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose", "mmap", "munmap"])
 
-explore_directory(f"{now_dir}/build/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose"])
-explore_directory(f"{now_dir}/build/x86_64-unknown-linux-gnu/stage1-rustc/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose"])
+# explore_directory(f"{now_dir}/build/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose"])
+# explore_directory(f"{now_dir}/build/x86_64-unknown-linux-gnu/stage1-rustc/wasm32-wasip1-threads/", ["dlopen", "dlsym", "dlerror", "dlclose"])
+
+explore_directory(f"{now_dir}/build/", ["LLVMIsMultithreaded"])
