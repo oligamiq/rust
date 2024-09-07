@@ -2116,13 +2116,13 @@ extern "C" {
         Ty: &'a DIType,
     ) -> &'a DITemplateTypeParameter;
 
-    // pub fn LLVMRustDIBuilderCreateNameSpace<'a>(
-    //     Builder: &DIBuilder<'a>,
-    //     Scope: Option<&'a DIScope>,
-    //     Name: *const c_char,
-    //     NameLen: size_t,
-    //     ExportSymbols: bool,
-    // ) -> &'a DINameSpace;
+    pub fn LLVMRustDIBuilderCreateNameSpace<'a>(
+        Builder: &DIBuilder<'a>,
+        Scope: Option<&'a DIScope>,
+        Name: *const c_char,
+        NameLen: size_t,
+        ExportSymbols: bool,
+    ) -> &'a DINameSpace;
 
     pub fn LLVMRustDICompositeTypeReplaceArrays<'a>(
         Builder: &DIBuilder<'a>,
