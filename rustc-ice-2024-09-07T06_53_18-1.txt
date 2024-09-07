@@ -1,0 +1,7 @@
+thread 'rustc' panicked at compiler/rustc_codegen_llvm/src/llvm_util.rs:33:13:
+compiler/rustc_codegen_llvm/src/llvm_util.rs:33:13: LLVM compiled without support for threads
+stack backtrace:
+unsupported backtrace
+
+rustc version: 1.79.0-dev
+platform: wasm32-wasip1-threads

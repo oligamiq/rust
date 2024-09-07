@@ -53,7 +53,7 @@ sysconfdir = "etc"
 [target.'wasm32-wasip1-threads']
 wasi-root = "wasi-sdk-22.0/share/wasi-sysroot"
 # linker = "wasi-sdk-22.0/bin/clang"
-linker = "./wrapper_linker.sh"
+linker = "./wrapper_linker_clang.sh"
 # codegen-backends = ["cranelift"]
 codegen-backends = ["llvm"]
 
