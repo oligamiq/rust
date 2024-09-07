@@ -553,7 +553,7 @@ impl Step for Llvm {
             .define("LLVM_ENABLE_PIC", "OFF")
             .define("LLVM_BUILD_STATIC", "ON")
             // .define("LLVM_ENABLE_THREADS", "OFF")
-            .define("LLVM_ENABLE_THREADS", "1")
+            .define("LLVM_ENABLE_THREADS", "ON")
             .define("LLVM_BUILD_RUNTIME", "OFF")
             .define("LLVM_BUILD_TOOLS", "OFF")
             .define("LLVM_INCLUDE_UTILS", "OFF")
