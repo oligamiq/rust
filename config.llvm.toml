@@ -1,0 +1,41 @@
+# Includes one of the default files in src/bootstrap/defaults
+profile = "compiler"
+change-id = 9999999
+
+[rust]
+codegen-backends = ["llvm"]
+deny-warnings = false
+llvm-bitcode-linker = false
+
+[llvm]
+cflags = "-march=native"
+cxxflags = "-march=native"
+static-libstdcpp = true
+ninja = false
+download-ci-llvm = false
+link-shared = false
+# thin-lto = true
+
+[build]
+docs = false
+extended = false
+tools = []
+# host = ["wasm32-wasip1-threads", "x86_64-unknown-linux-gnu"]
+host = ["wasm32-wasip1-threads"]
+target = ["x86_64-unknown-linux-gnu", "wasm32-wasip1-threads"]
+# target = ["wasm32-wasip1-threads"]
+cargo-native-static = true
+
+[install]
+prefix = "dist"
+sysconfdir = "etc"
+
+[target.'wasm32-wasip1-threads']
+wasi-root = "wasi-sdk-22.0/share/wasi-sysroot"
+# linker = "wasi-sdk-22.0/bin/wasm-ld"
+linker = "./wrapper_linker_clang.sh"
+# codegen-backends = ["cranelift"]
+codegen-backends = ["llvm"]
+
+[target.'x86_64-unknown-linux-gnu']
+cc = "gcc"
