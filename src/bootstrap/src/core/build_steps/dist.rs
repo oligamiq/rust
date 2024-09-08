@@ -2132,11 +2132,7 @@ fn maybe_install_llvm(
         for file in files.trim_end().split(' ') {
             // If we're not using a custom LLVM, make sure we package for the target.
             let file = if let Ok(relative_path) = Path::new(file).strip_prefix(build_llvm_out) {
-                if target.triple == "wasm32-wasip1-threads" {
-                    target_llvm_out.join("lib/libLLVM-18-rust-dev.so")
-                } else {
-                    target_llvm_out.join(relative_path)
-                }
+                target_llvm_out.join(relative_path)
             } else {
                 PathBuf::from(file)
             };

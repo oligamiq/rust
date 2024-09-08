@@ -2420,13 +2420,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "llvm_tester"
-version = "0.1.0"
-dependencies = [
- "rustc_llvm",
-]
-
-[[package]]
 name = "lock_api"
 version = "0.4.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -255,9 +255,6 @@ impl Linker {
         let (codegen_results, work_products) =
             codegen_backend.join_codegen(self.ongoing_codegen, sess, &self.output_filenames);
 
-        // println!("modules: {:?}", codegen_results.modules);
-        // println!("codegen_results.crate_info: {:?}", codegen_results.crate_info);
-
         if let Some(guar) = sess.dcx().has_errors() {
             return Err(guar);
         }

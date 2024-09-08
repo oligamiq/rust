@@ -24,8 +24,11 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
+# このファイルがあるディレクトリを取得しますわ
+DIR=$(cd $(dirname $0); pwd)
+
 # 引数をそのままlinkerに渡しますわ
-/home/oligami_dev/rust/wasi-sdk-22.0/bin/wasm-ld -lwasi-emulated-mman "${filtered_args[@]}"
+$DIR/wasi-sdk-22.0/bin/wasm-ld -lwasi-emulated-mman "${filtered_args[@]}"
 
 # 終了コードをそのまま返しますの
 exit $?

@@ -33,8 +33,6 @@ fn detect_llvm_link() -> (&'static str, &'static str) {
     // Force the link mode we want, preferring static by default, but
     // possibly overridden by `configure --enable-llvm-link-shared`.
     if tracked_env_var_os("LLVM_LINK_SHARED").is_some() {
-        panic!("LLVM_LINK_SHARED is not supported");
-
         ("dylib", "--link-shared")
     } else {
         ("static", "--link-static")
@@ -212,24 +210,13 @@ fn main() {
         // ref src/bootstrap/src/core/build_steps/llvm.rs
 
         let wasi_sysroot = env::var("WASI_SYSROOT").expect("WASI_SYSROOT not set");
-        // cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
-        let linker = env::var("WASI_CLANG_WRAPPER_LINKER").expect("WASI_CLANG_WRAPPER_LINKER not set");
-        cfg.compiler(linker);
+        cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
         cfg.flag("-pthread");
         cfg.flag("-D_WASI_EMULATED_MMAN");
         cfg.flag("-flto");
-
-        println!("cargo:rustc-link=static=wasi-emulated-mman");
-        println!("cargo:rustc-link-arg=-lwasi-emulated-mman");
-        println!("cargo:rustc-link-arg=-Wl,--max-memory=4294967296");
-        println!("cargo:rustc-link-arg=-Wl,-z,stack-size=1048576");
-        println!("cargo:rustc-link-arg=-Wl,--stack-first");
-        println!("cargo:rustc-link-arg=-flto");
-        println!("cargo:rustc-link-arg=-Wl,--strip-all");
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));
-
     cfg.file("llvm-wrapper/PassWrapper.cpp")
         .file("llvm-wrapper/RustWrapper.cpp")
         .file("llvm-wrapper/ArchiveWrapper.cpp")
@@ -313,10 +300,6 @@ fn main() {
         }
 
         let kind = if name.starts_with("LLVM") { llvm_kind } else { "dylib" };
-        // if target.contains("wasi") {
-        //     panic!("kind: {kind}, name: {name}");
-        // }
-
         println!("cargo:rustc-link-lib={kind}={name}");
     }
 
@@ -401,9 +384,7 @@ fn main() {
         } else if cxxflags.contains("stdlib=libc++") {
             println!("cargo:rustc-link-lib=c++");
         } else {
-            // if target != "wasm32-wasip1-threads" {
-                println!("cargo:rustc-link-lib={stdcppname}");
-            // }
+            println!("cargo:rustc-link-lib={stdcppname}");
         }
     }
 

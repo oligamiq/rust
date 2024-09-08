@@ -292,7 +292,6 @@ impl Step for Llvm {
 
         // https://llvm.org/docs/CMake.html
         let mut cfg = cmake::Config::new(builder.src.join(root));
-
         let mut ldflags = LdFlags::default();
 
         let profile = match (builder.config.llvm_optimize, builder.config.llvm_release_debuginfo) {
@@ -339,8 +338,7 @@ impl Step for Llvm {
             .define("LLVM_PARALLEL_COMPILE_JOBS", builder.jobs().to_string())
             .define("LLVM_TARGET_ARCH", target_native.split('-').next().unwrap())
             .define("LLVM_DEFAULT_TARGET_TRIPLE", target_native)
-            .define("LLVM_ENABLE_WARNINGS", enable_warnings)
-            .define("LLVM_BUILD_TOOLS", "OFF");
+            .define("LLVM_ENABLE_WARNINGS", enable_warnings);
 
         // Parts of our test suite rely on the `FileCheck` tool, which is built by default in
         // `build/$TARGET/llvm/build/bin` is but *not* then installed to `build/$TARGET/llvm/bin`.
@@ -454,7 +452,6 @@ impl Step for Llvm {
 
         // https://llvm.org/docs/HowToCrossCompileLLVM.html
         if target != builder.config.build {
-            println!("cross-compiling LLVM is not supported: target = {}, build = {}", target, builder.config.build);
             let LlvmResult { llvm_config, .. } =
                 builder.ensure(Llvm { target: builder.config.build });
             if !builder.config.dry_run() {
@@ -669,7 +666,8 @@ impl Step for Llvm {
             // .define("CLANG_LINKS_TO_CREATE", "clang;clang++")
             // .define("CLANG_LINKS_TO_CREATE", "")
             .define("LLD_BUILD_TOOLS", "OFF")
-            .define("CMAKE_BUILD_TYPE", "MinSizeRel");
+            .define("CMAKE_BUILD_TYPE", "MinSizeRel")
+            .define("HAVE_DLOPEN", "");
         } else {
             cfg.define("LLVM_TOOL_LLVM_CONFIG_BUILD", "ON")
                 .define("LLVM_BUILD_TOOLS", "ON");
@@ -765,9 +763,7 @@ fn configure_cmake(
     cfg.env("DESTDIR", "");
 
     if builder.ninja() {
-        if !target.contains("wasi") {
-            cfg.generator("Ninja");
-        }
+        cfg.generator("Ninja");
     }
     cfg.target(&target.triple).host(&builder.config.build.triple);
 

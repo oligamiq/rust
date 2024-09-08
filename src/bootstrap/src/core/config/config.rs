@@ -2193,7 +2193,7 @@ impl Config {
     /// The absolute path to the downloaded LLVM artifacts.
     pub(crate) fn ci_llvm_root(&self) -> PathBuf {
         assert!(self.llvm_from_ci);
-        self.out.join(&*self.build.triple).join("llvm")
+        self.out.join(&*self.build.triple).join("ci-llvm")
     }
 
     /// Directory where the extracted `rustc-dev` component is stored.
