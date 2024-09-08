@@ -16,3 +16,12 @@ $ gcc -fuse-ld=lld tmp/rmeta*/lib.rmeta tmp/rust_out.* dist/lib/rustlib/x86_64-u
 $ ./rust_out
 Hello World!
 ```
+
+use LLVM
+```
+$ mkdir tmp
+$ echo 'fn main() { println!("Hello World!"); }' | wasmtime run -Sthreads=y -Spreview2=n --dir tmp::/ --dir dist --env RUST_MIN_STACK=16777216 dist/bin/rustc.wasm - --sysroot dist --target x86_64-unknown-linux-gnu -Csave-temps
+$ gcc -fuse-ld=lld tmp/rmeta*/lib.rmeta tmp/rust_out.*.o tmp/rustc*/symbols.o dist/lib/rustlib/x86_64-unknown-linux-gnu/lib/lib*.rlib -o rust_out
+$ ./rust_out
+Hello World!
+```
