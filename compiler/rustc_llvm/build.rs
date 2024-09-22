@@ -213,7 +213,6 @@ fn main() {
         cfg.compiler(format!("{wasi_sysroot}/../../bin/{target}-clang++"));
         cfg.flag("-pthread");
         cfg.flag("-D_WASI_EMULATED_MMAN");
-        cfg.flag("-flto");
     }
 
     rerun_if_changed_anything_in_dir(Path::new("llvm-wrapper"));

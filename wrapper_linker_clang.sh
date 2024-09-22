@@ -1,34 +1,34 @@
 #!/bin/bash
 
-# スクリプト名: wrapper_linker.sh
-
-# 表示
+# log file
 echo "wrapper_linker.sh: $@" >> /tmp/wrapper_linker.log
 
-# 新しい引数リストを作成しますわ
+# new args
 filtered_args=()
 
-# 引数を一つずつ確認しますの
+# check args
 while [[ $# -gt 0 ]]; do
   if [[ $1 == "-flavor" ]]; then
-    # "-flavor"が見つかったら、次の引数も飛ばしますわ
+    # skip "-flavor" and its argument
     shift 2
     continue
   fi
+    #note: wasm-ld: error: unknown argument: -Wl,--max-memory=1073741824
   if [[ $1 == "-Wl,--max-memory=1073741824" ]]; then
+    # skip "-Wl,--max-memory=1073741824" because it is not supported by wasm-ld
     shift 1
     continue
   fi
-  # 新しい引数リストに追加しますわ
+  # add arg to new args
   filtered_args+=("$1")
   shift
 done
 
-# このファイルがあるディレクトリを取得しますわ
+# get script directory
 DIR=$(cd $(dirname $0); pwd)
 
-# 引数をそのままlinkerに渡しますわ
+# call wasm-ld with new args
 $DIR/wasi-sdk-22.0/bin/wasm-ld -lwasi-emulated-mman "${filtered_args[@]}"
 
-# 終了コードをそのまま返しますの
+# return wasm-ld exit code
 exit $?

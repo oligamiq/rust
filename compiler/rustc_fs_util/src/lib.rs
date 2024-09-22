@@ -91,6 +91,7 @@ pub fn path_to_c_string(p: &Path) -> CString {
 pub fn path_to_c_string(p: &Path) -> CString {
     CString::new(p.to_str().unwrap()).unwrap()
 }
+
 #[inline]
 pub fn try_canonicalize<P: AsRef<Path>>(path: P) -> io::Result<PathBuf> {
     fs::canonicalize(&path).or_else(|_| absolute(&path))
