@@ -6,6 +6,8 @@ change-id = 9999999
 codegen-backends = ["llvm"]
 deny-warnings = false
 llvm-bitcode-linker = false
+debug = false
+debuginfo-level = 0
 
 [llvm]
 cflags = "-march=native"
