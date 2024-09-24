@@ -1,4 +1,4 @@
-#[cfg(any(unix, windows))]
+#[cfg(any(unix, windows, target_os = "wasi"))]
 use std::ffi::CString;
 use std::path::{absolute, Path, PathBuf};
 use std::{fs, io};
