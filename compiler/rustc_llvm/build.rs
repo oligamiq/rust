@@ -377,6 +377,7 @@ fn main() {
         || target.contains("freebsd")
         || target.contains("windows-gnullvm")
         || target.contains("aix")
+        || target.contains("wasi")
     {
         "c++"
     } else if target.contains("netbsd") && llvm_static_stdcpp.is_some() {
