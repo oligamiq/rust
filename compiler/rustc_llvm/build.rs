@@ -205,7 +205,6 @@ fn main() {
         cfg.define("NDEBUG", None);
     }
 
-
     if target.contains("wasi") {
         // ref src/bootstrap/src/core/build_steps/llvm.rs
 
