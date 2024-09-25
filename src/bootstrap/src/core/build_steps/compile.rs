@@ -1253,9 +1253,7 @@ fn rustc_llvm_env(builder: &Builder<'_>, cargo: &mut Cargo, target: TargetSelect
 
     // Building with a static libstdc++ is only supported on linux right now,
     // not for MSVC or macOS
-    if target.contains("wasi") {
-        cargo.env("LLVM_STATIC_STDCPP", dbg!(builder.wasi_libdir(target).unwrap().join("libc++.a")));
-    } else if builder.config.llvm_static_stdcpp
+    if builder.config.llvm_static_stdcpp
         && !target.contains("freebsd")
         && !target.is_msvc()
         && !target.contains("apple")
@@ -1266,7 +1264,7 @@ fn rustc_llvm_env(builder: &Builder<'_>, cargo: &mut Cargo, target: TargetSelect
             &builder.cxx(target).unwrap(),
             target,
             CLang::Cxx,
-            "libstdc++.a",
+            if target.contains("wasi") { "libc++.a" } else { "libstdc++.a" },
         );
         cargo.env("LLVM_STATIC_STDCPP", file);
     }

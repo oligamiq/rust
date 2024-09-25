@@ -33,7 +33,7 @@ prefix = "dist"
 sysconfdir = "etc"
 
 [target.'wasm32-wasip1-threads']
-wasi-root = "/home/bjorn/Projects/rust/wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot"
+wasi-root = "wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot"
 # codegen-backends = ["cranelift"]
 cc = "/home/bjorn/Projects/rust/wasi-sdk-24.0-x86_64-linux/bin/clang"
 cxx = "/home/bjorn/Projects/rust/wasi-sdk-24.0-x86_64-linux/bin/clang"
