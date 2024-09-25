@@ -524,7 +524,11 @@ impl Step for Llvm {
             let wasi_cflags = String::from("");
             let wasi_ldflags = String::from("");
             let wasi_target_llvm = target.triple.to_string();
-            let wasi_cflags_llvm = format!("{wasi_cflags} -pthread");
+            let wasi_cflags_llvm = if target.contains("threads") {
+                format!("{wasi_cflags} -pthread")
+            } else {
+                wasi_cflags.clone()
+            };
             let wasi_ldflags_llvm = wasi_ldflags;
             // LLVM has some (unreachable in our configuration) calls to mmap.
             let wasi_cflags_llvm = format!("{wasi_cflags_llvm} -D_WASI_EMULATED_MMAN");
@@ -559,8 +563,6 @@ impl Step for Llvm {
             .define("LLVM_BUILD_SHARED_LIBS", "OFF")
             .define("LLVM_ENABLE_PIC", "OFF")
             .define("LLVM_BUILD_STATIC", "ON")
-            // .define("LLVM_ENABLE_THREADS", "OFF")
-            .define("LLVM_ENABLE_THREADS", "ON")
             .define("LLVM_BUILD_RUNTIME", "OFF")
             .define("LLVM_BUILD_TOOLS", "OFF")
             .define("LLVM_INCLUDE_UTILS", "OFF")
@@ -678,6 +680,12 @@ impl Step for Llvm {
             .define("LLD_BUILD_TOOLS", "OFF")
             .define("CMAKE_BUILD_TYPE", "MinSizeRel")
             .define("HAVE_DLOPEN", "");
+
+            if target.contains("threads") {
+                cfg.define("LLVM_ENABLE_THREADS", "ON");
+            } else {
+                cfg.define("LLVM_ENABLE_THREADS", "OFF");
+            }
         } else {
             cfg.define("LLVM_TOOL_LLVM_CONFIG_BUILD", "ON")
                 .define("LLVM_BUILD_TOOLS", "ON");

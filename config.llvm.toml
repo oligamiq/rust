@@ -23,13 +23,18 @@ experimental-targets = ""
 docs = false
 extended = false
 tools = []
-host = ["wasm32-wasip1-threads"]
+host = ["wasm32-wasip1"]
 target = ["x86_64-unknown-linux-gnu", "wasm32-wasip1-threads"]
 cargo-native-static = true
 
 [install]
 prefix = "dist"
 sysconfdir = "etc"
+
+[target.'wasm32-wasip1']
+wasi-root = "wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot"
+linker = "wasi-sdk-24.0-x86_64-linux/bin/clang"
+codegen-backends = ["llvm"]
 
 [target.'wasm32-wasip1-threads']
 wasi-root = "wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot"
