@@ -524,27 +524,26 @@ impl Step for Llvm {
             let wasi_sysroot = format!("--sysroot={wasi_sysroot}");
             let wasi_sdk_path = wasi_sdk_path.to_str().expect("invalid WASI_SYSROOT");
             let wasi_target = target.triple.to_string();
-            let wasi_cflags = String::from("");
-            let wasi_ldflags = String::from("");
             let wasi_target_llvm = target.triple.to_string();
-            let wasi_cflags_llvm = if target.contains("threads") {
-                format!("{wasi_cflags} -pthread")
-            } else {
-                wasi_cflags.clone()
-            };
-            let wasi_ldflags_llvm = wasi_ldflags;
+
+            let mut wasi_cflags_llvm = String::new();
+            let mut wasi_ldflags_llvm = String::new();
+            if target.contains("threads") {
+                wasi_cflags_llvm.push_str(" -pthread");
+            }
             // LLVM has some (unreachable in our configuration) calls to mmap.
-            let wasi_cflags_llvm = format!("{wasi_cflags_llvm} -D_WASI_EMULATED_MMAN");
-            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -lwasi-emulated-mman");
+            wasi_cflags_llvm.push_str(" -D_WASI_EMULATED_MMAN");
+            wasi_ldflags_llvm.push_str(" -lwasi-emulated-mman");
             // Depending on the code being compiled, both Clang and LLD can consume unbounded amounts of memory.
-            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -Wl,--max-memory=4294967296");
+            wasi_ldflags_llvm.push_str(" -Wl,--max-memory=4294967296");
             // Compiling C++ code requires a lot of stack space and can overflow and corrupt the heap.
             // (For example, `#include <iostream>` alone does it in a build with the default stack size.)
-            let wasi_ldflags_llvm =
-                format!("{wasi_ldflags_llvm} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
+            wasi_ldflags_llvm.push_str(" -Wl,-z,stack-size=1048576 -Wl,--stack-first");
 
             // We need two toolchain files: one for the compiler itself (which needs threads at the moment since
             // -DLLVM_ENABLE_THREADS=OFF is kind of broken), and one for the runtime libs.
+            // FIXME use wasi-sdk-24.0-x86_64-linux/share/cmake/wasi-sdk-pthread.cmake to define
+            // some of these variables in the future.
             cfg.define("WASI", "TRUE")
                 .define("CMAKE_SYSTEM_NAME", "Generic")
                 .define("CMAKE_SYSTEM_VERSION", "1")

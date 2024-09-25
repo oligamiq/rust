@@ -23,7 +23,7 @@ experimental-targets = ""
 docs = false
 extended = false
 tools = []
-host = ["wasm32-wasip1"]
+host = ["wasm32-wasip1-threads"]
 target = ["x86_64-unknown-linux-gnu", "wasm32-wasip1-threads"]
 cargo-native-static = true
 
