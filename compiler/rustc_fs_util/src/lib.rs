@@ -1,4 +1,4 @@
-#[cfg(any(unix, windows))]
+#[cfg(any(unix, windows, target_os = "wasi"))]
 use std::ffi::CString;
 use std::path::{absolute, Path, PathBuf};
 use std::{fs, io};
@@ -84,7 +84,7 @@ pub fn path_to_c_string(p: &Path) -> CString {
     let p: &OsStr = p.as_ref();
     CString::new(p.as_bytes()).unwrap()
 }
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "wasi"))]
 pub fn path_to_c_string(p: &Path) -> CString {
     CString::new(p.to_str().unwrap()).unwrap()
 }
