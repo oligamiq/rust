@@ -17,6 +17,8 @@ ninja = false
 download-ci-llvm = false
 link-shared = false
 # thin-lto = true
+targets = "WebAssembly;X86"
+experimental-targets = ""
 
 [build]
 docs = false

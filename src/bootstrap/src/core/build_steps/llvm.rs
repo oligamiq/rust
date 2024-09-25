@@ -534,10 +534,6 @@ impl Step for Llvm {
             // Compiling C++ code requires a lot of stack space and can overflow and corrupt the heap.
             // (For example, `#include <iostream>` alone does it in a build with the default stack size.)
             let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -Wl,-z,stack-size=1048576 -Wl,--stack-first");
-            // Some of the host APIs that are statically required by LLVM (notably threading) are dynamically
-            // never used. An LTO build removes imports of these APIs, simplifying deployment
-            let wasi_cflags_llvm = format!("{wasi_cflags_llvm} -flto");
-            let wasi_ldflags_llvm = format!("{wasi_ldflags_llvm} -flto -Wl,--strip-all");
 
             // We need two toolchain files: one for the compiler itself (which needs threads at the moment since
             // -DLLVM_ENABLE_THREADS=OFF is kind of broken), and one for the runtime libs.
