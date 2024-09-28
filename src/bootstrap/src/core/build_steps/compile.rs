@@ -2259,7 +2259,11 @@ pub fn strip_debug(builder: &Builder<'_>, target: TargetSelection, path: &Path) 
     }
 
     let previous_mtime = t!(t!(path.metadata()).modified());
-    command("strip").arg("--strip-debug").arg(path).run_capture(builder);
+
+    // if host is wasm32-wasip1-threads, skip stripping
+    if !(builder.hosts.iter().any(|host| host.contains("wasm32-wasip1-threads"))) {
+        command("strip").arg("--strip-debug").arg(path).run_capture(builder);
+    }
 
     let file = t!(fs::File::open(path));
 
