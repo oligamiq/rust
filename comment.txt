@@ -37,3 +37,6 @@ $ echo 'fn main() { println!("Hello World!"); }' | wasmtime run -Sthreads=y -Spr
 $ wasmtime run tmp/rust_out.wasm
 Hello World!
 ```
+
+build Cargo
+LLVM_CONFIG=`pwd`/build/x86_64-unknown-linux-gnu/llvm/bin/llvm-config WASI_SDK_PATH=`pwd`/wasi-sdk-24.0-x86_64-linux WASI_SYSROOT=`pwd`/wasi-sdk-24.0-x86_64-linux/share/wasi-sysroot ./x.py build cargo --config config.llvm.toml
