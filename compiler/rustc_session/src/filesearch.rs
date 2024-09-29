@@ -202,6 +202,10 @@ pub fn materialize_sysroot(maybe_sysroot: Option<PathBuf>) -> PathBuf {
 /// This function checks if sysroot is found using env::args().next(), and if it
 /// is not found, finds sysroot from current rustc_driver dll.
 pub fn get_or_default_sysroot() -> Result<PathBuf, String> {
+    if let Ok(sysroot) = env::var("RUSTC_SYSROOT").map(PathBuf::from) {
+        return Ok(sysroot);
+    }
+
     // Follow symlinks. If the resolved path is relative, make it absolute.
     fn canonicalize(path: PathBuf) -> PathBuf {
         let path = try_canonicalize(&path).unwrap_or(path);
