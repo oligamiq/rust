@@ -148,6 +148,7 @@ pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send,
     let registry = sync::Registry::new(std::num::NonZero::new(threads).unwrap());
 
     if !sync::is_dyn_thread_safe() {
+        println!("warning: the parallel compiler is disabled because the `rustc` binary was not compiled with `--cfg parallel_compiler`");
         return run_in_thread_with_globals(thread_stack_size, edition, sm_inputs, |current_gcx| {
             // Register the thread for use with the `WorkerLocal` type.
             registry.register();
@@ -208,8 +209,7 @@ pub(crate) fn run_in_thread_pool_with_globals<F: FnOnce(CurrentGcx) -> R + Send,
                         registry.register();
 
                         rustc_span::set_session_globals_then(session_globals.into_inner(), || {
-                            thread.run()
-                        })
+                            thread.run()                        })
                     },
                     // Run `f` on the first thread in the thread pool.
                     move |pool: &rayon::ThreadPool| pool.install(|| f(current_gcx.into_inner())),
