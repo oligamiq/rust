@@ -508,9 +508,9 @@ fn make_input(
         return Err(reported);
     }
 
-    let name = match env::var("UNSTABLE_RUSTDOC_TEST_PATH") {
+    let name = match env_alt::var("UNSTABLE_RUSTDOC_TEST_PATH") {
         Ok(path) => {
-            let line = env::var("UNSTABLE_RUSTDOC_TEST_LINE").expect(
+            let line = env_alt::var("UNSTABLE_RUSTDOC_TEST_LINE").expect(
                 "when UNSTABLE_RUSTDOC_TEST_PATH is set \
                                     UNSTABLE_RUSTDOC_TEST_LINE also needs to be set",
             );

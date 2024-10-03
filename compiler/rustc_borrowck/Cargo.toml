@@ -25,5 +25,6 @@ rustc_target = { path = "../rustc_target" }
 rustc_trait_selection = { path = "../rustc_trait_selection" }
 rustc_traits = { path = "../rustc_traits" }
 smallvec = { version = "1.8.1", features = ["union", "may_dangle"] }
+env-alt = { path = "../env-alt" }
 tracing = "0.1"
 # tidy-alphabetical-end

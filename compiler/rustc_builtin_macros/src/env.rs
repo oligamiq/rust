@@ -24,7 +24,7 @@ fn lookup_env<'cx>(cx: &'cx ExtCtxt<'_>, var: Symbol) -> Result<Symbol, VarError
     }
     // If the environment variable was not defined with the `--env-set` option, we try to retrieve it
     // from rustc's environment.
-    Ok(Symbol::intern(&env::var(var)?))
+    Ok(Symbol::intern(&env_alt::var(var)?))
 }
 
 pub(crate) fn expand_option_env<'cx>(
