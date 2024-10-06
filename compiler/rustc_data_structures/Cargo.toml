@@ -41,7 +41,7 @@ features = [
     "Win32_System_Threading",
 ]
 
-[target.'cfg(unix)'.dependencies]
+[target.'cfg(any(unix, all(target_os = "wasi", target_env = "p1")))'.dependencies]
 # tidy-alphabetical-start
 libc = "0.2"
 # tidy-alphabetical-end
